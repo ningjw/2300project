@@ -15,19 +15,20 @@
         <page name="流程设置-阀操作" id="12" />
         <page name="流程设置-等待时间" id="13" />
         <page name="流程选择" id="14" />
-        <page name="动作选择" id="15" />
-        <page name="量程设置" id="16" />
-        <page name="量程选择" id="17" />
-        <page name="手动操作1" id="18" />
-        <page name="手动操作2" id="19" />
-        <page name="手动操作3" id="20" />
-        <page name="手动操作4" id="21" />
-        <page name="输入输出" id="22" />
-        <page name="历史记录-分析记录" id="23" />
-        <page name="历史记录-校准记录" id="24" />
-        <page name="历史记录-报警记录" id="25" />
-        <page name="历史记录-运行日志" id="26" />
-        <page name="系统信息" id="27" />
+        <page name="流程选择2" id="15" />
+        <page name="动作选择" id="16" />
+        <page name="量程设置" id="17" />
+        <page name="量程选择" id="18" />
+        <page name="手动操作1" id="19" />
+        <page name="手动操作2" id="20" />
+        <page name="手动操作3" id="21" />
+        <page name="手动操作4" id="22" />
+        <page name="输入输出" id="23" />
+        <page name="历史记录-分析记录" id="24" />
+        <page name="历史记录-校准记录" id="25" />
+        <page name="历史记录-报警记录" id="26" />
+        <page name="历史记录-运行日志" id="27" />
+        <page name="系统信息" id="28" />
     </pages>
     <images>
         <image id="0" url="e:\visualtft project\2300project\Images\公司LOGeti - 副本.png" effect_width="98" effect_height="80" />

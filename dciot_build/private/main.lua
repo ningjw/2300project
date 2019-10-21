@@ -38,7 +38,9 @@ end
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function on_screen_change(screen)
-
+	if(screen == RANGE_SELECT_SCREEN) then
+		goto_range_select();
+	end
 end
 
 

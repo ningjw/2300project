@@ -2,6 +2,13 @@ Range1Id = 1;--量程1按钮Id
 Range2Id = 2;--量程2按钮Id
 Range3Id = 3;--量程3按钮Id
 
+Range1LowId = 64;--量程1文本id
+Range1HighId = 65;--量程1文本id
+Range2LowId = 16;--量程2文本id
+Range2HighId = 17;--量程2文本id
+Range3LowId = 21;--量程3文本id
+Range3HighId = 22;--量程3文本id
+
 RangeSureId = 8;
 RangeCancelId = 12;
 
@@ -29,4 +36,15 @@ function range_select_control_notify(screen, control, value)
     elseif control == RangeCancelId then
         change_screen(RangeDestScreen);
     end
+end
+
+
+--当画面切换时，执行此回调函数，screen为目标画面。
+function goto_range_select ()
+    set_text(RANGE_SELECT_SCREEN, Range1LowId,  get_text(RANGE_SET_SCREEN,64));
+    set_text(RANGE_SELECT_SCREEN, Range1HighId, get_text(RANGE_SET_SCREEN,65));
+    set_text(RANGE_SELECT_SCREEN, Range2LowId,  get_text(RANGE_SET_SCREEN,77));
+    set_text(RANGE_SELECT_SCREEN, Range2HighId, get_text(RANGE_SET_SCREEN,78));
+    set_text(RANGE_SELECT_SCREEN, Range3LowId,  get_text(RANGE_SET_SCREEN,115));
+    set_text(RANGE_SELECT_SCREEN, Range3HighId, get_text(RANGE_SET_SCREEN,116));
 end

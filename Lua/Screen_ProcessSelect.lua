@@ -25,7 +25,11 @@ function process_select_control_notify(screen, control, value)
 		ProcessSelectItem = control;
 	elseif control == SureButtonId then --确认按钮
 		change_screen(DestScreen);
-		set_text(DestScreen, DestControl, ProcessItem[ProcessSelectItem]);
+		set_text(DestScreen, DestControl, ProcessItem[ProcessSelectItem]);--DestControl对应流程选择
+		if DestScreen == PROCESS_SET1_SCREEN then
+			set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
+		end
+
 	elseif control == CancelButtonId then --取消按钮
 		change_screen(DestScreen);
 	end

@@ -10,6 +10,9 @@ local CancelButtonId = 11;--取消按钮
 
 ProcessSelectItem = 8;
 
+local DestScreen;
+local DestControl;
+
 --该函数在on_control_notify中进行调用（当需要选择流程时）
 function process_select_set(screen,control)
 	DestScreen = screen;

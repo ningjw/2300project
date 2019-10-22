@@ -47,7 +47,7 @@ TimedTab = {
 function run_control_notify(screen,control,value)
 	--control-100表示与该按钮重合的文本框
 	if (control-100) >= HandProcessID and (control-100) <= TimedTab.Process24.Id then
-		process_select_set(screen, control-100);--(control100)表示与该按钮重合的文本框
+		process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
 	end
 end
 

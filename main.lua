@@ -4,6 +4,7 @@
 require("Lua/ScreenId");
 require("Lua/Screen_RunControl");
 require("Lua/Screen_ProcessSelect");
+require("Lua/Screen_ProcessSelect2");
 require("Lua/Screen_ProcessSet1");
 require("Lua/Screen_ProcessSet2");
 require("Lua/Screen_ProcessSet3");
@@ -25,6 +26,8 @@ function on_control_notify(screen,control,value)
 		run_control_notify(screen,control,value);
 	elseif screen == PROCESS_SELECT_SCREEN then --流程选择界面
 		process_select_control_notify(screen,control,value);
+	elseif screen == PROCESS_SELECT2_SCREEN then--流程选择2界面
+		process_select2_control_notify(screen,control,value);	
  	elseif screen == PROCESS_SET1_SCREEN then --流程设置1界面
 		process_set1_control_notify(screen,control,value);
 	elseif screen == PROCESS_SET2_SCREEN then --流程设置2界面
@@ -38,8 +41,12 @@ end
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function on_screen_change(screen)
-	if(screen == RANGE_SELECT_SCREEN) then
+	if(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择界面
 		goto_range_select();
+	elseif screen == PROCESS_SET2_SCREEN then --跳转到流程设置2界面
+	   goto_ProcessSet2();
+	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择2界面
+		goto_ProcessSelect2();
 	end
 end
 

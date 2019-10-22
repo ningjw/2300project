@@ -26,7 +26,10 @@ function process_select2_control_notify(screen,control,value)
     elseif control == SureButtonId then --确认按钮
         change_screen(DestScreen);
         if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
-            set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应流程选择
+            set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
+ --           if string.len( get_text(DestScreen,DestControl-100) ) == 0 then
+                set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
+ --           end
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);

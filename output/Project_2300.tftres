@@ -55,48 +55,50 @@
         <image id="21" url="e:\visualtft project\2300project\Images\input.png" effect_width="82" effect_height="41" />
         <image id="22" url="e:\visualtft project\2300project\Images\动作.png" effect_width="529" effect_height="505" />
         <image id="23" url="e:\visualtft project\2300project\Images\input.png" effect_width="144" effect_height="38" />
-        <image id="24" url="e:\visualtft project\2300project\Images\蓝色图标2.jpg" effect_width="109" effect_height="35" />
-        <image id="25" url="e:\visualtft project\2300project\Images\蓝色图标.jpg" effect_width="109" effect_height="35" />
-        <image id="26" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="30" />
-        <image id="27" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="35" effect_height="35" />
-        <image id="28" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="35" effect_height="35" />
-        <image id="29" url="e:\visualtft project\2300project\Images\input.png" effect_width="50" effect_height="30" />
-        <image id="30" url="e:\visualtft project\2300project\Images\input.png" effect_width="60" effect_height="30" />
-        <image id="31" url="e:\visualtft project\2300project\Images\蓝色图标.jpg" effect_width="123" effect_height="30" />
-        <image id="32" url="e:\visualtft project\2300project\Images\Bright3 Button.jpg" effect_width="123" effect_height="30" />
-        <image id="33" url="e:\visualtft project\2300project\Images\input.png" effect_width="83" effect_height="31" />
-        <image id="34" url="e:\visualtft project\2300project\Images\菜单按钮一.png" effect_width="72" effect_height="29" />
-        <image id="35" url="e:\visualtft project\2300project\Images\菜单按钮.png" effect_width="72" effect_height="29" />
-        <image id="36" url="e:\visualtft project\2300project\Images\input.png" effect_width="100" effect_height="50" />
-        <image id="37" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="50" effect_height="40" />
-        <image id="38" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="40" />
-        <image id="39" url="e:\visualtft project\2300project\Images\单选框-否.png" effect_width="20" effect_height="20" />
-        <image id="40" url="e:\visualtft project\2300project\Images\单选框-是.png" effect_width="20" effect_height="20" />
-        <image id="41" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="40" effect_height="40" />
-        <image id="42" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="40" effect_height="40" />
-        <image id="43" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="93" effect_height="40" />
-        <image id="44" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="93" effect_height="40" />
-        <image id="45" url="e:\visualtft project\2300project\Images\input.png" effect_width="50" effect_height="40" />
-        <image id="46" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="73" effect_height="40" />
-        <image id="47" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="73" effect_height="40" />
-        <image id="48" url="e:\visualtft project\2300project\Images\input.png" effect_width="78" effect_height="40" />
-        <image id="49" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="35" />
-        <image id="50" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="50" effect_height="35" />
-        <image id="51" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="35" />
-        <image id="52" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="41" />
-        <image id="53" url="e:\visualtft project\2300project\Images\input.png" effect_width="94" effect_height="41" />
-        <image id="54" url="e:\visualtft project\2300project\Images\+.png" effect_width="35" effect_height="35" />
-        <image id="55" url="e:\visualtft project\2300project\Images\++.png" effect_width="35" effect_height="35" />
-        <image id="56" url="e:\visualtft project\2300project\Images\-.png" effect_width="35" effect_height="35" />
-        <image id="57" url="e:\visualtft project\2300project\Images\--.png" effect_width="35" effect_height="35" />
-        <image id="58" url="e:\visualtft project\2300project\Images\input.png" effect_width="66" effect_height="41" />
-        <image id="59" url="e:\visualtft project\2300project\Images\下拉选择按钮.png" effect_width="25" effect_height="25" />
-        <image id="60" url="e:\visualtft project\2300project\Images\input.png" effect_width="102" effect_height="41" />
-        <image id="61" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="40" />
-        <image id="62" url="e:\visualtft project\2300project\Images\长输入框.png" effect_width="312" effect_height="40" />
-        <image id="63" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="278" effect_height="40" />
-        <image id="64" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="278" effect_height="40" />
-        <image id="65" url="e:\visualtft project\2300project\Images\input.png" effect_width="150" effect_height="40" />
+        <image id="24" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="66" effect_height="38" />
+        <image id="25" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="66" effect_height="38" />
+        <image id="26" url="e:\visualtft project\2300project\Images\蓝色图标2.jpg" effect_width="109" effect_height="35" />
+        <image id="27" url="e:\visualtft project\2300project\Images\蓝色图标.jpg" effect_width="109" effect_height="35" />
+        <image id="28" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="30" />
+        <image id="29" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="35" effect_height="35" />
+        <image id="30" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="35" effect_height="35" />
+        <image id="31" url="e:\visualtft project\2300project\Images\input.png" effect_width="50" effect_height="30" />
+        <image id="32" url="e:\visualtft project\2300project\Images\input.png" effect_width="60" effect_height="30" />
+        <image id="33" url="e:\visualtft project\2300project\Images\蓝色图标.jpg" effect_width="123" effect_height="30" />
+        <image id="34" url="e:\visualtft project\2300project\Images\Bright3 Button.jpg" effect_width="123" effect_height="30" />
+        <image id="35" url="e:\visualtft project\2300project\Images\input.png" effect_width="83" effect_height="31" />
+        <image id="36" url="e:\visualtft project\2300project\Images\菜单按钮一.png" effect_width="72" effect_height="29" />
+        <image id="37" url="e:\visualtft project\2300project\Images\菜单按钮.png" effect_width="72" effect_height="29" />
+        <image id="38" url="e:\visualtft project\2300project\Images\input.png" effect_width="100" effect_height="50" />
+        <image id="39" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="50" effect_height="40" />
+        <image id="40" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="40" />
+        <image id="41" url="e:\visualtft project\2300project\Images\单选框-否.png" effect_width="20" effect_height="20" />
+        <image id="42" url="e:\visualtft project\2300project\Images\单选框-是.png" effect_width="20" effect_height="20" />
+        <image id="43" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="40" effect_height="40" />
+        <image id="44" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="40" effect_height="40" />
+        <image id="45" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="93" effect_height="40" />
+        <image id="46" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="93" effect_height="40" />
+        <image id="47" url="e:\visualtft project\2300project\Images\input.png" effect_width="50" effect_height="40" />
+        <image id="48" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="73" effect_height="40" />
+        <image id="49" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="73" effect_height="40" />
+        <image id="50" url="e:\visualtft project\2300project\Images\input.png" effect_width="78" effect_height="40" />
+        <image id="51" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="35" />
+        <image id="52" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="50" effect_height="35" />
+        <image id="53" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="35" />
+        <image id="54" url="e:\visualtft project\2300project\Images\input.png" effect_width="80" effect_height="41" />
+        <image id="55" url="e:\visualtft project\2300project\Images\input.png" effect_width="94" effect_height="41" />
+        <image id="56" url="e:\visualtft project\2300project\Images\+.png" effect_width="35" effect_height="35" />
+        <image id="57" url="e:\visualtft project\2300project\Images\++.png" effect_width="35" effect_height="35" />
+        <image id="58" url="e:\visualtft project\2300project\Images\-.png" effect_width="35" effect_height="35" />
+        <image id="59" url="e:\visualtft project\2300project\Images\--.png" effect_width="35" effect_height="35" />
+        <image id="60" url="e:\visualtft project\2300project\Images\input.png" effect_width="66" effect_height="41" />
+        <image id="61" url="e:\visualtft project\2300project\Images\下拉选择按钮.png" effect_width="25" effect_height="25" />
+        <image id="62" url="e:\visualtft project\2300project\Images\input.png" effect_width="102" effect_height="41" />
+        <image id="63" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="40" />
+        <image id="64" url="e:\visualtft project\2300project\Images\长输入框.png" effect_width="312" effect_height="40" />
+        <image id="65" url="e:\visualtft project\2300project\Images\按钮.JPG" effect_width="278" effect_height="40" />
+        <image id="66" url="e:\visualtft project\2300project\Images\按钮按下.JPG" effect_width="278" effect_height="40" />
+        <image id="67" url="e:\visualtft project\2300project\Images\input.png" effect_width="150" effect_height="40" />
     </images>
     <waves />
 </Resource>

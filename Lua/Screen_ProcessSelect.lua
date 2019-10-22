@@ -29,7 +29,7 @@ function process_select_control_notify(screen, control, value)
 	elseif control == SureButtonId then --确认按钮
 		change_screen(DestScreen);
 		set_text(DestScreen, DestControl, ProcessItem[ProcessSelectItem]);--DestControl对应流程选择
-		if DestScreen == PROCESS_SET1_SCREEN then
+		if DestScreen == PROCESS_SET1_SCREEN  then --and string.len( get_text(DestScreen, DestControl-100) ) == 0
 			set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
 		end
 

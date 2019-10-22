@@ -9,7 +9,7 @@ require("Lua/Screen_ProcessSet1");
 require("Lua/Screen_ProcessSet2");
 require("Lua/Screen_ProcessSet3");
 require("Lua/Screen_RangeSelect");
-
+require("Lua/Screen_ActionSelect");
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
 	uart_set_baudrate(38400);
@@ -36,6 +36,8 @@ function on_control_notify(screen,control,value)
 		process_set3_control_notify(screen,control,value);
 	elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
 		range_select_control_notify(screen,control,value);
+	elseif screen== ACTION_SELECT_SCREEN then--动作选择界面
+		action_select_control_notify(screen,control,value);
 	end
 end
 
@@ -47,6 +49,8 @@ function on_screen_change(screen)
 	   goto_ProcessSet2();
 	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择2界面
 		goto_ProcessSelect2();
+	elseif screen== ACTION_SELECT_SCREEN then --跳转到动作选择界面
+ 		goto_ActionSelect();
 	end
 end
 

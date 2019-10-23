@@ -10,6 +10,16 @@ require("Lua/Screen_ProcessSet2");
 require("Lua/Screen_ProcessSet3");
 require("Lua/Screen_RangeSelect");
 require("Lua/Screen_ActionSelect");
+require("Lua/Screen_ProcessStart");
+require("Lua/Screen_ProcessGetSample");
+require("Lua/Screen_ProcessInject");
+require("Lua/Screen_ProcessPeristaltic");
+require("Lua/Screen_ProcessDispel");
+require("Lua/Screen_ProcessReadSignal");
+require("Lua/Screen_ProcessCalculate");
+require("Lua/Screen_ProcessValveCtrl");
+require("Lua/Screen_ProcessWaitTime");
+
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
 	uart_set_baudrate(38400);
@@ -36,8 +46,26 @@ function on_control_notify(screen,control,value)
 		process_set3_control_notify(screen,control,value);
 	elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
 		range_select_control_notify(screen,control,value);
-	elseif screen== ACTION_SELECT_SCREEN then--动作选择界面
+	elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
 		action_select_control_notify(screen,control,value);
+	elseif screen == PROCESS_START_SCREEN then--流程设置-开始界面
+		process_start_control_notify(screen,control,value);
+ 	elseif screen == PROCESS_GET_SANPLE_SCREEN	then--流程设置-取样界面
+		process_get_sample_control_notify(screen,control,value);
+ 	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-注射泵加液
+		process_inject_control_notify(screen,control,value);
+ 	elseif screen == PROCESS_PERISTALTIC_SCREEN	then--流程设置-蠕动泵加液
+		process_peristaltic_control_notify(screen,control,value);
+	elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
+		process_dispel_control_notify(screen,control,value);
+    elseif screen == PROCESS_READ_SIGNAL_SCREEN then--流程设置-读取信号
+		process_read_signal_control_notify(screen,control,value);
+    elseif screen == PROCESS_CALCULATE_SCREEN then--流程设置-计算
+		process_calculate_control_notify(screen,control,value);	
+    elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
+		process_valve_ctrl_control_notify(screen,control,value);
+    elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
+		process_wait_time_control_notify(screen,control,value);	
 	end
 end
 

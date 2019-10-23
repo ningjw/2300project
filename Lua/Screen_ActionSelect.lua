@@ -27,9 +27,7 @@ function action_select_control_notify(screen,control,value)
         change_screen(DestScreen);
         if ActionSelectItem ~= nil then
             set_text(DestScreen, DestControl, ActionItem[ActionSelectItem]);--动作选择
- --           if string.len( get_text(DestScreen, DestControl-100) ) == 0 then
-                set_text(DestScreen, DestControl-100, ActionItem[ActionSelectItem]);--DestControl-100对应动作名称
- --           end
+            set_text(DestScreen, DestControl-100, ActionItem[ActionSelectItem]);--DestControl-100对应动作名称
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);

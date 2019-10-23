@@ -1514,7 +1514,103 @@
 
 #define  _TXT_DIS__流程设置3_TEXT_DISPLAY29                                       48
 
-#define  _BTN_流程设置-开始_BUTTON3                                                  8
+//画面流程设置3中按钮Button22弹起时的图片
+#define  _IMG_流程设置3_BUTTON22_UP                                               24
+
+//画面流程设置3中按钮Button22按下时的图片
+#define  _IMG_流程设置3_BUTTON22_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON22                                                 100
+
+//画面流程设置3中按钮Button23弹起时的图片
+#define  _IMG_流程设置3_BUTTON23_UP                                               24
+
+//画面流程设置3中按钮Button23按下时的图片
+#define  _IMG_流程设置3_BUTTON23_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON23                                                 101
+
+//画面流程设置3中按钮Button24弹起时的图片
+#define  _IMG_流程设置3_BUTTON24_UP                                               24
+
+//画面流程设置3中按钮Button24按下时的图片
+#define  _IMG_流程设置3_BUTTON24_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON24                                                 102
+
+//画面流程设置3中按钮Button25弹起时的图片
+#define  _IMG_流程设置3_BUTTON25_UP                                               24
+
+//画面流程设置3中按钮Button25按下时的图片
+#define  _IMG_流程设置3_BUTTON25_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON25                                                 103
+
+//画面流程设置3中按钮Button26弹起时的图片
+#define  _IMG_流程设置3_BUTTON26_UP                                               24
+
+//画面流程设置3中按钮Button26按下时的图片
+#define  _IMG_流程设置3_BUTTON26_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON26                                                 104
+
+//画面流程设置3中按钮Button27弹起时的图片
+#define  _IMG_流程设置3_BUTTON27_UP                                               24
+
+//画面流程设置3中按钮Button27按下时的图片
+#define  _IMG_流程设置3_BUTTON27_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON27                                                 105
+
+//画面流程设置3中按钮Button28弹起时的图片
+#define  _IMG_流程设置3_BUTTON28_UP                                               24
+
+//画面流程设置3中按钮Button28按下时的图片
+#define  _IMG_流程设置3_BUTTON28_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON28                                                 106
+
+//画面流程设置3中按钮Button29弹起时的图片
+#define  _IMG_流程设置3_BUTTON29_UP                                               24
+
+//画面流程设置3中按钮Button29按下时的图片
+#define  _IMG_流程设置3_BUTTON29_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON29                                                 107
+
+//画面流程设置3中按钮Button30弹起时的图片
+#define  _IMG_流程设置3_BUTTON30_UP                                               24
+
+//画面流程设置3中按钮Button30按下时的图片
+#define  _IMG_流程设置3_BUTTON30_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON30                                                 108
+
+//画面流程设置3中按钮Button31弹起时的图片
+#define  _IMG_流程设置3_BUTTON31_UP                                               24
+
+//画面流程设置3中按钮Button31按下时的图片
+#define  _IMG_流程设置3_BUTTON31_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON31                                                 109
+
+//画面流程设置3中按钮Button32弹起时的图片
+#define  _IMG_流程设置3_BUTTON32_UP                                               24
+
+//画面流程设置3中按钮Button32按下时的图片
+#define  _IMG_流程设置3_BUTTON32_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON32                                                 110
+
+//画面流程设置3中按钮Button33弹起时的图片
+#define  _IMG_流程设置3_BUTTON33_UP                                               24
+
+//画面流程设置3中按钮Button33按下时的图片
+#define  _IMG_流程设置3_BUTTON33_DOWN                                             25
+
+#define  _BTN_流程设置3_BUTTON33                                                 111
+
+#define  _BTN_流程设置-开始_BUTTON3                                                 99
 
 #define  _TXT_DIS__流程设置-开始_TEXT_DISPLAY15                                     66
 
@@ -1524,7 +1620,7 @@
 //画面流程设置-开始中按钮Button1按下时的图片
 #define  _IMG_流程设置-开始_BUTTON1_DOWN                                            27
 
-#define  _BTN_流程设置-开始_BUTTON1                                                  4
+#define  _BTN_流程设置-开始_BUTTON1                                                 98
 
 //画面流程设置-开始中按钮Button51弹起时的图片
 #define  _IMG_流程设置-开始_BUTTON51_UP                                             17
@@ -1540,7 +1636,7 @@
 //画面流程设置-取样中按钮Button3按下时的图片
 #define  _IMG_流程设置-取样_BUTTON3_DOWN                                            27
 
-#define  _BTN_流程设置-取样_BUTTON3                                                  8
+#define  _BTN_流程设置-取样_BUTTON3                                                 99
 
 #define  _BTN_流程设置-取样_BUTTON9                                                 35
 
@@ -1670,7 +1766,7 @@
 //画面流程设置-取样中按钮Button1按下时的图片
 #define  _IMG_流程设置-取样_BUTTON1_DOWN                                            27
 
-#define  _BTN_流程设置-取样_BUTTON1                                                  3
+#define  _BTN_流程设置-取样_BUTTON1                                                 98
 
 //画面流程设置-取样中图片Image2使用的图片
 #define  _IMG_流程设置-取样_IMAGE2                                                  28
@@ -1832,7 +1928,7 @@
 //画面流程设置-注射泵加液中按钮Button3按下时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON3_DOWN                                         27
 
-#define  _BTN_流程设置-注射泵加液_BUTTON3                                               8
+#define  _BTN_流程设置-注射泵加液_BUTTON3                                              99
 
 //画面流程设置-注射泵加液中按钮Button1弹起时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON1_UP                                           26
@@ -1840,7 +1936,7 @@
 //画面流程设置-注射泵加液中按钮Button1按下时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON1_DOWN                                         27
 
-#define  _BTN_流程设置-注射泵加液_BUTTON1                                               3
+#define  _BTN_流程设置-注射泵加液_BUTTON1                                              98
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY17                                 130
 
@@ -2088,7 +2184,7 @@
 //画面流程设置-蠕动泵加液中按钮Button3按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON3_DOWN                                         27
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON3                                               8
+#define  _BTN_流程设置-蠕动泵加液_BUTTON3                                              99
 
 //画面流程设置-蠕动泵加液中按钮Button1弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON1_UP                                           26
@@ -2096,7 +2192,7 @@
 //画面流程设置-蠕动泵加液中按钮Button1按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON1_DOWN                                         27
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON1                                               3
+#define  _BTN_流程设置-蠕动泵加液_BUTTON1                                              98
 
 //画面流程设置-蠕动泵加液中图片Image14使用的图片
 #define  _IMG_流程设置-蠕动泵加液_IMAGE14                                              31
@@ -2347,7 +2443,7 @@
 //画面流程设置-消解中按钮Button3按下时的图片
 #define  _IMG_流程设置-消解_BUTTON3_DOWN                                            27
 
-#define  _BTN_流程设置-消解_BUTTON3                                                  8
+#define  _BTN_流程设置-消解_BUTTON3                                                 99
 
 //画面流程设置-消解中按钮Button1弹起时的图片
 #define  _IMG_流程设置-消解_BUTTON1_UP                                              26
@@ -2355,7 +2451,7 @@
 //画面流程设置-消解中按钮Button1按下时的图片
 #define  _IMG_流程设置-消解_BUTTON1_DOWN                                            27
 
-#define  _BTN_流程设置-消解_BUTTON1                                                  3
+#define  _BTN_流程设置-消解_BUTTON1                                                 98
 
 //画面流程设置-消解中图片Image14使用的图片
 #define  _IMG_流程设置-消解_IMAGE14                                                 31
@@ -2644,7 +2740,7 @@
 //画面流程设置-消解中图片Image21使用的图片
 #define  _IMG_流程设置-消解_IMAGE21                                                 28
 
-#define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY21                                     99
+#define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY21                                    109
 
 //画面流程设置-消解中图片Image22使用的图片
 #define  _IMG_流程设置-消解_IMAGE22                                                 28
@@ -2662,7 +2758,7 @@
 //画面流程设置-读取信号中按钮Button3按下时的图片
 #define  _IMG_流程设置-读取信号_BUTTON3_DOWN                                          27
 
-#define  _BTN_流程设置-读取信号_BUTTON3                                                8
+#define  _BTN_流程设置-读取信号_BUTTON3                                               99
 
 //画面流程设置-读取信号中按钮Button1弹起时的图片
 #define  _IMG_流程设置-读取信号_BUTTON1_UP                                            26
@@ -2670,7 +2766,7 @@
 //画面流程设置-读取信号中按钮Button1按下时的图片
 #define  _IMG_流程设置-读取信号_BUTTON1_DOWN                                          27
 
-#define  _BTN_流程设置-读取信号_BUTTON1                                                3
+#define  _BTN_流程设置-读取信号_BUTTON1                                               98
 
 //画面流程设置-读取信号中图片Image3使用的图片
 #define  _IMG_流程设置-读取信号_IMAGE3                                                28
@@ -2698,7 +2794,7 @@
 //画面流程设置-计算中按钮Button3按下时的图片
 #define  _IMG_流程设置-计算_BUTTON3_DOWN                                            27
 
-#define  _BTN_流程设置-计算_BUTTON3                                                  8
+#define  _BTN_流程设置-计算_BUTTON3                                                 99
 
 //画面流程设置-计算中按钮Button1弹起时的图片
 #define  _IMG_流程设置-计算_BUTTON1_UP                                              26
@@ -2706,7 +2802,7 @@
 //画面流程设置-计算中按钮Button1按下时的图片
 #define  _IMG_流程设置-计算_BUTTON1_DOWN                                            27
 
-#define  _BTN_流程设置-计算_BUTTON1                                                  3
+#define  _BTN_流程设置-计算_BUTTON1                                                 98
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                      13
 
@@ -2783,7 +2879,7 @@
 //画面流程设置-阀操作中按钮Button3按下时的图片
 #define  _IMG_流程设置-阀操作_BUTTON3_DOWN                                           27
 
-#define  _BTN_流程设置-阀操作_BUTTON3                                                 8
+#define  _BTN_流程设置-阀操作_BUTTON3                                                99
 
 //画面流程设置-阀操作中按钮Button1弹起时的图片
 #define  _IMG_流程设置-阀操作_BUTTON1_UP                                             26
@@ -2791,7 +2887,7 @@
 //画面流程设置-阀操作中按钮Button1按下时的图片
 #define  _IMG_流程设置-阀操作_BUTTON1_DOWN                                           27
 
-#define  _BTN_流程设置-阀操作_BUTTON1                                                 3
+#define  _BTN_流程设置-阀操作_BUTTON1                                                98
 
 //画面流程设置-阀操作中按钮Button9弹起时的图片
 #define  _IMG_流程设置-阀操作_BUTTON9_UP                                             29
@@ -2950,7 +3046,7 @@
 //画面流程设置-等待时间中按钮Button3按下时的图片
 #define  _IMG_流程设置-等待时间_BUTTON3_DOWN                                          27
 
-#define  _BTN_流程设置-等待时间_BUTTON3                                                8
+#define  _BTN_流程设置-等待时间_BUTTON3                                               99
 
 //画面流程设置-等待时间中按钮Button1弹起时的图片
 #define  _IMG_流程设置-等待时间_BUTTON1_UP                                            26
@@ -2958,7 +3054,7 @@
 //画面流程设置-等待时间中按钮Button1按下时的图片
 #define  _IMG_流程设置-等待时间_BUTTON1_DOWN                                          27
 
-#define  _BTN_流程设置-等待时间_BUTTON1                                                4
+#define  _BTN_流程设置-等待时间_BUTTON1                                               98
 
 //画面流程设置-等待时间中图片Image1使用的图片
 #define  _IMG_流程设置-等待时间_IMAGE1                                                28

@@ -51,7 +51,8 @@ function goto_ProcessSelect2()
     --遍历流程1-12,看是否有设置名称,如果设置了名称,则在流程选择2界面中进行显示
     NumberOfProcess = 0;
     for i = 1, 12, 1 do
-        if string.len(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)) ~= 0 then--获取名称长度,当名称长度不为0时表示有效
+        if string.len(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)) ~= 1 and 
+           string.len(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)) ~= 0 then--获取名称长度,当名称长度不为0时表示有效
             NumberOfProcess = NumberOfProcess + 1;--个数+1
             set_visiable(PROCESS_SELECT2_SCREEN, NumberOfProcess,  1);--显示id为NumberOfProcess的文本
             set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,TabProcess[i].nameId))--为该文本框设置内容

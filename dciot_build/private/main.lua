@@ -19,10 +19,15 @@ require("Lua/Screen_ProcessReadSignal");
 require("Lua/Screen_ProcessCalculate");
 require("Lua/Screen_ProcessValveCtrl");
 require("Lua/Screen_ProcessWaitTime");
+require("Lua/Screen_RangeSet");
+require("Lua/screen_SystemInfo");
+require("Lua/Screen_LoginSystem");
+require("Lua/Screen_PasswordSet");
 
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
 	uart_set_baudrate(38400);
+	set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, 0);
 end
 
 --定时回调函数，系统每隔1秒钟自动调用。
@@ -66,6 +71,12 @@ function on_control_notify(screen,control,value)
 		process_valve_ctrl_control_notify(screen,control,value);
     elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
 		process_wait_time_control_notify(screen,control,value);	
+ 	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
+		system_info_control_notify(screen,control,value);	
+	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统界面
+		login_system_control_notify(screen,control,value);	
+ 	elseif screen== PASSWORD_SET_SCREEN then--密码设置界面
+		login_system_control_notify(screen,control,value);		
 	end
 end
 
@@ -79,6 +90,10 @@ function on_screen_change(screen)
 		goto_ProcessSelect2();
 	elseif screen== ACTION_SELECT_SCREEN then --跳转到动作选择界面
  		goto_ActionSelect();
+	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统界面	
+		goto_LoginSystem();
+	elseif screen== PASSWORD_SET_SCREEN then--密码设置界面
+		goto_PasswordSet();
 	end
 end
 

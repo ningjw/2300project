@@ -317,6 +317,7 @@ Range3Id = 3;--量程3按钮Id
 ------------------------------------系统入口函数--------------------------------------------------
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
+	
 	uart_set_baudrate(38400);
 end
 
@@ -473,7 +474,7 @@ function process_set1_control_notify(screen,control,value)
            string.len(get_text(PROCESS_SET1_SCREEN, control+120)) ~= 0 then --名称的长度为0,表示名称没有设置
             set_text(PROCESS_SET1_SCREEN, control+220," ");--将对应流程选择的文本显示为空格
 			set_text(PROCESS_SET1_SCREEN, control+120," ");--将对应流程名称的文本显示为空格
---			set_text(PROCESS_SET1_SCREEN, ," ");--将对应流程的量程设置为空格显示
+			set_text(PROCESS_SET1_SCREEN, control+232," ");--将对应流程的量程设置为空格显示
         end
     end
 end

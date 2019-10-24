@@ -126,8 +126,7 @@ TabProcess = {[1] = {selectId = 300, nameId = 200, rangeId = 312, activeId = 95,
 
 AnalyteSetId = 38;--分析物选择
 CodeSetId = 107;--代码
-UniteSetId = 36;--单位选择
-UniteSetTextId = 111--单位设置成功后,用于显示单位文本的id
+
 
 
 
@@ -235,6 +234,9 @@ Range2LowId = 77;--量程2文本id
 Range2HighId = 78;--量程2文本id
 Range3LowId = 115;--量程3文本id
 Range3HighId = 116;--量程3文本id
+
+UniteSetMenuId = 17;--单位选择
+UniteSetTextId = 15--单位设置成功后,用于显示单位文本的id
 
 RangeTab = {
     [1] = {LowId = 64, HighId = 65, densityCalLowId = 81, densityCalHighId = 84, aId = 48, bId = 49, cId = 50, dId = 51},
@@ -362,7 +364,9 @@ function on_control_notify(screen,control,value)
    elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
 		process_valve_ctrl_control_notify(screen,control,value);
    elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
-		process_wait_time_control_notify(screen,control,value);	
+        process_wait_time_control_notify(screen,control,value);
+   elseif screen == RANGE_SET_SCREEN then --量程设置
+        range_set_control_notify(screen,control,value);	
 	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
 		system_info_control_notify(screen,control,value);	
 	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统界面
@@ -441,28 +445,12 @@ end
 
 
 -----------------------------------流程设置1 函数定义------------------------------------------------
---设置单位
-function set_unit()
-    local Unite = get_text(PROCESS_SET1_SCREEN, UniteSetTextId);
-    --量程设置界面中,控件Id = 200 ~ 208为单位显示文本
-    for i = 200,208,1 do 
-        set_text(RANGE_SET_SCREEN, i, Unite);
-    end
-    --首页中,空间Id= 19 为单位显示
-    set_text(MAIN_SCREEN,LastAnalysisUnitId, Unite);
-    --量程选择界面中,控件Id = 15/20/25为单位显示文本
-    set_text(RANGE_SELECT_SCREEN,15 , Unite);
-    set_text(RANGE_SELECT_SCREEN,20 , Unite);
-    set_text(RANGE_SELECT_SCREEN,25 , Unite);
-end
 
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_set1_control_notify(screen,control,value)
-    if(control == UniteSetId) then --设置单位
-        set_unit();
-    elseif control == AnalyteSetId then
+    if control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
     --control-100表示与该按钮重合的文本框id
     elseif (control-100) >= TabProcess[1].selectId and (control-100) <= TabProcess[12].selectId then --这里是流程选择下的各个按钮
@@ -828,7 +816,28 @@ end
 
 
 -----------------------------------量程设置 函数定义--------------------------------------------
+--设置单位
+function set_unit()
+    local Unite = get_text(RANGE_SET_SCREEN, UniteSetTextId);
+    --量程设置界面中,控件Id = 200 ~ 208为单位显示文本
+    for i = 200,208,1 do 
+        set_text(RANGE_SET_SCREEN, i, Unite);
+    end
+    --首页中,空间Id= 19 为单位显示
+    set_text(MAIN_SCREEN,LastAnalysisUnitId, Unite);
+    --量程选择界面中,控件Id = 15/20/25为单位显示文本
+    set_text(RANGE_SELECT_SCREEN,15 , Unite);
+    set_text(RANGE_SELECT_SCREEN,20 , Unite);
+    set_text(RANGE_SELECT_SCREEN,25 , Unite);
+end
 
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function range_set_control_notify(screen,control,value)
+    if(control == UniteSetMenuId) then --设置单位
+        set_unit();
+    end
+end
 
 
 -----------------------------------量程选择 函数定义--------------------------------------------

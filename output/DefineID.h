@@ -1545,14 +1545,14 @@
 
 #define  _BTN_流程设置-开始_BUTTON1                                                 98
 
-#define  _BTN_流程设置-开始_BUTTON51                                               105
+#define  _BTN_流程设置-开始_BUTTON51                                                 5
 
 //画面流程设置-开始中按钮Button2按下时的图片
 #define  _IMG_流程设置-开始_BUTTON2_DOWN                                            28
 
 #define  _BTN_流程设置-开始_BUTTON2                                                  2
 
-#define  _TXT_DIS__流程设置-开始_TEXT_DISPLAY15                                     66
+#define  _TXT_DIS__流程设置-开始_TEXT_DISPLAY15                                      7
 
 #define  _MENU_流程设置-开始_MENU1                                                   4
 
@@ -1696,14 +1696,6 @@
 
 #define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY1                                      61
 
-//画面流程设置-取样中按钮Button51弹起时的图片
-#define  _IMG_流程设置-取样_BUTTON51_UP                                             26
-
-//画面流程设置-取样中按钮Button51按下时的图片
-#define  _IMG_流程设置-取样_BUTTON51_DOWN                                           27
-
-#define  _BTN_流程设置-取样_BUTTON51                                               105
-
 //画面流程设置-取样中按钮Button2弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON2_UP                                              29
 
@@ -1837,13 +1829,21 @@
 
 #define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY2                                      25
 
-//画面流程设置-取样中按钮Button35弹起时的图片
-#define  _IMG_流程设置-取样_BUTTON35_UP                                             26
+//画面流程设置-取样中按钮Button36弹起时的图片
+#define  _IMG_流程设置-取样_BUTTON36_UP                                             26
 
-//画面流程设置-取样中按钮Button35按下时的图片
-#define  _IMG_流程设置-取样_BUTTON35_DOWN                                           27
+//画面流程设置-取样中按钮Button36按下时的图片
+#define  _IMG_流程设置-取样_BUTTON36_DOWN                                           27
 
-#define  _BTN_流程设置-取样_BUTTON35                                                27
+#define  _BTN_流程设置-取样_BUTTON36                                                 3
+
+//画面流程设置-取样中按钮Button37弹起时的图片
+#define  _IMG_流程设置-取样_BUTTON37_UP                                             26
+
+//画面流程设置-取样中按钮Button37按下时的图片
+#define  _IMG_流程设置-取样_BUTTON37_DOWN                                           27
+
+#define  _BTN_流程设置-取样_BUTTON37                                                 8
 
 //画面流程设置-注射泵加液中按钮Button3弹起时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON3_UP                                           24
@@ -2994,7 +2994,7 @@
 //画面流程选择中按钮Button3按下时的图片
 #define  _IMG_流程选择_BUTTON3_DOWN                                               25
 
-#define  _BTN_流程选择_BUTTON3                                                    12
+#define  _BTN_流程选择_BUTTON3                                                    99
 
 #define  _BTN_流程选择_BUTTON8                                                     1
 
@@ -3060,7 +3060,7 @@
 //画面流程选择中按钮Button4按下时的图片
 #define  _IMG_流程选择_BUTTON4_DOWN                                               25
 
-#define  _BTN_流程选择_BUTTON4                                                    11
+#define  _BTN_流程选择_BUTTON4                                                    98
 
 //画面流程选择2中按钮Button3弹起时的图片
 #define  _IMG_流程选择2_BUTTON3_UP                                                24
@@ -3068,7 +3068,7 @@
 //画面流程选择2中按钮Button3按下时的图片
 #define  _IMG_流程选择2_BUTTON3_DOWN                                              25
 
-#define  _BTN_流程选择2_BUTTON3                                                   19
+#define  _BTN_流程选择2_BUTTON3                                                   99
 
 //画面流程选择2中按钮Button8弹起时的图片
 #define  _IMG_流程选择2_BUTTON8_UP                                                35
@@ -3140,7 +3140,7 @@
 //画面流程选择2中按钮Button4按下时的图片
 #define  _IMG_流程选择2_BUTTON4_DOWN                                              25
 
-#define  _BTN_流程选择2_BUTTON4                                                   18
+#define  _BTN_流程选择2_BUTTON4                                                   98
 
 //画面流程选择2中按钮Button5弹起时的图片
 #define  _IMG_流程选择2_BUTTON5_UP                                                35
@@ -3286,7 +3286,7 @@
 //画面动作选择中按钮Button3按下时的图片
 #define  _IMG_动作选择_BUTTON3_DOWN                                               25
 
-#define  _BTN_动作选择_BUTTON3                                                    19
+#define  _BTN_动作选择_BUTTON3                                                    99
 
 //画面动作选择中按钮Button14弹起时的图片
 #define  _IMG_动作选择_BUTTON14_UP                                                24
@@ -3294,7 +3294,7 @@
 //画面动作选择中按钮Button14按下时的图片
 #define  _IMG_动作选择_BUTTON14_DOWN                                              25
 
-#define  _BTN_动作选择_BUTTON14                                                   18
+#define  _BTN_动作选择_BUTTON14                                                   98
 
 #define  _RTC_量程设置_RTC1                                                        4
 
@@ -3520,7 +3520,7 @@
 //画面量程选择中按钮Button3按下时的图片
 #define  _IMG_量程选择_BUTTON3_DOWN                                               25
 
-#define  _BTN_量程选择_BUTTON3                                                     8
+#define  _BTN_量程选择_BUTTON3                                                    99
 
 //画面量程选择中按钮Button5弹起时的图片
 #define  _IMG_量程选择_BUTTON5_UP                                                 24
@@ -3528,7 +3528,7 @@
 //画面量程选择中按钮Button5按下时的图片
 #define  _IMG_量程选择_BUTTON5_DOWN                                               25
 
-#define  _BTN_量程选择_BUTTON5                                                    12
+#define  _BTN_量程选择_BUTTON5                                                    98
 
 #define  _TXT_DIS__量程选择_TEXT_DISPLAY15                                        64
 
@@ -3536,15 +3536,15 @@
 
 #define  _TXT_DIS__量程选择_TEXT_DISPLAY2                                         15
 
-#define  _TXT_DIS__量程选择_TEXT_DISPLAY3                                         16
+#define  _TXT_DIS__量程选择_TEXT_DISPLAY3                                         77
 
-#define  _TXT_DIS__量程选择_TEXT_DISPLAY4                                         17
+#define  _TXT_DIS__量程选择_TEXT_DISPLAY4                                         78
 
 #define  _TXT_DIS__量程选择_TEXT_DISPLAY6                                         20
 
-#define  _TXT_DIS__量程选择_TEXT_DISPLAY7                                         21
+#define  _TXT_DIS__量程选择_TEXT_DISPLAY7                                        115
 
-#define  _TXT_DIS__量程选择_TEXT_DISPLAY8                                         22
+#define  _TXT_DIS__量程选择_TEXT_DISPLAY8                                        116
 
 #define  _TXT_DIS__量程选择_TEXT_DISPLAY10                                        25
 

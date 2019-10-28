@@ -56,7 +56,128 @@ PublicTab = {
     [16] = SYSTEM_INFO_SCREEN
 };
 
------------------------------首页 控件ID----------------------------------------------------
+------------------------------------系统入口函数-----------------------------------------------
+--设置全局变量uart_free_protocol，使用自由串口协议
+uart_free_protocol = 1
+--初始化函数,系统加载LUA脚本后，立即调用次回调函数
+function on_init()
+    uart_set_timeout(1000,200);
+    -- read_text = readfile("config.txt")         --读数据
+    -- set_text(PROCESS_SET1_SCREEN, TabProcess[1].selectId, read_text)  --把数据显示到文本框中
+end
+
+--定时回调函数，系统每隔1秒钟自动调用。
+function on_systick()
+
+end
+
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function on_control_notify(screen,control,value)
+    if screen == MAIN_SCREEN then
+        main_control_notify(screen,control,value);
+    end
+
+	if screen == RUN_CONTROL_SCREEN then --运行控制界面
+		run_control_notify(screen,control,value);
+	elseif screen == PROCESS_SELECT_SCREEN then --流程选择界面
+		process_select_control_notify(screen,control,value);
+	elseif screen == PROCESS_SELECT2_SCREEN then--流程选择2界面
+		process_select2_control_notify(screen,control,value);	
+	elseif screen == PROCESS_SET1_SCREEN then --流程设置1界面
+		process_set1_control_notify(screen,control,value);
+	elseif screen == PROCESS_SET2_SCREEN then --流程设置2界面
+		process_set2_control_notify(screen,control,value);
+    elseif screen == PROCESS_SET3_SCREEN then --流程设置3界面
+		process_set3_control_notify(screen,control,value);
+	elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
+		range_select_control_notify(screen,control,value);
+	elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
+		action_select_control_notify(screen,control,value);
+	elseif screen == PROCESS_START_SCREEN then--流程设置-开始界面
+		process_start_control_notify(screen,control,value);
+	elseif screen == PROCESS_GET_SANPLE_SCREEN	then--流程设置-取样界面
+		process_get_sample_control_notify(screen,control,value);
+	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-注射泵加液
+		process_inject_control_notify(screen,control,value);
+	elseif screen == PROCESS_PERISTALTIC_SCREEN	then--流程设置-蠕动泵加液
+		process_peristaltic_control_notify(screen,control,value);
+	elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
+		process_dispel_control_notify(screen,control,value);
+    elseif screen == PROCESS_READ_SIGNAL_SCREEN then--流程设置-读取信号
+		process_read_signal_control_notify(screen,control,value);
+    elseif screen == PROCESS_CALCULATE_SCREEN then--流程设置-计算
+		process_calculate_control_notify(screen,control,value);	
+    elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
+		process_valve_ctrl_control_notify(screen,control,value);
+    elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
+        process_wait_time_control_notify(screen,control,value);
+    elseif screen == RANGE_SET_SCREEN then --量程设置
+        range_set_control_notify(screen,control,value);	
+    elseif screen == HAND_OPERATE1_SCREEN then --手动操作1
+        hand_operate1_control_notify(screen,control,value);	
+	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
+		system_info_control_notify(screen,control,value);	
+	elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
+		login_system_control_notify(screen,control,value);	
+	elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
+		login_system_control_notify(screen,control,value);		
+	end
+end
+
+
+--当画面切换时，执行此回调函数，screen为目标画面。
+function on_screen_change(screen)
+	if(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择
+		goto_range_select();
+	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择3
+		goto_ProcessSelect2();
+	elseif screen== PROCESS_SELECT3_SCREEN then --跳转到流程选择3
+		goto_ProcessSelect3();
+	elseif screen== ACTION_SELECT_SCREEN then --跳转到动作选择
+		goto_ActionSelect();
+	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
+		goto_LoginSystem();
+	elseif screen== PASSWORD_SET_SCREEN then--密码设置
+		goto_PasswordSet();
+	end
+end
+
+
+--定时器超时，执行此回调函数,定时器编号 0~31
+function on_timer(timer_id)
+
+end
+
+
+--插入 U 盘后，执行此回调函数
+function on_usb_inserted(dir)
+    set_text(MAIN_SCREEN, 16, "插入U盘");
+end
+
+--拔出 U 盘后，执行此回调函数
+function on_usb_removed()
+    set_text(MAIN_SCREEN, 16, "拔出U盘");
+end
+
+--插入 SD 卡后，执行此回调函数
+function on_sd_inserted(dir)
+    set_text(MAIN_SCREEN, 16, "插入SD卡");
+end
+
+--拔出 SD 卡后，执行此回调函数
+function on_sd_removed()
+    set_text(MAIN_SCREEN, 16, "拔出SD卡");
+end
+
+
+--串口自定义函数
+function on_uart_recv_data(packet)
+
+end
+
+
+-----------------------------------首页 函数定义----------------------------------------------------
 LastAnalysisTimeId = 20;   --分析时间
 LastAnalyteId = 17;        --分析物
 LastAnalysisResultId = 18; --分析结果
@@ -64,9 +185,11 @@ LastAnalysisUnitId = 19;   --单位
 LastAnalysisE1Id = 25;     --E1
 LastAnalysisE2Id = 26;     --E2
 
+function main_control_notify(screen,control,value)
 
+end
 
--------------------------运行控制 控件ID-----------------------------------------------------
+-----------------------------------运行控制 函数定义-------------------------------------------------
 RunTypeID = 43;--运行方式对应的文本空间ID
 RunStatusId = 131;--运行状态切换按钮"开始""停止"按钮
 --手动设置
@@ -105,33 +228,130 @@ TimedTab = {
 	Process24 = {Id = 328, StartHourId = 141, StartMinuteId = 142},
 };
 
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function run_control_notify(screen,control,value)
 
--------------------------流程设置1 控件ID------------------------------------------------------------------
+	--control-100表示与该按钮重合的文本框
+	if (control-100) >= HandProcessID and (control-100) <= TimedTab.Process24.Id then--当点击需要选择流程的文本框时
+		process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
+	end
+end
 
+-----------------------------------流程设置1 配置文件相关函数------------------------------------------------
+
+
+--创建配置文件,并保存在"config.txt"文件中
+function WriteCfgFile()
+    os.remove("config.txt");--删除现有的文件
+    local configFile = io.open("config.txt", "a+"); --以覆盖写入的方式打开文本
+    assert(configFile);--判断文件是否存在,如果不存在则报错.
+    --保存流程选择界面参数
+    for i=1,12,1 do
+    configFile:write(get_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId)..",".. --流程类型选择
+                     get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)..","..   --流程名称
+                     get_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId)..",");  --流程量程
+    end
+    configFile:close();                         --关闭文本
+end
+
+--读取配置文件中的数据
+function ReadCfgFile()
+	local wfile = io.open("config.txt","a+")      --以只读的方式打开文本
+	assert(wfile)                            --检查文本是否存在，不存在会报错，存在就正常运行
+	wfile:seek("set")                        --把文件位置定位到开头
+	info = wfile:read("a")                   --从当前位置读取整个文件，并赋值到字符串中
+	wfile:close()                            --关闭文本
+    
+    t = split(info, ",")
+    for i=1,12,1 do
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, t[(i-1)*3+1])  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,  t[(i-1)*3+2])    --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId, t[(i-1)*3+3])    --把数据显示到文本框中
+    end
+end
+
+--字符串分割函数,str -> 需要分割的字符串;delimiter->分隔符
+function split(str, delimiter)
+    local dLen = string.len(delimiter)--获取字符串长度
+    local newDeli = ''
+    for i=1,dLen,1 do
+        newDeli = newDeli .. "["..string.sub(delimiter,i,i).."]"
+    end
+
+    local locaStart,locaEnd = string.find(str,newDeli)
+    local arr = {}
+    local n = 1
+    while locaStart ~= nil
+    do
+        if locaStart>0 then
+            arr[n] = string.sub(str,1,locaStart-1)
+            n = n + 1
+        end
+
+        str = string.sub(str,locaEnd+1,string.len(str))
+        locaStart,locaEnd = string.find(str,newDeli)
+    end
+    if str ~= nil then
+        arr[n] = str
+    end
+    return arr
+end
+
+
+-----------------------------------流程设置1 函数定义------------------------------------------------
 --流程设置表中各控件Id,注意selecId与nameId的数学关系:selectId = nameId + 100, selectId = deleteId + 220 等等
-TabProcess = {[1] = {selectId = 300, nameId = 200, rangeId = 312, activeId = 95, deleteId = 80},
-              [2] = {selectId = 301, nameId = 201, rangeId = 313, activeId = 96, deleteId = 81},
-              [3] = {selectId = 302, nameId = 202, rangeId = 314, activeId = 97, deleteId = 82},
-              [4] = {selectId = 303, nameId = 203, rangeId = 315, activeId = 99, deleteId = 83},
-              [5] = {selectId = 304, nameId = 204, rangeId = 316, activeId = 100,deleteId = 84},
-              [6] = {selectId = 305, nameId = 205, rangeId = 317, activeId = 101,deleteId = 85},
-              [7] = {selectId = 306, nameId = 206, rangeId = 318, activeId = 102,deleteId = 85},
-              [8] = {selectId = 307, nameId = 207, rangeId = 319, activeId = 103,deleteId = 87},
-              [9] = {selectId = 308, nameId = 208, rangeId = 320, activeId = 104,deleteId = 88},
-              [10]= {selectId = 309, nameId = 209, rangeId = 321, activeId = 105,deleteId = 89},
-              [11]= {selectId = 310, nameId = 210, rangeId = 322, activeId = 48, deleteId = 90},
-              [12]= {selectId = 311, nameId = 211, rangeId = 323, activeId = 92, deleteId = 91},
+TabProcess = {[1] = {selectId = 300, nameId = 200, rangeId = 312, deleteId = 80},
+              [2] = {selectId = 301, nameId = 201, rangeId = 313, deleteId = 81},
+              [3] = {selectId = 302, nameId = 202, rangeId = 314, deleteId = 82},
+              [4] = {selectId = 303, nameId = 203, rangeId = 315, deleteId = 83},
+              [5] = {selectId = 304, nameId = 204, rangeId = 316, deleteId = 84},
+              [6] = {selectId = 305, nameId = 205, rangeId = 317, deleteId = 85},
+              [7] = {selectId = 306, nameId = 206, rangeId = 318, deleteId = 85},
+              [8] = {selectId = 307, nameId = 207, rangeId = 319, deleteId = 87},
+              [9] = {selectId = 308, nameId = 208, rangeId = 320, deleteId = 88},
+              [10]= {selectId = 309, nameId = 209, rangeId = 321, deleteId = 89},
+              [11]= {selectId = 310, nameId = 210, rangeId = 322, deleteId = 90},
+              [12]= {selectId = 311, nameId = 211, rangeId = 323, deleteId = 91},
        };
 
 
 AnalyteSetId = 38;--分析物选择
 CodeSetId = 107;--代码
+ProcessSaveBtId = 19;
 
 
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function process_set1_control_notify(screen,control,value)
+
+    if control == ProcessSaveBtId then -- 保存
+        WriteCfgFile();
+    elseif control == 42 then --导入按钮
+        ReadCfgFile();
+    elseif control == 41 then --导出按钮
+
+    end
+
+    if control == AnalyteSetId then
+        set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
+    --control-100表示与该按钮重合的文本框id
+    elseif (control-100) >= TabProcess[1].selectId and (control-100) <= TabProcess[12].selectId then --这里是流程选择下的各个按钮
+        process_select_set(screen, control-100);
+    elseif (control-100) >= TabProcess[1].rangeId and (control-100) <= TabProcess[12].rangeId  then --这里是量程选择下的各个按钮
+        range_select_set(screen, control-100);
+    elseif control >= TabProcess[1].deleteId and control <= TabProcess[12].deleteId then--删除按钮
+        if string.len(get_text(PROCESS_SET1_SCREEN, control+120)) ~= 1 and  --名称可能为一个空格,此时当做名称没有设置
+           string.len(get_text(PROCESS_SET1_SCREEN, control+120)) ~= 0 then --名称的长度为0,表示名称没有设置
+            set_text(PROCESS_SET1_SCREEN, control+220," ");--将对应流程选择的文本显示为空格
+			set_text(PROCESS_SET1_SCREEN, control+120," ");--将对应流程名称的文本显示为空格
+			set_text(PROCESS_SET1_SCREEN, control+232," ");--将对应流程的量程设置为空格显示
+        end
+    end
+end
 
 
---------------------------------------流程设置2/3 控件ID------------------------------------------------------
-
+-----------------------------------流程设置2/3 函数定义------------------------------------------------
 ProcessSelectButtonId = 35;--位于流程设置2
 ProcessSelectId = 38;      --位于流程设置2
 ProcessSelectShowId = 38;  --位于流程设置3
@@ -165,310 +385,6 @@ ActionTab = {
     [24] = {selectId = 311, nameId = 211, EditId = 111},
 };
 
------------------------------------流程设置-开始 控件ID--------------------------------------------
---在所有子界面中("开始/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
-SureButtonId = 99;--确认按钮
-CancelButtonId = 98;--取消按钮
-DestScreen = nil;
-DestControl = nil;
-
-AnalysisTypeMenuId = 4;
-AnalysisTypeTextId = 7;
-ResetSystemButtonId = 5;
-
------------------------------------流程设置-取样 控件ID--------------------------------------------
-
-
-
-
------------------------------------流程设置-注射泵取样 控件ID--------------------------------------------
-
-
-
-
------------------------------------流程设置-蠕动泵取样 控件ID--------------------------------------------
-
-
-
------------------------------------流程设置-消解 控件ID--------------------------------------------
-
-
-
------------------------------------流程设置-读取信号 控件ID-----------------------------------
-
-
-
------------------------------------流程设置-计算 控件ID--------------------------------------
-
-
-
------------------------------------流程设置-阀操作 控件ID------------------------------------
-
-
-
-
------------------------------------流程设置-等待时间 控件ID------------------------------------
-
-
-
------------------------------------流程选择 控件ID--------------------------------------------
-AnalysisButtonId = 1;--分析按钮
-NullButtonId = 8;--空按钮
-
-
------------------------------------流程选择2 控件ID--------------------------------------------
-FirstButtonId = 101;--第一个按钮
-LastButtonId = 112;--最后一个按钮
-TipsTextId = 13;--提示文本框
-
------------------------------------动作选择 控件ID--------------------------------------------
-ActionStartButtonId = 1;
-ActionEndButtonId = 10;
-
-
------------------------------------量程设置 控件ID--------------------------------------------
---在量程设置/量程选择界面中,量程1/2/3文本的id都是一样的
-Range1LowId = 64;--量程1文本id
-Range1HighId = 65;--量程1文本id
-Range2LowId = 77;--量程2文本id
-Range2HighId = 78;--量程2文本id
-Range3LowId = 115;--量程3文本id
-Range3HighId = 116;--量程3文本id
-
-UniteSetMenuId = 17;--单位选择
-UniteSetTextId = 15--单位设置成功后,用于显示单位文本的id
-
-RangeTab = {
-    [1] = {LowId = 64, HighId = 65, densityCalLowId = 81, densityCalHighId = 84, aId = 48, bId = 49, cId = 50, dId = 51},
-    [2] = {LowId = 77, HighId = 78, densityCalLowId = 67, densityCalHighId = 70, aId = 52, bId = 53, cId = 54, dId = 55 },
-    [3] = {LowId = 115,HighId= 116, densityCalLowId = 105,densityCalHighId = 108,aId = 92, bId = 93, cId = 94, dId = 95},
-};
-
-
------------------------------------量程选择 控件ID--------------------------------------------
-Range1Id = 1;--量程1按钮Id
-Range2Id = 2;--量程2按钮Id
-Range3Id = 3;--量程3按钮Id
-
-
------------------------------------手动操作1 控件ID--------------------------------------------
-
-
-
-
------------------------------------手动操作2 控件ID--------------------------------------------
-
-
-
-
-
------------------------------------手动操作3 控件ID--------------------------------------------
-
-
-
-
------------------------------------手动操作4 控件ID--------------------------------------------
-
-
-
-
-
------------------------------------输入输出 控件ID--------------------------------------------
-
-
-
-
-
------------------------------------分析记录 控件ID--------------------------------------------
-
-
-
-
-
------------------------------------校准记录 控件ID--------------------------------------------
-
-
-
-
------------------------------------报警记录 控件ID--------------------------------------------
-
-
-
-
------------------------------------运行日志 控件ID--------------------------------------------
-
-
-
-
------------------------------------系统信息 控件ID--------------------------------------------
-
-
-
------------------------------------密码设置 控件ID--------------------------------------------
-
-
-
------------------------------------登录系统 控件ID--------------------------------------------
-
-
-
-
------------------------------------分界线,上面是各种空间的id定义,下面是函数调用---------------------
-
-
-------------------------------------系统入口函数--------------------------------------------------
---初始化函数,系统加载LUA脚本后，立即调用次回调函数
-function on_init()
-	
-	uart_set_baudrate(38400);
-end
-
---定时回调函数，系统每隔1秒钟自动调用。
-function on_systick()
-
-end
-
---用户通过触摸修改控件后，执行此回调函数。
---点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
-function on_control_notify(screen,control,value)
-	if screen == RUN_CONTROL_SCREEN then --运行控制界面
-		run_control_notify(screen,control,value);
-	elseif screen == PROCESS_SELECT_SCREEN then --流程选择界面
-		process_select_control_notify(screen,control,value);
-	elseif screen == PROCESS_SELECT2_SCREEN then--流程选择2界面
-		process_select2_control_notify(screen,control,value);	
-	elseif screen == PROCESS_SET1_SCREEN then --流程设置1界面
-		process_set1_control_notify(screen,control,value);
-	elseif screen == PROCESS_SET2_SCREEN then --流程设置2界面
-		process_set2_control_notify(screen,control,value);
-   elseif screen == PROCESS_SET3_SCREEN then --流程设置3界面
-		process_set3_control_notify(screen,control,value);
-	elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
-		range_select_control_notify(screen,control,value);
-	elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
-		action_select_control_notify(screen,control,value);
-	elseif screen == PROCESS_START_SCREEN then--流程设置-开始界面
-		process_start_control_notify(screen,control,value);
-	elseif screen == PROCESS_GET_SANPLE_SCREEN	then--流程设置-取样界面
-		process_get_sample_control_notify(screen,control,value);
-	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-注射泵加液
-		process_inject_control_notify(screen,control,value);
-	elseif screen == PROCESS_PERISTALTIC_SCREEN	then--流程设置-蠕动泵加液
-		process_peristaltic_control_notify(screen,control,value);
-	elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
-		process_dispel_control_notify(screen,control,value);
-   elseif screen == PROCESS_READ_SIGNAL_SCREEN then--流程设置-读取信号
-		process_read_signal_control_notify(screen,control,value);
-   elseif screen == PROCESS_CALCULATE_SCREEN then--流程设置-计算
-		process_calculate_control_notify(screen,control,value);	
-   elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
-		process_valve_ctrl_control_notify(screen,control,value);
-   elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
-        process_wait_time_control_notify(screen,control,value);
-   elseif screen == RANGE_SET_SCREEN then --量程设置
-        range_set_control_notify(screen,control,value);	
-	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
-		system_info_control_notify(screen,control,value);	
-	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统界面
-		login_system_control_notify(screen,control,value);	
-	elseif screen== PASSWORD_SET_SCREEN then--密码设置界面
-		login_system_control_notify(screen,control,value);		
-	end
-end
-
-
-
---当画面切换时，执行此回调函数，screen为目标画面。
-function on_screen_change(screen)
-	if(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择
-		goto_range_select();
-	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择3
-		goto_ProcessSelect2();
-	elseif screen== PROCESS_SELECT3_SCREEN then --跳转到流程选择3
-		goto_ProcessSelect3();
-	elseif screen== ACTION_SELECT_SCREEN then --跳转到动作选择
-		goto_ActionSelect();
-	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
-		goto_LoginSystem();
-	elseif screen== PASSWORD_SET_SCREEN then--密码设置
-		goto_PasswordSet();
-	end
-end
-
-
---定时器超时，执行此回调函数,定时器编号 0~31
-function on_timer(timer_id)
-
-end
-
-
---插入 U 盘后，执行此回调函数
-function on_usb_inserted(dir)
-
-end
-
---拔出 U 盘后，执行此回调函数
-function on_usb_removed()
-
-end
-
---插入 SD 卡后，执行此回调函数
-function on_sd_inserted(dir)
-
-end
-
---拔出 SD 卡后，执行此回调函数
-function on_sd_removed()
-
-end
-
---设置全局变量uart_free_protocol，使用自由串口协议
-uart_free_protocol = 1
---串口自定义函数
-function on_uart_recv_data(rev_data)
-
-end
-
-
------------------------------------首页 函数定义----------------------------------------------------
-
-
------------------------------------运行控制 函数定义-------------------------------------------------
---用户通过触摸修改控件后，执行此回调函数。
---点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
-function run_control_notify(screen,control,value)
-	--control-100表示与该按钮重合的文本框
-	if (control-100) >= HandProcessID and (control-100) <= TimedTab.Process24.Id then--当点击需要选择流程的文本框时
-		process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
-	end
-end
-
-
------------------------------------流程设置1 函数定义------------------------------------------------
-
-
---用户通过触摸修改控件后，执行此回调函数。
---点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
-function process_set1_control_notify(screen,control,value)
-    if control == AnalyteSetId then
-        set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
-    --control-100表示与该按钮重合的文本框id
-    elseif (control-100) >= TabProcess[1].selectId and (control-100) <= TabProcess[12].selectId then --这里是流程选择下的各个按钮
-        process_select_set(screen, control-100);
-    elseif (control-100) >= TabProcess[1].rangeId and (control-100) <= TabProcess[12].rangeId  then --这里是量程选择下的各个按钮
-        range_select_set(screen, control-100);
-    elseif control >= TabProcess[1].deleteId and control <= TabProcess[12].deleteId then--删除按钮
-        if string.len(get_text(PROCESS_SET1_SCREEN, control+120)) ~= 1 and  --名称可能为一个空格,此时当做名称没有设置
-           string.len(get_text(PROCESS_SET1_SCREEN, control+120)) ~= 0 then --名称的长度为0,表示名称没有设置
-            set_text(PROCESS_SET1_SCREEN, control+220," ");--将对应流程选择的文本显示为空格
-			set_text(PROCESS_SET1_SCREEN, control+120," ");--将对应流程名称的文本显示为空格
-			set_text(PROCESS_SET1_SCREEN, control+232," ");--将对应流程的量程设置为空格显示
-        end
-    end
-end
-
-
------------------------------------流程设置2/3 函数定义------------------------------------------------
 --设置编辑按钮对应的跳转界面
 function set_edit_screen(para,screen)
     if para == ActionItem[1] then --开始界面
@@ -542,6 +458,16 @@ end
 
 
 -----------------------------------流程设置-开始 函数定义--------------------------------------------
+--在所有子界面中("开始/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
+SureButtonId = 99;--确认按钮
+CancelButtonId = 98;--取消按钮
+DestScreen = nil;
+DestControl = nil;
+
+AnalysisTypeMenuId = 4;
+AnalysisTypeTextId = 7;
+ResetSystemButtonId = 5;
+
 --该函数在on_control_notify中进行调用（当需要选择流程时）
 function process_start_set(screen)
 	DestScreen = screen;
@@ -700,6 +626,8 @@ function process_wait_time_control_notify(screen,control,value)
 end
 
 -----------------------------------流程选择 函数定义--------------------------------------------
+AnalysisButtonId = 1;--分析按钮
+NullButtonId = 8;--空按钮
 
 ProcessItem = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查"," "};
 ProcessSelectItem = nil;
@@ -732,6 +660,9 @@ end
 
 
 -----------------------------------流程选择2 函数定义--------------------------------------------
+FirstButtonId = 101;--第一个按钮
+LastButtonId = 112;--最后一个按钮
+TipsTextId = 13;--提示文本框
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
 function process_select2_set(screen,control)
@@ -788,6 +719,8 @@ function goto_ProcessSelect2()
 end
 
 -----------------------------------动作选择 函数定义--------------------------------------------
+ActionStartButtonId = 1;
+ActionEndButtonId = 10;
 ActionItem = {"开始","取样","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作"," "};
 ActionSelectItem = nil;
 
@@ -816,6 +749,23 @@ end
 
 
 -----------------------------------量程设置 函数定义--------------------------------------------
+--在量程设置/量程选择界面中,量程1/2/3文本的id都是一样的
+Range1LowId = 64;--量程1文本id
+Range1HighId = 65;--量程1文本id
+Range2LowId = 77;--量程2文本id
+Range2HighId = 78;--量程2文本id
+Range3LowId = 115;--量程3文本id
+Range3HighId = 116;--量程3文本id
+
+UniteSetMenuId = 17;--单位选择
+UniteSetTextId = 15--单位设置成功后,用于显示单位文本的id
+
+RangeTab = {
+    [1] = {LowId = 64, HighId = 65, densityCalLowId = 81, densityCalHighId = 84, aId = 48, bId = 49, cId = 50, dId = 51},
+    [2] = {LowId = 77, HighId = 78, densityCalLowId = 67, densityCalHighId = 70, aId = 52, bId = 53, cId = 54, dId = 55 },
+    [3] = {LowId = 115,HighId= 116, densityCalLowId = 105,densityCalHighId = 108,aId = 92, bId = 93, cId = 94, dId = 95},
+};
+
 --设置单位
 function set_unit()
     local Unite = get_text(RANGE_SET_SCREEN, UniteSetTextId);
@@ -841,6 +791,9 @@ end
 
 
 -----------------------------------量程选择 函数定义--------------------------------------------
+Range1Id = 1;--量程1按钮Id
+Range2Id = 2;--量程2按钮Id
+Range3Id = 3;--量程3按钮Id
 RangeSelectItem = 1;
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
@@ -876,8 +829,22 @@ end
 
 
 -----------------------------------手动操作1 函数定义--------------------------------------------
-
-
+Valve16BtId = 67;
+Valve16Close = {53,0,0,0,0,154,127};
+Valve16Open  = {53,0,1,0,0,155,239};
+Valve16Close[0] = 224;
+Valve16Open[0] = 224;
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function hand_operate1_control_notify(screen, control, value)
+    if control == Valve16BtId then
+        if get_value(HAND_OPERATE1_SCREEN, Valve16BtId) == 1.0 then
+            uart_send_data(Valve16Close);
+        else
+            uart_send_data(Valve16Open);
+        end
+    end
+end
 
 
 -----------------------------------手动操作2 函数定义--------------------------------------------
@@ -1003,7 +970,6 @@ end
 function goto_LoginSystem()
     set_text(LOGIN_SYSTEM_SCREEN, UserNameId, userName);
 end
-
 
 
 

@@ -1264,10 +1264,15 @@
 
 #define  _RTC_流程设置2_RTC2                                                      10
 
-//画面流程设置2中图片Image7使用的图片
-#define  _IMG_流程设置2_IMAGE7                                                    19
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY30                                       21
 
-#define  _BTN_流程设置2_BUTTON42                                                  17
+//画面流程设置2中按钮Button42弹起时的图片
+#define  _IMG_流程设置2_BUTTON42_UP                                               19
+
+//画面流程设置2中按钮Button42按下时的图片
+#define  _IMG_流程设置2_BUTTON42_DOWN                                             20
+
+#define  _BTN_流程设置2_BUTTON42                                                  19
 
 //画面流程设置3中图片Image1使用的图片
 #define  _IMG_流程设置3_IMAGE1                                                     0
@@ -1533,8 +1538,13 @@
 
 #define  _RTC_流程设置3_RTC2                                                      10
 
-//画面流程设置3中图片Image7使用的图片
-#define  _IMG_流程设置3_IMAGE7                                                    19
+#define  _TXT_DIS__流程设置3_TEXT_DISPLAY30                                       21
+
+//画面流程设置3中按钮Button42弹起时的图片
+#define  _IMG_流程设置3_BUTTON42_UP                                               19
+
+//画面流程设置3中按钮Button42按下时的图片
+#define  _IMG_流程设置3_BUTTON42_DOWN                                             20
 
 #define  _BTN_流程设置3_BUTTON42                                                  19
 

@@ -62,7 +62,7 @@ uart_free_protocol = 1
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
     uart_set_timeout(1000,200);
-    -- read_text = readfile("config.txt")         --读数据
+    -- read_text = readfile("ProcessSummary")         --读数据
     -- set_text(PROCESS_SET1_SCREEN, TabProcess[1].selectId, read_text)  --把数据显示到文本框中
 end
 
@@ -128,14 +128,16 @@ end
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function on_screen_change(screen)
-	if(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择
+    if screen == PROCESS_SET2_SCREEN then --流程选择2
+        goto_ProcessSet2();
+    elseif screen == PROCESS_SET3_SCREEN then --流程选择3
+        goto_ProcessSet3();
+    elseif(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择
 		goto_range_select();
-	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择3
+	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择2
 		goto_ProcessSelect2();
 	elseif screen== PROCESS_SELECT3_SCREEN then --跳转到流程选择3
 		goto_ProcessSelect3();
-	elseif screen== ACTION_SELECT_SCREEN then --跳转到动作选择
-		goto_ActionSelect();
 	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
 		goto_LoginSystem();
 	elseif screen== PASSWORD_SET_SCREEN then--密码设置
@@ -241,10 +243,10 @@ end
 -----------------------------------流程设置1 配置文件相关函数------------------------------------------------
 
 
---创建配置文件,并保存在"config.txt"文件中
-function WriteCfgFile()
-    os.remove("config.txt");--删除现有的文件
-    local configFile = io.open("config.txt", "a+"); --以覆盖写入的方式打开文本
+--创建配置文件,并保存在"ProcessSummary"文件中
+function WriteProcessSummaryFile()
+    os.remove("ProcessSummary");--删除现有的文件
+    local configFile = io.open("ProcessSummary", "a+"); --以覆盖写入的方式打开文本
     assert(configFile);--判断文件是否存在,如果不存在则报错.
     --保存流程选择界面参数
     for i=1,12,1 do
@@ -255,21 +257,84 @@ function WriteCfgFile()
     configFile:close();                         --关闭文本
 end
 
+
+
 --读取配置文件中的数据
-function ReadCfgFile()
-	local wfile = io.open("config.txt","a+")      --以只读的方式打开文本
-	assert(wfile)                            --检查文本是否存在，不存在会报错，存在就正常运行
-	wfile:seek("set")                        --把文件位置定位到开头
-	info = wfile:read("a")                   --从当前位置读取整个文件，并赋值到字符串中
-	wfile:close()                            --关闭文本
+function ReadProcessSummaryFile()
+	local configFile = io.open("ProcessSummary","a+")      --以只读的方式打开文本
+	assert(configFile)                            --检查文本是否存在，不存在会报错，存在就正常运行
+	configFile:seek("set")                        --把文件位置定位到开头
+	fileInfo = configFile:read("a")                   --从当前位置读取整个文件，并赋值到字符串中
+	configFile:close()                            --关闭文本
     
-    t = split(info, ",")
+    t = split(fileInfo, ",")
     for i=1,12,1 do
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, t[(i-1)*3+1])  --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,  t[(i-1)*3+2])    --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId, t[(i-1)*3+3])    --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, t[(i-1)*3+1]);  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,  t[(i-1)*3+2]);    --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId, t[(i-1)*3+3]);    --把数据显示到文本框中
     end
 end
+
+
+--创建配置文件,并保存在"1.txt"文件中
+function WriteProcessFile(fileName)
+    os.remove(fileName);--删除现有的文件
+    local processFile = io.open(fileName, "a+"); --以覆盖写入的方式打开文本
+    assert(processFile);--判断文件是否存在,如果不存在则报错.
+    for i=1,12,1 do
+        processFile:write(get_text(PROCESS_SET2_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
+                          get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  )..",");   --动作名称
+    end
+    for i=13,24,1 do
+        processFile:write(get_text(PROCESS_SET3_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
+                          get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  )..",");   --动作名称
+    end
+    processFile:close();                         --关闭文本
+end
+
+--保存单个流程配置文件,每个流程都有一个对应的配置文件,文件名为该流程在表格中的序号
+function SaveProcessFile()
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);
+    for i=1,12,1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+            set_text(PROCESS_SET2_SCREEN,30,"保存文件"..i);
+            WriteProcessFile(i);--创建并保存数据到文件中,序号为文件名
+            break;
+        end
+    end
+end
+
+--读取配置文件中的数据
+function ReadProcessFile(fileName)
+    local processFile = io.open(fileName,"a+");     --以只读的方式打开文本
+	assert(processFile);                            --检查文本是否存在，不存在会报错，存在就正常运行
+	processFile:seek("set");                        --把文件位置定位到开头
+	fileInfo = processFile:read("a");               --从当前位置读取整个文件，并赋值到字符串中
+    processFile:close();                            --关闭文本
+    
+    t = split(fileInfo, ",");
+    for i=1,12,1 do
+        set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId, t[(i-1)*2+1]);  --把数据显示到文本框中
+        set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,   t[(i-1)*2+2]);   --把数据显示到文本框中
+    end
+    for i=13,24,1 do
+       set_text(PROCESS_SET3_SCREEN, TabAction[i].selectId, t[(i-1)*2+1]);  --把数据显示到文本框中
+       set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId,   t[(i-1)*2+2]);  --把数据显示到文本框中
+    end
+end
+
+--保存单个流程配置文件,每个流程都有一个对应的配置文件,文件名为该流程在表格中的序号
+function LoadProcessFile()
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);
+    for i=1,12,1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+            ReadProcessFile(i);--创建并保存数据到文件中,序号为文件名
+            set_text(PROCESS_SET2_SCREEN,30,"加载文件"..i);
+            break;
+        end
+    end
+end
+
 
 --字符串分割函数,str -> 需要分割的字符串;delimiter->分隔符
 function split(str, delimiter)
@@ -318,18 +383,19 @@ TabProcess = {[1] = {selectId = 300, nameId = 200, rangeId = 312, deleteId = 80}
 
 AnalyteSetId = 38;--分析物选择
 CodeSetId = 107;--代码
-ProcessSaveBtId = 19;
-
+ProcessSaveBtId = 19;--保存按钮,流程设置1/2/3的保存按钮都是这个id
+ExportBtId = 41;--导出按钮
+InportBtId = 42;--导入按钮
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_set1_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
-        WriteCfgFile();
-    elseif control == 42 then --导入按钮
-        ReadCfgFile();
-    elseif control == 41 then --导出按钮
+        WriteProcessSummaryFile();
+    elseif control == InportBtId then --导入按钮
+        ReadProcessSummaryFile();
+    elseif control == ExportBtId then --导出按钮
 
     end
 
@@ -353,12 +419,12 @@ end
 
 -----------------------------------流程设置2/3 函数定义------------------------------------------------
 ProcessSelectButtonId = 35;--位于流程设置2
-ProcessSelectId = 38;      --位于流程设置2
-ProcessSelectShowId = 38;  --位于流程设置3
+ProcessSelectId = 38;      --位于流程设置2/3都是这个id
+ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程设置2/3界面中都是这个id
 
 --这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:selectId = nameId + 100; nameId = EditId + 100
 --其中[1]-[12]中包含的id控件在流程设置2界面中,[13]-[24]中包含的id控件在流程设置3界面中
-ActionTab = {
+TabAction = {
     [1]  = {selectId = 300, nameId = 200, EditId = 100},
     [2]  = {selectId = 301, nameId = 201, EditId = 101},
     [3]  = {selectId = 302, nameId = 202, EditId = 102},
@@ -421,13 +487,26 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_set2_control_notify(screen,control,value)
-    if control == ProcessSelectButtonId then--当点击流程选择按钮时
-        process_select2_set(PROCESS_SET2_SCREEN, ProcessSelectId);
+
+    if control == ProcessSaveBtId then -- 保存
+        if string.len(get_text(PROCESS_SET2_SCREEN, ProcessSelectId)) == 0 then
+            set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
+        else
+            set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
+            --手动保存当前正在编辑的流程
+            SaveProcessFile();
+        end
+    elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
+        process_select2_set(PROCESS_SET2_SCREEN, ProcessSelectId);--设置流程选择2界面中按确认/返回按钮后,返回流程设置2界面
+        --自动保存当前正在编辑的流程
+        if string.len(get_text(PROCESS_SET2_SCREEN, ProcessSelectId)) ~= 0 then
+            SaveProcessFile();
+        end
     elseif control == ProcessSelectId then
         --        set_text(process_set1_control_notify,);
-    elseif (control-100) >= ActionTab[1].selectId and (control-100) <= ActionTab[12].selectId then--当点击"动作选择"下面的按钮时
+    elseif (control-100) >= TabAction[1].selectId and (control-100) <= TabAction[12].selectId then--当点击"动作选择"下面的按钮时
         action_select_set(PROCESS_SET2_SCREEN, control-100);
-    elseif control >= ActionTab[1].EditId and control <= ActionTab[12].EditId then--当点击"编辑"按钮时
+    elseif control >= TabAction[1].EditId and control <= TabAction[12].EditId then--当点击"编辑"按钮时
         if string.len( get_text(PROCESS_SET2_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN);--control+200表示对应的"动作选择"id
         end
@@ -441,19 +520,25 @@ end
 function process_set3_control_notify(screen,control,value)
     if control == ProcessSelectButtonId then--当点击流程选择按钮时
         process_select2_set(PROCESS_SET3_SCREEN, ProcessSelectId);
-    elseif (control-100) >= ActionTab[13].selectId and (control-100) <= ActionTab[24].selectId then--当点击"动作选择"下面的按钮时
+    elseif (control-100) >= TabAction[13].selectId and (control-100) <= TabAction[24].selectId then--当点击"动作选择"下面的按钮时
         action_select_set(PROCESS_SET3_SCREEN, control-100);
-    elseif control >= ActionTab[13].EditId and control <= ActionTab[24].EditId then--当点击"编辑"按钮时
+    elseif control >= TabAction[13].EditId and control <= TabAction[24].EditId then--当点击"编辑"按钮时
         if string.len( get_text(PROCESS_SET3_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN);--control+200表示对应的"动作选择"id
         end
     end
 end
 
+--当画面切换到流程设置2时，执行此回调函数
+function goto_ProcessSet2()
+    set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
+end
 
 --当画面切换到流程设置3时，执行此回调函数
 function goto_ProcessSet3()
-    set_text(PROCESS_SET3_SCREEN, ProcessSelectShowId, get_text(PROCESS_SET2_SCREEN,ProcessSelectId));
+    set_text(PROCESS_SET3_SCREEN,30,"流程设置3");
+    set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
+    set_text(PROCESS_SET3_SCREEN, ProcessSelectId, get_text(PROCESS_SET2_SCREEN,ProcessSelectId));
 end
 
 
@@ -677,9 +762,13 @@ function process_select2_control_notify(screen,control,value)
         ProcessSelec2tItem = control-100;--control-100 = 与该按钮重合的文本框id
     elseif control == SureButtonId then --确认按钮
         change_screen(DestScreen);
+
         if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
             set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
             set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
+            if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
+                LoadProcessFile();
+            end
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);

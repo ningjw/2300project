@@ -311,10 +311,16 @@ function WriteActionTag(fileName, actionNumber)
                           get_value(PROCESS_START_SCREEN,ResetSystemButtonId)..","..--是否硬件复位
                           "</content>");
     elseif actionType == ActionItem[2] then --取样界面参数
-        processFile:write("<content>"..
-                          --get_text(PROCESS_GET_SANPLE_SCREEN, )..","..--输出1
-                          --get_value(PROCESS_GET_SANPLE_SCREEN,)..","..--是否硬件复位
-                          "</content>");
+        processFile:write("<content>");          
+        for i = 100,116,1 do
+            processFile:write(get_value(PROCESS_GET_SANPLE_SCREEN, i)..",");--写入输出1按钮值
+        end
+        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, 117)..",");--写入输出1等待时间
+        for i = 200,216,1 do
+            processFile:write(get_value(PROCESS_GET_SANPLE_SCREEN, i)..",");--写入输出2按钮值
+        end
+        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, 217));--写入输出2等待时间
+        processFile:write("</content>");
     elseif actionType == ActionItem[3] then --注射泵加液体界面参数
     elseif actionType == ActionItem[4] then --读取信号
     elseif actionType == ActionItem[5] then --蠕动泵加液
@@ -332,7 +338,7 @@ end
 
 --保存单个流程配置文件,每个流程都有一个对应的配置文件,文件名为该流程在表格中的序号
 --actionNumber:动作标签,范围:action1~action24
-function SaveProcessFile(actionNumber)
+function WriteProcessFile(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
     for i=1,12,1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
@@ -344,7 +350,7 @@ end
 
 --加载动作配置,在流程设置2/3界面点击编辑按钮时,会调用该函数,获取当前配置
 --actionNumber:当前动作为第几步
-function LoadActionTag(actionNumber)
+function ReadProcessFile(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
     local fileName = 0;
     for i=1,12,1 do--循环查找当前流程名称对应的序号.
@@ -356,7 +362,7 @@ function LoadActionTag(actionNumber)
 
     local processFile = io.open(fileName,"r");      --打开文本
     if processFile == nil then--还没有该文件,则创建一个新的配置文件,并返回
-        SaveProcessFile(0);--
+        WriteProcessFile(0);--
         --将流程设置2/3界面清空
         for i = TabAction[1].selectId,TabAction[12].selectId,1 do
             set_text(PROCESS_SET2_SCREEN, i," ");    --将对应动作选择的文本显示为空格
@@ -368,17 +374,21 @@ function LoadActionTag(actionNumber)
     end
 
 	processFile:seek("set");                        --把文件位置定位到开头
-	fileString = processFile:read("a");               --从当前位置读取整个文件，并赋值到字符串中
+	fileString = processFile:read("a");             --从当前位置读取整个文件，并赋值到字符串中
     processFile:close();                            --关闭文本
 
     actionString = GetSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--截取fileInfo文件中<action?> ~ </action?>标签之间的字符串
+    if actionString == nil then--如果文件中没有该标签,则返回.
+        return 
+    end
+    
     actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型
     if actionNumber == 0 then --判定位<action0>标签
         content = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
         if content == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
             return;
         end
-        local tab = split(content, ",");
+        tab = split(content, ",");
         for i=1,12,1 do
             set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId, tab[(i-1)*2+1]);  --把数据显示到文本框中
             set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);   --把数据显示到文本框中
@@ -394,6 +404,17 @@ function LoadActionTag(actionNumber)
         set_value(PROCESS_START_SCREEN, ResetSystemButtonId, tab[2] );
     
     elseif actionType == ActionItem[2] then --取样界面参数
+        actionTab = GetSubString(actionString,"<content>","</content>");--获取内容
+        tab = split(actionTab,",");--分割字符串
+        set_text(PROCESS_SET2_SCREEN,30, tab[1])
+        for i = 1,17,1 do
+            set_value(PROCESS_GET_SANPLE_SCREEN, i+99, tab[i]);--tab中前17个位按钮值
+        end
+        set_text(PROCESS_GET_SANPLE_SCREEN, 117, tab[18]);--第18个为输出1等待时间值
+        for i = 19,35,1 do
+           set_value(PROCESS_GET_SANPLE_SCREEN, i+181, tab[i]);--第19-35个位按钮值
+        end
+        set_text(PROCESS_GET_SANPLE_SCREEN, 217, tab[36]);--第36个为输出2等待时间值
     elseif actionType == ActionItem[3] then --注射泵加液体界面参数
     elseif actionType == ActionItem[4] then --读取信号
     elseif actionType == ActionItem[5] then --蠕动泵加液
@@ -559,10 +580,10 @@ TabAction = {
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
     if screen == PROCESS_SET2_SCREEN then
-        LoadActionTag(control-99);--在流程设置2界面, 当编辑按钮id号为100时, 当前动作序号为1, 依次类推
+        ReadProcessFile(control-99);--在流程设置2界面, 当编辑按钮id号为100时, 当前动作序号为1, 依次类推
         set_screen_actionNumber(screen, control-99);
     elseif screen == PROCESS_SET3_SCREEN then
-        LoadActionTag(control-99+12);
+        ReadProcessFile(control-99+12);
         set_screen_actionNumber(screen, control-99+12);
     end
 
@@ -598,21 +619,19 @@ function process_set2_control_notify(screen,control,value)
         else
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
             --手动保存当前正在编辑的流程
-            SaveProcessFile(0);
+            WriteProcessFile(0);
         end
     elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
         process_select2_set(PROCESS_SET2_SCREEN, ProcessSelectId);--设置流程选择2界面中按确认/返回按钮后,返回流程设置2界面
         --自动保存当前正在编辑的流程
         if string.len(get_text(PROCESS_SET2_SCREEN, ProcessSelectId)) ~= 0 then
-            SaveProcessFile(0);
+            WriteProcessFile(0);
         end
     elseif control == ProcessSelectId then
 
     elseif (control-100) >= TabAction[1].selectId and (control-100) <= TabAction[12].selectId then--当点击"动作选择"下面的按钮时
         action_select_set(PROCESS_SET2_SCREEN, control-100);
     elseif control >= TabAction[1].EditId and control <= TabAction[12].EditId then--当点击"编辑"按钮时
-
-
         if string.len( get_text(PROCESS_SET2_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作选择"id
         end
@@ -629,7 +648,7 @@ function process_set3_control_notify(screen,control,value)
         action_select_set(PROCESS_SET3_SCREEN, control-100);
     elseif control >= TabAction[13].EditId and control <= TabAction[24].EditId then--当点击"编辑"按钮时
         if string.len( get_text(PROCESS_SET3_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
-            set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN);--control+200表示对应的"动作选择"id
+            set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作选择"id
         end
     end
 end
@@ -669,7 +688,7 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_start_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        SaveProcessFile(DestActionNum);
+        WriteProcessFile(DestActionNum);
         change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
@@ -684,6 +703,7 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_get_sample_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
+        WriteProcessFile(DestActionNum);
         change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
@@ -811,7 +831,7 @@ function process_select_control_notify(screen, control, value)
 			if DestScreen == PROCESS_SET1_SCREEN  then
 				set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
             end
-            LoadActionTag(0);--当选择一个流程时,加载该流程配置文件
+            ReadProcessFile(0);--当选择一个流程时,加载该流程配置文件
 		end
 	elseif control == CancelButtonId then --取消按钮
 		change_screen(DestScreen);
@@ -842,7 +862,7 @@ function process_select2_control_notify(screen,control,value)
             set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
             set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
             if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
-                LoadActionTag(0);
+                ReadProcessFile(0);
             end
         end
     elseif control == CancelButtonId then --取消按钮

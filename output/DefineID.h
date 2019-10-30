@@ -1577,7 +1577,7 @@
 
 #define  _BTN_流程设置-取样_BUTTON3                                                 99
 
-#define  _BTN_流程设置-取样_BUTTON9                                                 35
+#define  _BTN_流程设置-取样_BUTTON9                                                101
 
 //画面流程设置-取样中按钮Button10弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON10_UP                                             32
@@ -1585,7 +1585,7 @@
 //画面流程设置-取样中按钮Button10按下时的图片
 #define  _IMG_流程设置-取样_BUTTON10_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON10                                                 2
+#define  _BTN_流程设置-取样_BUTTON10                                               102
 
 //画面流程设置-取样中按钮Button11弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON11_UP                                             32
@@ -1593,7 +1593,7 @@
 //画面流程设置-取样中按钮Button11按下时的图片
 #define  _IMG_流程设置-取样_BUTTON11_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON11                                                33
+#define  _BTN_流程设置-取样_BUTTON11                                               103
 
 //画面流程设置-取样中按钮Button12弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON12_UP                                             32
@@ -1601,7 +1601,7 @@
 //画面流程设置-取样中按钮Button12按下时的图片
 #define  _IMG_流程设置-取样_BUTTON12_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON12                                                36
+#define  _BTN_流程设置-取样_BUTTON12                                               104
 
 //画面流程设置-取样中按钮Button13弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON13_UP                                             32
@@ -1609,7 +1609,7 @@
 //画面流程设置-取样中按钮Button13按下时的图片
 #define  _IMG_流程设置-取样_BUTTON13_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON13                                                37
+#define  _BTN_流程设置-取样_BUTTON13                                               105
 
 //画面流程设置-取样中按钮Button14弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON14_UP                                             32
@@ -1617,7 +1617,7 @@
 //画面流程设置-取样中按钮Button14按下时的图片
 #define  _IMG_流程设置-取样_BUTTON14_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON14                                                38
+#define  _BTN_流程设置-取样_BUTTON14                                               106
 
 //画面流程设置-取样中按钮Button15弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON15_UP                                             32
@@ -1625,7 +1625,7 @@
 //画面流程设置-取样中按钮Button15按下时的图片
 #define  _IMG_流程设置-取样_BUTTON15_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON15                                                39
+#define  _BTN_流程设置-取样_BUTTON15                                               107
 
 //画面流程设置-取样中按钮Button16弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON16_UP                                             32
@@ -1633,7 +1633,7 @@
 //画面流程设置-取样中按钮Button16按下时的图片
 #define  _IMG_流程设置-取样_BUTTON16_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON16                                                40
+#define  _BTN_流程设置-取样_BUTTON16                                               108
 
 //画面流程设置-取样中按钮Button17弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON17_UP                                             32
@@ -1641,7 +1641,7 @@
 //画面流程设置-取样中按钮Button17按下时的图片
 #define  _IMG_流程设置-取样_BUTTON17_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON17                                                41
+#define  _BTN_流程设置-取样_BUTTON17                                               109
 
 //画面流程设置-取样中按钮Button18弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON18_UP                                             32
@@ -1649,7 +1649,7 @@
 //画面流程设置-取样中按钮Button18按下时的图片
 #define  _IMG_流程设置-取样_BUTTON18_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON18                                                42
+#define  _BTN_流程设置-取样_BUTTON18                                               110
 
 //画面流程设置-取样中按钮Button19弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON19_UP                                             32
@@ -1657,7 +1657,7 @@
 //画面流程设置-取样中按钮Button19按下时的图片
 #define  _IMG_流程设置-取样_BUTTON19_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON19                                                43
+#define  _BTN_流程设置-取样_BUTTON19                                               111
 
 //画面流程设置-取样中按钮Button20弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON20_UP                                             32
@@ -1665,7 +1665,7 @@
 //画面流程设置-取样中按钮Button20按下时的图片
 #define  _IMG_流程设置-取样_BUTTON20_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON20                                                44
+#define  _BTN_流程设置-取样_BUTTON20                                               112
 
 //画面流程设置-取样中按钮Button21弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON21_UP                                             32
@@ -1673,7 +1673,7 @@
 //画面流程设置-取样中按钮Button21按下时的图片
 #define  _IMG_流程设置-取样_BUTTON21_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON21                                                45
+#define  _BTN_流程设置-取样_BUTTON21                                               113
 
 //画面流程设置-取样中按钮Button22弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON22_UP                                             32
@@ -1681,7 +1681,7 @@
 //画面流程设置-取样中按钮Button22按下时的图片
 #define  _IMG_流程设置-取样_BUTTON22_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON22                                                46
+#define  _BTN_流程设置-取样_BUTTON22                                               114
 
 //画面流程设置-取样中按钮Button26弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON26_UP                                             32
@@ -1689,7 +1689,7 @@
 //画面流程设置-取样中按钮Button26按下时的图片
 #define  _IMG_流程设置-取样_BUTTON26_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON26                                                66
+#define  _BTN_流程设置-取样_BUTTON26                                               115
 
 //画面流程设置-取样中按钮Button27弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON27_UP                                             32
@@ -1697,7 +1697,7 @@
 //画面流程设置-取样中按钮Button27按下时的图片
 #define  _IMG_流程设置-取样_BUTTON27_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON27                                                67
+#define  _BTN_流程设置-取样_BUTTON27                                               116
 
 //画面流程设置-取样中按钮Button1弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON1_UP                                              27
@@ -1707,7 +1707,7 @@
 
 #define  _BTN_流程设置-取样_BUTTON1                                                 98
 
-#define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY1                                      61
+#define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY1                                     117
 
 //画面流程设置-取样中按钮Button2弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON2_UP                                              32
@@ -1715,7 +1715,7 @@
 //画面流程设置-取样中按钮Button2按下时的图片
 #define  _IMG_流程设置-取样_BUTTON2_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON2                                                  4
+#define  _BTN_流程设置-取样_BUTTON2                                                201
 
 //画面流程设置-取样中按钮Button4弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON4_UP                                              32
@@ -1723,7 +1723,7 @@
 //画面流程设置-取样中按钮Button4按下时的图片
 #define  _IMG_流程设置-取样_BUTTON4_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON4                                                  7
+#define  _BTN_流程设置-取样_BUTTON4                                                202
 
 //画面流程设置-取样中按钮Button5弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON5_UP                                              32
@@ -1731,7 +1731,7 @@
 //画面流程设置-取样中按钮Button5按下时的图片
 #define  _IMG_流程设置-取样_BUTTON5_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON5                                                  9
+#define  _BTN_流程设置-取样_BUTTON5                                                203
 
 //画面流程设置-取样中按钮Button6弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON6_UP                                              32
@@ -1739,7 +1739,7 @@
 //画面流程设置-取样中按钮Button6按下时的图片
 #define  _IMG_流程设置-取样_BUTTON6_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON6                                                 10
+#define  _BTN_流程设置-取样_BUTTON6                                                204
 
 //画面流程设置-取样中按钮Button7弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON7_UP                                              32
@@ -1747,7 +1747,7 @@
 //画面流程设置-取样中按钮Button7按下时的图片
 #define  _IMG_流程设置-取样_BUTTON7_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON7                                                 11
+#define  _BTN_流程设置-取样_BUTTON7                                                205
 
 //画面流程设置-取样中按钮Button8弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON8_UP                                              32
@@ -1755,7 +1755,7 @@
 //画面流程设置-取样中按钮Button8按下时的图片
 #define  _IMG_流程设置-取样_BUTTON8_DOWN                                            33
 
-#define  _BTN_流程设置-取样_BUTTON8                                                 12
+#define  _BTN_流程设置-取样_BUTTON8                                                206
 
 //画面流程设置-取样中按钮Button23弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON23_UP                                             32
@@ -1763,7 +1763,7 @@
 //画面流程设置-取样中按钮Button23按下时的图片
 #define  _IMG_流程设置-取样_BUTTON23_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON23                                                13
+#define  _BTN_流程设置-取样_BUTTON23                                               207
 
 //画面流程设置-取样中按钮Button24弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON24_UP                                             32
@@ -1771,7 +1771,7 @@
 //画面流程设置-取样中按钮Button24按下时的图片
 #define  _IMG_流程设置-取样_BUTTON24_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON24                                                14
+#define  _BTN_流程设置-取样_BUTTON24                                               208
 
 //画面流程设置-取样中按钮Button25弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON25_UP                                             32
@@ -1779,7 +1779,7 @@
 //画面流程设置-取样中按钮Button25按下时的图片
 #define  _IMG_流程设置-取样_BUTTON25_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON25                                                15
+#define  _BTN_流程设置-取样_BUTTON25                                               209
 
 //画面流程设置-取样中按钮Button28弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON28_UP                                             32
@@ -1787,7 +1787,7 @@
 //画面流程设置-取样中按钮Button28按下时的图片
 #define  _IMG_流程设置-取样_BUTTON28_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON28                                                16
+#define  _BTN_流程设置-取样_BUTTON28                                               210
 
 //画面流程设置-取样中按钮Button29弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON29_UP                                             32
@@ -1795,7 +1795,7 @@
 //画面流程设置-取样中按钮Button29按下时的图片
 #define  _IMG_流程设置-取样_BUTTON29_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON29                                                17
+#define  _BTN_流程设置-取样_BUTTON29                                               211
 
 //画面流程设置-取样中按钮Button30弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON30_UP                                             32
@@ -1803,7 +1803,7 @@
 //画面流程设置-取样中按钮Button30按下时的图片
 #define  _IMG_流程设置-取样_BUTTON30_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON30                                                18
+#define  _BTN_流程设置-取样_BUTTON30                                               212
 
 //画面流程设置-取样中按钮Button31弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON31_UP                                             32
@@ -1811,7 +1811,7 @@
 //画面流程设置-取样中按钮Button31按下时的图片
 #define  _IMG_流程设置-取样_BUTTON31_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON31                                                19
+#define  _BTN_流程设置-取样_BUTTON31                                               213
 
 //画面流程设置-取样中按钮Button32弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON32_UP                                             32
@@ -1819,7 +1819,7 @@
 //画面流程设置-取样中按钮Button32按下时的图片
 #define  _IMG_流程设置-取样_BUTTON32_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON32                                                20
+#define  _BTN_流程设置-取样_BUTTON32                                               214
 
 //画面流程设置-取样中按钮Button33弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON33_UP                                             32
@@ -1827,7 +1827,7 @@
 //画面流程设置-取样中按钮Button33按下时的图片
 #define  _IMG_流程设置-取样_BUTTON33_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON33                                                21
+#define  _BTN_流程设置-取样_BUTTON33                                               215
 
 //画面流程设置-取样中按钮Button34弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON34_UP                                             32
@@ -1835,12 +1835,12 @@
 //画面流程设置-取样中按钮Button34按下时的图片
 #define  _IMG_流程设置-取样_BUTTON34_DOWN                                           33
 
-#define  _BTN_流程设置-取样_BUTTON34                                                22
+#define  _BTN_流程设置-取样_BUTTON34                                               216
 
 //画面流程设置-取样中图片Image1使用的图片
 #define  _IMG_流程设置-取样_IMAGE1                                                  34
 
-#define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY2                                      25
+#define  _TXT_DIS__流程设置-取样_TEXT_DISPLAY2                                     217
 
 //画面流程设置-取样中按钮Button36弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON36_UP                                             29
@@ -1848,7 +1848,7 @@
 //画面流程设置-取样中按钮Button36按下时的图片
 #define  _IMG_流程设置-取样_BUTTON36_DOWN                                           30
 
-#define  _BTN_流程设置-取样_BUTTON36                                                 3
+#define  _BTN_流程设置-取样_BUTTON36                                               100
 
 //画面流程设置-取样中按钮Button37弹起时的图片
 #define  _IMG_流程设置-取样_BUTTON37_UP                                             29
@@ -1856,7 +1856,7 @@
 //画面流程设置-取样中按钮Button37按下时的图片
 #define  _IMG_流程设置-取样_BUTTON37_DOWN                                           30
 
-#define  _BTN_流程设置-取样_BUTTON37                                                 8
+#define  _BTN_流程设置-取样_BUTTON37                                               200
 
 //画面流程设置-注射泵加液中按钮Button3弹起时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON3_UP                                           27

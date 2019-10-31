@@ -177,8 +177,8 @@ function on_uart_recv_data(packet)
 
 end
 
-
 -----------------------------------首页 函数定义----------------------------------------------------
+
 LastAnalysisTimeId = 20;   --分析时间
 LastAnalyteId = 17;        --分析物
 LastAnalysisResultId = 18; --分析结果
@@ -190,7 +190,9 @@ function main_control_notify(screen,control,value)
 
 end
 
+
 -----------------------------------运行控制 函数定义-------------------------------------------------
+
 RunTypeID = 43;--运行方式对应的文本空间ID
 RunStatusId = 131;--运行状态切换按钮"开始""停止"按钮
 --手动设置
@@ -271,7 +273,7 @@ function ReadProcessSummaryFile()
     end
 end
 
---将动作写入配置文件中,该文件在WriteProcessFile中调用
+--将动作写入配置文件中,该文件在WriteProcessFile中调用--------------------------------------------------------------------------------
 --fileName:配置文件名称:范围:1-12,对应12个流程(每个流程对应一个配置文件)
 --actionNumber:动作标签,范围:action1~action24
 function WriteActionTag(fileName, actionNumber)
@@ -294,34 +296,43 @@ function WriteActionTag(fileName, actionNumber)
 
     processFile:write("<action"..actionNumber..">");--写入开始标签
     processFile:write("<type>"..actionType.."</type>");--写入动作类型:开始/取样/消解......
+
+    --------------------------------写<action0>标签内容---------------------------------------------
+    --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
     if actionNumber == 0 then
         processFile:write("<content>");
         for i=1,12,1 do
             processFile:write(get_text(PROCESS_SET2_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
-                                get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  )..",");   --动作名称
+                              get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  )..","); --动作名称
         end
         for i=13,24,1 do
             processFile:write(get_text(PROCESS_SET3_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
-                                get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  )..",");   --动作名称
+                              get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  )..","); --动作名称
         end
         processFile:write("</content>");
-    elseif actionType == ActionItem[1] then --开始界面参数
+    --------------------------------写开始界面参数----------------------------------------------------
+    elseif actionType == ActionItem[1] then 
         processFile:write("<content>"..
                           get_text(PROCESS_START_SCREEN, AnalysisTypeTextId)..","..--分析方法
                           get_value(PROCESS_START_SCREEN,ResetSystemButtonId)..","..--是否硬件复位
                           "</content>");
-    elseif actionType == ActionItem[2] then --取样界面参数
-        processFile:write("<content>");          
-        for i = 100,116,1 do
+    --------------------------------写取样界面参数----------------------------------------------------
+    elseif actionType == ActionItem[2] then 
+        processFile:write("<content>");
+        for i = GS_OUT1_EnableId, GS_OUT1_Valve16Id, 1 do
             processFile:write(get_value(PROCESS_GET_SANPLE_SCREEN, i)..",");--写入输出1按钮值
         end
-        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, 117)..",");--写入输出1等待时间
-        for i = 200,216,1 do
+        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, GS_OUT1_WaitTimeId)..",");--写入输出1等待时间
+        for i = GS_OUT2_EnableId, GS_OUT2_Valve16Id, 1 do
             processFile:write(get_value(PROCESS_GET_SANPLE_SCREEN, i)..",");--写入输出2按钮值
         end
-        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, 217));--写入输出2等待时间
+        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, GS_OUT2_WaitTimeId));--写入输出2等待时间
         processFile:write("</content>");
+    --------------------------------写注射泵加液参数----------------------------------------------------
     elseif actionType == ActionItem[3] then --注射泵加液体界面参数
+        processFile:write("<content>");
+
+        processFile:write("</content>");
     elseif actionType == ActionItem[4] then --读取信号
     elseif actionType == ActionItem[5] then --蠕动泵加液
     elseif actionType == ActionItem[6] then --计算
@@ -348,7 +359,7 @@ function WriteProcessFile(actionNumber)
 end
 
 
---加载动作配置,在流程设置2/3界面点击编辑按钮时,会调用该函数,获取当前配置
+--加载动作配置,在流程设置2/3界面点击编辑按钮时,会调用该函数,获取当前配置---------------------------------------------------------------
 --actionNumber:当前动作为第几步
 function ReadProcessFile(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
@@ -407,14 +418,14 @@ function ReadProcessFile(actionNumber)
         actionTab = GetSubString(actionString,"<content>","</content>");--获取内容
         tab = split(actionTab,",");--分割字符串
         set_text(PROCESS_SET2_SCREEN,30, tab[1])
-        for i = 1,17,1 do
-            set_value(PROCESS_GET_SANPLE_SCREEN, i+99, tab[i]);--tab中前17个位按钮值
+        for i = 1,17,1 do 
+            set_value(PROCESS_GET_SANPLE_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
-        set_text(PROCESS_GET_SANPLE_SCREEN, 117, tab[18]);--第18个为输出1等待时间值
+        set_text(PROCESS_GET_SANPLE_SCREEN, GS_OUT1_WaitTimeId, tab[18]);--第18个为输出1等待时间值
         for i = 19,35,1 do
-           set_value(PROCESS_GET_SANPLE_SCREEN, i+181, tab[i]);--第19-35个位按钮值
+           set_value(PROCESS_GET_SANPLE_SCREEN, i, tab[i]);--第19-35个位按钮值
         end
-        set_text(PROCESS_GET_SANPLE_SCREEN, 217, tab[36]);--第36个为输出2等待时间值
+        set_text(PROCESS_GET_SANPLE_SCREEN, GS_OUT2_WaitTimeId, tab[36]);--第36个为输出2等待时间值
     elseif actionType == ActionItem[3] then --注射泵加液体界面参数
     elseif actionType == ActionItem[4] then --读取信号
     elseif actionType == ActionItem[5] then --蠕动泵加液
@@ -664,6 +675,8 @@ function goto_ProcessSet3()
     set_text(PROCESS_SET3_SCREEN, ProcessSelectId, get_text(PROCESS_SET2_SCREEN,ProcessSelectId));
 end
 
+
+
 -----------------------------------流程设置-开始 函数定义--------------------------------------------
 
 --在所有子界面中("开始/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
@@ -695,9 +708,17 @@ function process_start_control_notify(screen,control,value)
     end
 end
 
-
 -----------------------------------流程设置-取样 函数定义--------------------------------------------
 
+GS_OUT1_EnableId = 1;--取样界面中输出1使能按钮id (GS->GetSample)
+GS_OUT1_Valve1Id = 2;--输出1中阀1的id
+GS_OUT1_Valve16Id= 17;--输出1中阀16的id
+GS_OUT1_WaitTimeId = 18;--输出1等待时间
+
+GS_OUT2_EnableId = 19;--取样界面中输出1使能按钮id (GS->GetSample)
+GS_OUT2_Valve1Id = 20;--输出1中阀1的id
+GS_OUT2_Valve16Id= 35;--输出1中阀16的id
+GS_OUT2_WaitTimeId = 36;--输出1等待时间
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -719,6 +740,7 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
+        WriteProcessFile(DestActionNum);
         change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);

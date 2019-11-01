@@ -57,7 +57,7 @@ PublicTab = {
 };
 
 --[[-----------------------------------------------------------------------------------------------------------------
-                                                系统入口函数
+    系统入口函数
 --------------------------------------------------------------------------------------------------------------------]]
 --设置全局变量uart_free_protocol，使用自由串口协议
 uart_free_protocol = 1
@@ -273,7 +273,7 @@ end
 --读取配置文件中的数据
 --***********************************************************************************************
 function ReadProcessSummaryFile()
-	local configFile = io.open("ProcessSummary","a+")      --以只读的方式打开文本
+	local configFile = io.open("ProcessSummary", "r")      --打开文本
     if configFile == nil then--如果没有该文件则返回    
         return;
     end
@@ -640,9 +640,8 @@ function process_set1_control_notify(screen,control,value)
     elseif control == ExportBtId then --导出按钮(将流程配置导出到SD卡中)
         if SdPath  ~= nil then
             local fileNmae = 1;
-            FileCopy(fileNmae, SdPath..fileNmae); 
-            fileName = "ProcessSummary"
-            FileCopy(fileNmae, SdPath..fileNmae); 
+            FileCopy(fileNmae, SdPath..fileNmae);
+            FileCopy("ProcessSummary", SdPath.."ProcessSummary");
         end;
     elseif control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
@@ -1055,7 +1054,6 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_select_control_notify(screen, control, value)
-
 	if control >= AnalysisButtonId and control <= NullButtonId then
 		ProcessSelectItem = control;
 	elseif control == SureButtonId then --确认按钮
@@ -1065,7 +1063,6 @@ function process_select_control_notify(screen, control, value)
 			if DestScreen == PROCESS_SET1_SCREEN  then
 				set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
             end
-            ReadProcessFile(0);--当选择一个流程时,加载该流程配置文件
 		end
 	elseif control == CancelButtonId then --取消按钮
 		change_screen(DestScreen);
@@ -1101,6 +1098,7 @@ function process_select2_control_notify(screen,control,value)
                 ReadProcessFile(0);
             end
         end
+
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end

@@ -64,6 +64,8 @@ uart_free_protocol = 1
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 function on_init()
     uart_set_timeout(1000,200);
+    ReadConfigFile(1);--加载流程设置1界面中的参数配置
+    ReadConfigFile(2);--加载运行控制界面中的参数配置
 end
 
 --定时回调函数，系统每隔1秒钟自动调用。
@@ -152,24 +154,24 @@ end
 
 --插入 U 盘后，执行此回调函数
 function on_usb_inserted(dir)
-    set_text(MAIN_SCREEN, 16, "插入U盘");
+    set_text(PROCESS_SET1_SCREEN, 905, "插入U盘"..dir);
     UsbPath = dir;
 end
 
 --拔出 U 盘后，执行此回调函数
 function on_usb_removed()
-    set_text(MAIN_SCREEN, 16, "拔出U盘");
+    set_text(PROCESS_SET1_SCREEN, 905, "拔出U盘");
 end
 
 --插入 SD 卡后，执行此回调函数
 function on_sd_inserted(dir)
-    set_text(MAIN_SCREEN, 16, "插入SD卡"..dir);
+    set_text(PROCESS_SET1_SCREEN, 905, "插入SD卡"..dir);
     SdPath = dir;
 end
 
 --拔出 SD 卡后，执行此回调函数
 function on_sd_removed()
-    set_text(MAIN_SCREEN, 16, "拔出SD卡");
+    set_text(PROCESS_SET1_SCREEN, 905, "拔出SD卡");
 end
 
 
@@ -196,52 +198,59 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    运行控制
+    运行控制                                                                                                          
 --------------------------------------------------------------------------------------------------------------------]]
 
-RunTypeID = 43;--运行方式对应的文本空间ID
-RunStatusId = 131;--运行状态切换按钮"开始""停止"按钮
+--流程设置相关的按钮id从101 - 129, 其中101为周期流程第一个, id129为手动流程
+RUNCTRL_TextStartId = 1;
+RUNCTRL_TextEndId = 85;
+RunTypeID = 30;--运行方式对应的文本空间ID
+RunStatusId = 229;--运行状态切换按钮"开始""停止"按钮
 --手动设置
-HandProcessID = 300;--手动设置：手动流程对应的文本控件ID
-HandProcessTimesID = 171; --手动设置：次数对应的文本空间ID
-
+HandProcessTimesID = 31; --手动设置：次数对应的文本空间ID
+HandProcessID = 130;--手动设置：手动流程对应的文本控件ID
 --周期设置
-PeriodicTab = { Process1Id = 301, Process2Id = 302, Process3Id = 303, Process4Id = 304,
-                YearId = 155, MonthId = 156, DayId = 157, HourId = 158, MinuteId = 159, FreqId = 176};
+PeriodicTab = { [1] = 101, 
+                [2] = 102,
+                [3] = 103,
+                [4] = 104,
+                [5] = {YearId = 32, MonthId = 33, DayId = 34, HourId = 35, MinuteId = 36},
+                [6] = 37,};
 
 --定时设置
-TimedTab = {
-	Process1  = {Id = 305, StartHourId = 94,  StartMinuteId = 95},
-	Process2  = {Id = 306, StartHourId = 92,  StartMinuteId = 96},
-	Process3  = {Id = 307, StartHourId = 119, StartMinuteId = 120},
-	Process4  = {Id = 308, StartHourId = 49,  StartMinuteId = 50},
-	Process5  = {Id = 309, StartHourId = 98,  StartMinuteId = 99},
-	Process6  = {Id = 310, StartHourId = 122, StartMinuteId = 123},
-	Process7  = {Id = 311, StartHourId = 54,  StartMinuteId = 56},
-	Process8  = {Id = 312, StartHourId = 101, StartMinuteId = 102},
-	Process9  = {Id = 313, StartHourId = 125, StartMinuteId = 126},
-	Process10 = {Id = 314, StartHourId = 60,  StartMinuteId = 62},
-	Process11 = {Id = 315, StartHourId = 104, StartMinuteId = 105},
-	Process12 = {Id = 316, StartHourId = 128, StartMinuteId = 129},
-	Process13 = {Id = 317, StartHourId = 67,  StartMinuteId = 69},
-	Process14 = {Id = 318, StartHourId = 107, StartMinuteId = 108},
-	Process15 = {Id = 319, StartHourId = 132, StartMinuteId = 133},
-	Process16 = {Id = 320, StartHourId = 73,  StartMinuteId = 76},
-	Process17 = {Id = 321, StartHourId = 11,  StartMinuteId = 111},
-	Process18 = {Id = 322, StartHourId = 135, StartMinuteId = 136},
-	Process19 = {Id = 323, StartHourId = 80, StartMinuteId  = 82},
-	Process20 = {Id = 324, StartHourId = 113, StartMinuteId = 114},
-	Process21 = {Id = 325, StartHourId = 138, StartMinuteId = 139},
-	Process22 = {Id = 326, StartHourId = 86, StartMinuteId  = 88},
-	Process23 = {Id = 327, StartHourId = 116, StartMinuteId = 117},
-	Process24 = {Id = 328, StartHourId = 141, StartMinuteId = 142},
+TimedProcessTab = {
+	[1 ] = {BtId = 105, StartHourId = 38, StartMinuteId = 62},
+	[2 ] = {BtId = 106, StartHourId = 39, StartMinuteId = 63},
+	[3 ] = {BtId = 107, StartHourId = 40, StartMinuteId = 64},
+	[4 ] = {BtId = 108, StartHourId = 41, StartMinuteId = 65},
+	[5 ] = {BtId = 109, StartHourId = 42, StartMinuteId = 66},
+	[6 ] = {BtId = 110, StartHourId = 43, StartMinuteId = 67},
+	[7 ] = {BtId = 111, StartHourId = 44, StartMinuteId = 68},
+	[8 ] = {BtId = 112, StartHourId = 45, StartMinuteId = 69},
+	[9 ] = {BtId = 113, StartHourId = 46, StartMinuteId = 70},
+	[10] = {BtId = 114, StartHourId = 47, StartMinuteId = 71},
+	[11] = {BtId = 115, StartHourId = 48, StartMinuteId = 72},
+	[12] = {BtId = 116, StartHourId = 49, StartMinuteId = 73},
+	[13] = {BtId = 117, StartHourId = 50, StartMinuteId = 74},
+	[14] = {BtId = 118, StartHourId = 51, StartMinuteId = 75},
+	[15] = {BtId = 119, StartHourId = 52, StartMinuteId = 76},
+	[16] = {BtId = 120, StartHourId = 53, StartMinuteId = 77},
+	[17] = {BtId = 121, StartHourId = 54, StartMinuteId = 78},
+	[18] = {BtId = 122, StartHourId = 55, StartMinuteId = 79},
+	[19] = {BtId = 123, StartHourId = 56, StartMinuteId = 80},
+	[20] = {BtId = 124, StartHourId = 57, StartMinuteId = 81},
+	[21] = {BtId = 125, StartHourId = 58, StartMinuteId = 82},
+	[22] = {BtId = 126, StartHourId = 59, StartMinuteId = 83},
+	[23] = {BtId = 127, StartHourId = 60, StartMinuteId = 84},
+	[24] = {BtId = 128, StartHourId = 61, StartMinuteId = 85},
 };
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function run_control_notify(screen,control,value)
+    set_text(RUN_CONTROL_SCREEN, 902, control);
 	--control-100表示与该按钮重合的文本框
-	if (control-100) >= HandProcessID and (control-100) <= TimedTab.Process24.Id then--当点击需要选择流程的文本框时
+	if (control) >= PeriodicTab[1]  and control <= HandProcessID then--当点击需要选择流程的文本框时
 		process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
 	end
 end
@@ -252,19 +261,35 @@ end
     配置文件操作相关函数
 --------------------------------------------------------------------------------------------------------------------]]
 
+cfgFileTab = {
+    [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--流程设置1界面中的参数保存在这个tag中
+    [2] = {sTag = "<RunControl>",eTag = "</RunControl>"};--运行控制界面中的参数保存在这个tag中
+};
 --***********************************************************************************************
---创建配置文件,并保存在"ProcessSummary"文件中
+--创建配置文件,并保存在"0"文件中
 --***********************************************************************************************
-function WriteProcessSummaryFile()
-    os.remove("ProcessSummary");--删除现有的文件
-    local configFile = io.open("ProcessSummary", "a+"); --以覆盖写入的方式打开文本
-    assert(configFile);--判断文件是否存在,如果不存在则报错.
-    --保存流程选择界面参数
-    for i=1,12,1 do
-        configFile:write(get_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId)..",".. --流程类型选择
-                        get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)..","..   --流程名称
-                        get_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId)..",");  --流程量程
+function WriteConfigFile(tagNum)
+    local configFile = io.open("0", "a+");        --以覆盖写入的方式打开文本
+    configFile:seek("set");                       --把文件位置定位到开头
+    local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+    configFile:close();                           --关闭文件
+
+    configFile = io.open("0", "w+");         --打开并清空该文件
+    fileString = DeleteSubString(fileString, cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--删除指定的标签内容
+    configFile:write(fileString);                 --将处理过的原文件内容重新写入文件
+    configFile:write(cfgFileTab[tagNum].sTag);
+    if tagNum == 1 then--流程设置1界面中的参数
+        for i=1,12,1 do
+            configFile:write(get_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId)..",".. --流程类型选择
+                             get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)..","..   --流程名称
+                             get_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId)..",");  --流程量程
+        end
+    elseif tagNum == 2 then
+        for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
+            configFile:write(get_text(RUN_CONTROL_SCREEN,i)..",");
+        end
     end
+    configFile:write(cfgFileTab[tagNum].eTag);
     configFile:close(); --关闭文本
 end
 
@@ -272,20 +297,33 @@ end
 --***********************************************************************************************
 --读取配置文件中的数据
 --***********************************************************************************************
-function ReadProcessSummaryFile()
-	local configFile = io.open("ProcessSummary", "r")      --打开文本
-    if configFile == nil then--如果没有该文件则返回    
+function ReadConfigFile(tagNum)
+	local configFile = io.open("0", "r")      --打开文本
+    if configFile == nil then--如果没有该文件则返回
+        --创建一个默认配置文件
+        WriteConfigFile(1);
+        WriteConfigFile(2);
         return;
     end
 	configFile:seek("set")                        --把文件位置定位到开头
-	fileInfo = configFile:read("a")               --从当前位置读取整个文件，并赋值到字符串中
+	local fileString = configFile:read("a")               --从当前位置读取整个文件，并赋值到字符串中
 	configFile:close()                            --关闭文本
     
-    t = split(fileInfo, ",")
-    for i=1,12,1 do
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, t[(i-1)*3+1]);  --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,  t[(i-1)*3+2]);    --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId, t[(i-1)*3+3]);    --把数据显示到文本框中
+    tagString = GetSubString(fileString, cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--截取标签之间的字符串
+    if tagString == nil then--如果文件中没有该标签,则返回.
+        return 
+    end
+    local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
+    if tagNum == 1 then--流程设置1界面中的参数
+        for i=1,12,1 do
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,   tab[(i-1)*3+2]);    --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId,  tab[(i-1)*3+3]);    --把数据显示到文本框中
+        end
+    elseif tagNum == 2 then
+        for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
+            set_text(RUN_CONTROL_SCREEN, i, tab[i])
+        end
     end
 end
 
@@ -301,7 +339,6 @@ function WriteActionTag(fileName, actionNumber)
     processFile:close();                           --关闭文件
 
     processFile = io.open(fileName, "w+");         --打开并清空该文件
-
     fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--将原来的<action?>-</action?>标签之间的字符串删除
     processFile:write(fileString);                 --将处理过的原文件内容重写写入文件
 
@@ -584,23 +621,26 @@ function DeleteSubString(str, substr1, substr2)
     local s1,e1 = string.find(str, substr1)  --获取字符串1的位置
     local s2,e2 = string.find(str, substr2)  --获取字符串2的位置
     if s1 ~= nil and s2 ~= nil then
-        str = string.sub(str,1,s1-1)..string.sub(str,e2+1, -1);
+        str = string.sub(str,1,s1-1)..string.sub(str, e2+1, -1);
     end
     return str
 end
 
+
 --***********************************************************************************************
 --复制文件操作, 用于配置文件的导入导出
 --***********************************************************************************************
-function FileCopy(sourcefile, destinationfile)
-	local temp_content ="";
-	io.input(sourcefile)
-	temp_content = io.read("*a")
-	io.output(destinationfile)
-	io.write(temp_content)
-	io.flush()
-	io.close()
+function ConfigFileCopy(sourcefile, destinationfile)
+    sFile = io.open(sourcefile, "r");
+    if sFile == nil then
+        return 
+    end
+    destFile = io.open(destinationfile, "w");
+    destFile:write(sFile:read("*all"));
+    sFile:close()
+    destFile:close()
 end
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -634,14 +674,42 @@ InportBtId = 42;--导入按钮
 function process_set1_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
-        WriteProcessSummaryFile();
+        WriteConfigFile(1);
     elseif control == InportBtId then --导入按钮
-        
+        if SdPath  ~= nil then
+            set_text(PROCESS_SET1_SCREEN, 905, "正在导入配置文件...");
+            for i = 0,12,1 do--依次导出文件"0"~"12"
+                ConfigFileCopy( SdPath..i, i);--将Sd卡中的配置文件导入都系统
+            end
+            set_text(PROCESS_SET1_SCREEN, 905, "配置文件导入成功");
+            ReadConfigFile(1);--加载流程设置1界面中的参数配置
+            ReadConfigFile(2);--加载运行控制界面中的参数配置
+        elseif UsbPath ~= nil then
+            set_text(PROCESS_SET1_SCREEN, 905, "正在导入配置文件...");
+            for i = 0,12,1 do--依次导出文件"0"~"12"
+                ConfigFileCopy( UsbPath..i, i);--将Sd卡中的配置文件导入都系统
+            end
+            set_text(PROCESS_SET1_SCREEN, 905, "配置文件导入成功");
+            ReadConfigFile(1);--加载流程设置1界面中的参数配置
+            ReadConfigFile(2);--加载运行控制界面中的参数配置
+        else
+            set_text(PROCESS_SET1_SCREEN, 905, "请插入SD卡或者U盘");
+        end;
     elseif control == ExportBtId then --导出按钮(将流程配置导出到SD卡中)
         if SdPath  ~= nil then
-            local fileNmae = 1;
-            FileCopy(fileNmae, SdPath..fileNmae);
-            FileCopy("ProcessSummary", SdPath.."ProcessSummary");
+            set_text(PROCESS_SET1_SCREEN, 905, "正在导出配置文件...");
+            for i = 0,12,1 do--依次导出文件"0"~"12"
+                    ConfigFileCopy(i, SdPath..i);--将文件导出到config文件中,配置文件名为0~12
+            end
+            set_text(PROCESS_SET1_SCREEN, 905, "配置文件导出成功");
+        elseif UsbPath ~= nil then
+            set_text(PROCESS_SET1_SCREEN, 905, "正在导出配置文件...");
+            for i = 0,12,1 do--依次导出文件"0"~"12"
+                    ConfigFileCopy(i, UsbPath..i);--将文件导出到config文件中,配置文件名为0~12
+            end
+            set_text(PROCESS_SET1_SCREEN, 905, "配置文件导出成功");
+        else
+            set_text(PROCESS_SET1_SCREEN, 905, "请插入SD卡或者U盘");
         end;
     elseif control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
@@ -661,7 +729,7 @@ end
 
 --当画面切换到流程设置1时，执行此回调函数
 function goto_ProcessSet1()
-    ReadProcessSummaryFile();
+    
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -1088,7 +1156,8 @@ end
 function process_select2_control_notify(screen,control,value)
     if control >= FirstButtonId and control <= LastButtonId then
         ProcessSelec2tItem = control-100;--control-100 = 与该按钮重合的文本框id
-    elseif control == SureButtonId then --确认按钮
+
+    elseif control == SureButtonId then --确认按钮,返回之前的界面
         change_screen(DestScreen);
 
         if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
@@ -1096,6 +1165,8 @@ function process_select2_control_notify(screen,control,value)
             set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
             if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
                 ReadProcessFile(0);
+            elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
+                WriteConfigFile(2);--2对应<RunCtrl>标签
             end
         end
 
@@ -1343,7 +1414,7 @@ end
 maintainerPwdSetId = 50;
 administratorPwdSetId = 51;
 EquipmentTypeSetId = 60;
-EquipmentTypeTextId = 11;--每个界面中的仪器型号id都是11
+EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是11
 OperatorLoginId = 72;
 maintainerLoginId = 47;
 administratorLoginId = 48;

@@ -272,11 +272,11 @@
 //画面运行控制中按钮Button9按下时的图片
 #define  _IMG_运行控制_BUTTON9_DOWN                                                7
 
-#define  _BTN_运行控制_BUTTON9                                                    30
+#define  _BTN_运行控制_BUTTON9                                                   529
 
 #define  _MENU_运行控制_MENU1                                                    243
 
-#define  _TXT_DIS__运行控制_TEXTDISPLAY                                          529
+#define  _TXT_DIS__运行控制_TEXTDISPLAY                                           30
 
 //画面运行控制中按钮Button34按下时的图片
 #define  _IMG_运行控制_BUTTON34_DOWN                                               9

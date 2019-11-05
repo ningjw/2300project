@@ -58,22 +58,23 @@ PublicTab = {
 
 
 TipsTab = {
-    InsertSdUsb = "请插入SD卡或者U盘",
-    InsertSd    = "插入SD卡",
-    InsertUsb   = "插入U盘",
-    PullOutSd   = "拔出SD卡",
-    PullOutUSB  = "拔出U盘",
-    Importing   = "正在导入配置文件...",
-    Imported    = "配置文件导入成功",
-    Outporting  = "正在导出配置文件...",
-    OutPorted   = "配置文件导出成功",
+    insertSdUsb = "请插入SD卡或者U盘",
+    insertSd    = "插入SD卡",
+    insertUsb   = "插入U盘",
+    pullOutSd   = "拔出SD卡",
+    pullOutUSB  = "拔出U盘",
+    importing   = "正在导入配置文件...",
+    imported    = "配置文件导入成功",
+    outporting  = "正在导出配置文件...",
+    outported   = "配置文件导出成功",
+    selectProcess = "请选择流程"
 };
 
 
 WorkStatus = {
     run = "运行",
     stop = "停止",
-    idle = "待机"
+    readyRun = "待机"
 };
 
 WorkType = {
@@ -91,9 +92,23 @@ User = {
 SystemArg = {
     status = 0,--系统状态:对应WorkStatus中的值
     runType = 0,--运行方式: 对应WorkType中的值
-    totalProcess = 0,--总流程个数:对应流程设置1中的流程设置.
-    handProcess = 0,--手动流程:对应运行控制界面-手动流程,这里保存的是流程id号
-    handProcessTimes = 1,--手动流程次数,默认为1次
+    
+    dateTime,--系统日期时间,以字符串的形式保存,例如"201911051148"
+    minute = 0,--系统时间-分钟
+    hour = 0,--系统时间-小时
+    periodStartDateTime,--周期流程开始时间
+
+    periodicIndex = 1,--周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
+    totalAction = 0,--所有动作类型
+    actionStep = 0,--取值范围为1-24,对应了流程设置2/3界面中的共24个步骤
+    actionSubStep = 0,
+    actionNumber = 0,--所有的动作步数,可以通过统计<action>标签获得
+                    --actionTab
+    actionTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,
+                 [13]= 0,[14]= 0,[15]= 0,[16]= 0,[17]= 0,[18]= 0,[19]= 0,[20] = 0,[21] = 0,[22] = 0,[23] = 0,[24] = 0},
+    currentProcessId = 0,--当前正在执行的流程,所对应的的序号.
+    processFileStr = nil,--读出取流程相关的配置文件后,保存到该变量当中
+    processName = nil ,--流程名称
 }
 
 
@@ -109,11 +124,25 @@ function on_init()
     ShowSysUser(User.operator);--开机之后默认为操作员
     ReadConfigFile(1);--加载流程设置1界面中的参数配置
     ReadConfigFile(2);--加载运行控制界面中的参数配置
+
+    ReadProcessFile(1);
+    printf(SystemArg.actionTab[1]..","..SystemArg.actionTab[2]..","..SystemArg.actionTab[3]..","..SystemArg.actionTab[4]);
+end
+
+--定时器超时，执行此回调函数,定时器编号 0~31
+function on_timer(timer_id)
+    if  timer_id == 0 then --定时器0,定时时间到
+        if SystemArg.status == WorkStatus.run then--系统为运行状态,或者准备运行状态
+            excute_process();
+        end
+    end
 end
 
 --定时回调函数，系统每隔1秒钟自动调用。
 function on_systick()
-    
+    if SystemArg.status == WorkStatus.readyRun then
+        
+    end
 end
 
 --用户通过触摸修改控件后，执行此回调函数。
@@ -189,42 +218,26 @@ function on_screen_change(screen)
 end
 
 
---定时器超时，执行此回调函数,定时器编号 0~31
-function on_timer(timer_id)
-    if  timer_id == 0 then --定时器0,定时时间到
-        if SystemArg.status == WorkStatus.run then--系统为运行状态
-            if SystemArg.runType == WorkType.hand then --手动
-
-            elseif SystemArg.runType == WorkType.auto then --自动
-
-            elseif SystemArg.runType == WorkType.controlled then --反控
-
-            end
-        end
-    end
-end
-
-
 --插入 U 盘后，执行此回调函数
 function on_usb_inserted(dir)
-    ShowSysTips(TipsTab.InsertUsb);
+    ShowSysTips(TipsTab.insertUsb);
     UsbPath = dir;
 end
 
 --拔出 U 盘后，执行此回调函数
 function on_usb_removed()
-    ShowSysTips(TipsTab.PullOutUSB);
+    ShowSysTips(TipsTab.pullOutUSB);
 end
 
 --插入 SD 卡后，执行此回调函数
 function on_sd_inserted(dir)
-    ShowSysTips(TipsTab.InsertSd);
+    ShowSysTips(TipsTab.insertSd);
     SdPath = dir;
 end
 
 --拔出 SD 卡后，执行此回调函数
 function on_sd_removed()
-    ShowSysTips(TipsTab.PullOutUSB);
+    ShowSysTips(TipsTab.pullOutUSB);
 end
 
 
@@ -232,17 +245,6 @@ end
 function on_uart_recv_data(packet)
 
 end
-
-
---***********************************************************************************************
---  在底部的状态栏显示提示信息
---***********************************************************************************************
-function SystemStop()
-    SystemArg.status = WorkStatus.stop;
-    ShowSysWorkStatus(WorkStatus.stop);--将状态栏显示为停止
-end
-
-
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -267,6 +269,18 @@ SysTipsId = 905;         --界面底部用于显示提示信息的文本id
 function main_control_notify(screen,control,value)
 
 end
+
+
+--***********************************************************************************************
+--用于调试显示,在tips状态栏
+--name : 流程名称
+--***********************************************************************************************
+function printf(text)
+    for i = 1,16,1 do
+        set_text(PublicTab[i], SysTipsId, text);
+    end
+end
+
 --***********************************************************************************************
 --  在底部的状态栏显示提示信息
 --***********************************************************************************************
@@ -277,9 +291,11 @@ function ShowSysTips(tips)
 end
 
 --***********************************************************************************************
---  在底部的状态栏显示工作状态
+--  设置工作状态
 --***********************************************************************************************
-function ShowSysWorkStatus(status)
+function SetSysWorkStatus(status)
+    SystemArg.status = status;--设置系统状态为运行
+    --在底部的状态栏显示工作状态
     for i = 1,16,1 do
         set_text(PublicTab[i], SysWorkStatusId, status);
     end
@@ -328,49 +344,49 @@ RunStopButtonId = 229;--运行状态切换按钮"开始""停止"按钮
 
 --手动设置
 HandProcessTab = {
-    --  用于显示流程名称的文本id, 与文本重合的按钮id, 手动次数id, 流程名称对应的流程序号
-    [1] = {TextId = 29, BtId = 129, TimesId = 31, processId = 0},
+    --  用于显示流程名称的文本id, 与文本重合的按钮id, 手动分析次数id, 手动分析次数, 流程名称对应的流程序号
+    [1] = {textId = 29, buttonId = 129, TimesId = 31, times = 0, processId = 0},
 };
 
 --周期设置
-PeriodicTab = { [1] = {TextId = 1, BtId = 101, processId = 0}, 
-                [2] = {TextId = 2, BtId = 102, processId = 0},
-                [3] = {TextId = 3, BtId = 103, processId = 0},
-                [4] = {TextId = 4, BtId = 104, processId = 0},
-                [5] = {TextId = 32, value = 0},--年 这里需要注意数学关系:  序号 =  TextId - 27
-                [6] = {TextId = 33, value = 0},--月
-                [7] = {TextId = 34, value = 0},--日
-                [8] = {TextId = 35, value = 0},--时
-                [9] = {TextId = 36, value = 0},--分
-                [10]= {TextId = 37, value = 0},--频率
+PeriodicTab = { [1] = {textId = 1, buttonId = 101, processId = 0}, 
+                [2] = {textId = 2, buttonId = 102, processId = 0},
+                [3] = {textId = 3, buttonId = 103, processId = 0},
+                [4] = {textId = 4, buttonId = 104, processId = 0},
+                [5] = {textId = 32, value = 0},--年 这里需要注意数学关系:   textId - 27 = 序号
+                [6] = {textId = 33, value = 0},--月
+                [7] = {textId = 34, value = 0},--日
+                [8] = {textId = 35, value = 0},--时
+                [9] = {textId = 36, value = 0},--分
+                [10]= {textId = 37, value = 0},--频率
 };
 
---定时设置
+--定时设置  这里注意StartHourId - 37 = 序号; startMinuteId - 61 = 序号
 TimedProcessTab = {
-	[1 ] = {TextId = 5,  BtId = 105, StartHourId = 38, StartMinuteId = 62, processId = 0},
-	[2 ] = {TextId = 6,  BtId = 106, StartHourId = 39, StartMinuteId = 63, processId = 0},
-	[3 ] = {TextId = 7,  BtId = 107, StartHourId = 40, StartMinuteId = 64, processId = 0},
-	[4 ] = {TextId = 8,  BtId = 108, StartHourId = 41, StartMinuteId = 65, processId = 0},
-	[5 ] = {TextId = 9,  BtId = 109, StartHourId = 42, StartMinuteId = 66, processId = 0},
-	[6 ] = {TextId = 10, BtId = 110, StartHourId = 43, StartMinuteId = 67, processId = 0},
-	[7 ] = {TextId = 11, BtId = 111, StartHourId = 44, StartMinuteId = 68, processId = 0},
-	[8 ] = {TextId = 12, BtId = 112, StartHourId = 45, StartMinuteId = 69, processId = 0},
-	[9 ] = {TextId = 13, BtId = 113, StartHourId = 46, StartMinuteId = 70, processId = 0},
-	[10] = {TextId = 14, BtId = 114, StartHourId = 47, StartMinuteId = 71, processId = 0},
-	[11] = {TextId = 15, BtId = 115, StartHourId = 48, StartMinuteId = 72, processId = 0},
-	[12] = {TextId = 16, BtId = 116, StartHourId = 49, StartMinuteId = 73, processId = 0},
-	[13] = {TextId = 17, BtId = 117, StartHourId = 50, StartMinuteId = 74, processId = 0},
-	[14] = {TextId = 18, BtId = 118, StartHourId = 51, StartMinuteId = 75, processId = 0},
-	[15] = {TextId = 19, BtId = 119, StartHourId = 52, StartMinuteId = 76, processId = 0},
-	[16] = {TextId = 20, BtId = 120, StartHourId = 53, StartMinuteId = 77, processId = 0},
-	[17] = {TextId = 21, BtId = 121, StartHourId = 54, StartMinuteId = 78, processId = 0},
-	[18] = {TextId = 22, BtId = 122, StartHourId = 55, StartMinuteId = 79, processId = 0},
-	[19] = {TextId = 23, BtId = 123, StartHourId = 56, StartMinuteId = 80, processId = 0},
-	[20] = {TextId = 24, BtId = 124, StartHourId = 57, StartMinuteId = 81, processId = 0},
-	[21] = {TextId = 25, BtId = 125, StartHourId = 58, StartMinuteId = 82, processId = 0},
-	[22] = {TextId = 26, BtId = 126, StartHourId = 59, StartMinuteId = 83, processId = 0},
-	[23] = {TextId = 27, BtId = 127, StartHourId = 60, StartMinuteId = 84, processId = 0},
-	[24] = {TextId = 28, BtId = 128, StartHourId = 61, StartMinuteId = 85, processId = 0},
+	[1 ] = {textId = 5,  buttonId = 105, startHourId = 38, startHour = 0, startMinuteId = 62, startMinute = 0, processId = 0},
+	[2 ] = {textId = 6,  buttonId = 106, startHourId = 39, startHour = 0, startMinuteId = 63, startMinute = 0, processId = 0},
+	[3 ] = {textId = 7,  buttonId = 107, startHourId = 40, startHour = 0, startMinuteId = 64, startMinute = 0, processId = 0},
+	[4 ] = {textId = 8,  buttonId = 108, startHourId = 41, startHour = 0, startMinuteId = 65, startMinute = 0, processId = 0},
+	[5 ] = {textId = 9,  buttonId = 109, startHourId = 42, startHour = 0, startMinuteId = 66, startMinute = 0, processId = 0},
+	[6 ] = {textId = 10, buttonId = 110, startHourId = 43, startHour = 0, startMinuteId = 67, startMinute = 0, processId = 0},
+	[7 ] = {textId = 11, buttonId = 111, startHourId = 44, startHour = 0, startMinuteId = 68, startMinute = 0, processId = 0},
+	[8 ] = {textId = 12, buttonId = 112, startHourId = 45, startHour = 0, startMinuteId = 69, startMinute = 0, processId = 0},
+	[9 ] = {textId = 13, buttonId = 113, startHourId = 46, startHour = 0, startMinuteId = 70, startMinute = 0, processId = 0},
+	[10] = {textId = 14, buttonId = 114, startHourId = 47, startHour = 0, startMinuteId = 71, startMinute = 0, processId = 0},
+	[11] = {textId = 15, buttonId = 115, startHourId = 48, startHour = 0, startMinuteId = 72, startMinute = 0, processId = 0},
+	[12] = {textId = 16, buttonId = 116, startHourId = 49, startHour = 0, startMinuteId = 73, startMinute = 0, processId = 0},
+	[13] = {textId = 17, buttonId = 117, startHourId = 50, startHour = 0, startMinuteId = 74, startMinute = 0, processId = 0},
+	[14] = {textId = 18, buttonId = 118, startHourId = 51, startHour = 0, startMinuteId = 75, startMinute = 0, processId = 0},
+	[15] = {textId = 19, buttonId = 119, startHourId = 52, startHour = 0, startMinuteId = 76, startMinute = 0, processId = 0},
+	[16] = {textId = 20, buttonId = 120, startHourId = 53, startHour = 0, startMinuteId = 77, startMinute = 0, processId = 0},
+	[17] = {textId = 21, buttonId = 121, startHourId = 54, startHour = 0, startMinuteId = 78, startMinute = 0, processId = 0},
+	[18] = {textId = 22, buttonId = 122, startHourId = 55, startHour = 0, startMinuteId = 79, startMinute = 0, processId = 0},
+	[19] = {textId = 23, buttonId = 123, startHourId = 56, startHour = 0, startMinuteId = 80, startMinute = 0, processId = 0},
+	[20] = {textId = 24, buttonId = 124, startHourId = 57, startHour = 0, startMinuteId = 81, startMinute = 0, processId = 0},
+	[21] = {textId = 25, buttonId = 125, startHourId = 58, startHour = 0, startMinuteId = 82, startMinute = 0, processId = 0},
+	[22] = {textId = 26, buttonId = 126, startHourId = 59, startHour = 0, startMinuteId = 83, startMinute = 0, processId = 0},
+	[23] = {textId = 27, buttonId = 127, startHourId = 60, startHour = 0, startMinuteId = 84, startMinute = 0, processId = 0},
+	[24] = {textId = 28, buttonId = 128, startHourId = 61, startHour = 0, startMinuteId = 85, startMinute = 0, processId = 0},
 };
 
 --***********************************************************************************************
@@ -379,60 +395,136 @@ TimedProcessTab = {
 --***********************************************************************************************
 function run_control_notify(screen,control,value)
 	--control-100表示与该按钮重合的文本框
-	if (control) >= PeriodicTab[1].BtId  and control <= HandProcessTab.BtId then--当点击需要选择流程的文本框时
+	if (control) >= PeriodicTab[1].buttonId  and control <= HandProcessTab[1].buttonId then--当点击需要选择流程的文本框时
         process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
     elseif control == RunStopButtonId then--当按下开始按钮和停止按钮时.
         if get_value(RUN_CONTROL_SCREEN,control) == 1.0 then--按钮按下,此时系统状态变为运行
-            SystemArg.status = WorkStatus.run;
-            ShowSysWorkStatus(WorkStatus.run);
+            SystemArg.status = WorkStatus.readyRun;
+            SystemArg.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+            if SystemArg.currentProcessId ~= 0 then
+                SetSysWorkStatus(WorkStatus.run);--设置工作状态为运行
+                ReadProcessFile(SystemArg.currentProcessId);--读取流程配置文件
+            end
         else--按钮松开,此时系统状态应变为停止
             SystemStop();
         end
     elseif control == RunTypeMenuId then--更改运行方式
         SystemArg.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
         WriteConfigFile(2);--更新文件中<RunCtrl>标签中的内容
-    elseif control == HandProcessTab.TimesId then--更改手动运行次数
-        SystemArg.handProcessTimes = tonumber(get_text(RUN_CONTROL_SCREEN,control));
-        WriteConfigFile(2);--更新文件中<RunCtrl>标签中的内容
-    elseif control >= TimedProcessTab[5].TextId and control <= TimedProcessTab[10].TextId then --更改周期开始时间与频率
-        TimedProcessTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));
-        WriteConfigFile(2);--更新文件中<RunCtrl>标签中的内容
-	end
+    elseif control == HandProcessTab[1].TimesId then--更改手动运行次数
+        HandProcessTab[1].TimesId = tonumber(get_text(RUN_CONTROL_SCREEN,control));
+        WriteConfigFile(2);
+    elseif control >= PeriodicTab[5].textId and control <= PeriodicTab[10].textId then --更改周期开始时间与频率
+        PeriodicTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与频率
+        WriteConfigFile(2);
+    elseif control >= TimedProcessTab[1].startHourId and control <= TimedProcessTab[24].startHourId then--更改定时流程时间中的小时
+        TimedProcessTab[control-37].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-37后,对应了定时流程的序号
+        WriteConfigFile(2);
+    elseif control >= TimedProcessTab[1].startMinuteId and control <= TimedProcessTab[24].startMinuteId then--更改定时流程时间中的分钟
+        TimedProcessTab[control-61].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-61后,对应了定时流程的序号
+        WriteConfigFile(2);
+    end
 end
 
 
 --***********************************************************************************************
 --当修改了某个流程时,调用该函数,一般按了流程选择2界面中的确认按钮会调用该函数
+--control 运行控制界面中流程文本的id
 --***********************************************************************************************
 function process_change(control)
     local processId = 0;
 
-    --遍历流程1-12
+    --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),name, 1) ~= nil then
+        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), get_text(RUN_CONTROL_SCREEN, control), 1) ~= nil then
             processId = i;
             break;
         end
     end
 
     --设置流程id号
-    if control == HandProcessTab[1].TextId then--手动流程设置
-        SystemArg.handProcess = processId;
-    elseif control >= PeriodicTab[1].TextId and control <= PeriodicTab[4].TextId then--周期流程
+    if control == HandProcessTab[1].textId then--手动流程设置
+        HandProcessTab[1].processId = processId;
+    elseif control >= PeriodicTab[1].textId and control <= PeriodicTab[4].textId then--周期流程
         for i=1,4,1 do
-            if control == PeriodicTab[i].TextId then
+            if control == PeriodicTab[i].textId then--找到当前是设置的第几个周期流程
                 PeriodicTab[i].processId = processId;
             end
         end
-    elseif control >= TimedProcessTab[1].TextId and control <= TimedProcessTab[24].TextId then--定时流程
+    elseif control >= TimedProcessTab[1].textId and control <= TimedProcessTab[24].textId then--定时流程
         for i=1,24,1 do
-            if control == TimedProcessTab[i].TextId then
+            if control == TimedProcessTab[i].textId then --找到当前设置的是定时流程中的哪个
                 TimedProcessTab[i].processId = processId;
             end
         end
     end
 end
 
+--***********************************************************************************************
+--当点击开始按钮时,调用该函数执行流程
+--***********************************************************************************************
+function get_current_process_id()
+    local processId = 0;
+    if SystemArg.status == WorkStatus.run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
+        return SystemArg.currentProcessId;
+    end
+
+    if SystemArg.runType == WorkType.hand then --手动模式 ,这个比较简单,只有一个流程可设置.
+        processId = HandProcessTab[1].processId;
+    elseif SystemArg.runType == WorkType.auto then --自动模式  自动模式中的定时时间错过了会直接跳过该流程.
+
+        local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
+        SystemArg.hour = hour;
+        SystemArg.minute = min;
+        SysDateTime =  string.format("%02d,%02d,%02d,%02d,%02d",year,mon,day,hour,min);
+        SystemArg.periodStartDateTime = string.format("%02d,%02d,%02d,%02d,%02d",
+                                                       PeriodicTab[5].value,PeriodicTab[6].value,PeriodicTab[7].value,
+                                                       PeriodicTab[8].value,PeriodicTab[9].value);
+
+        if SystemArg.periodStartDateTime <= SysDateTime then--设置的周期开始时间到了,查找定时设置中,是否有满足条件的流程
+            local diff = SystemArg.periodicIndex - 1;
+            for i = SystemArg.periodicIndex, SystemArg.periodicIndex + 3, 1 do --因为周期流程有4个,所以需要循环查找四次
+                if PeriodicTab[i- diff].processId ~= 0 then--流程序号不为0 ,表示该流程有设置,跳出循环, i-diff 表示4个周期流程的第几个流程
+                    processId = PeriodicTab[i - diff].processId;--获取流程对应的序号
+
+                    SystemArg.periodicIndex = i - diff + 1;--该变量使用完后加1, 指向下一个周期流程
+                    if SystemArg.periodicIndex > 4 then
+                        SystemArg.periodicIndex = 1;--从新指向第一个流程
+                    end
+                    break;
+                end
+            end
+        else     --循环查找定时设置中,是否有满足条件的流程
+            for i=1,24,1 do
+                if TimedProcessTab[i].startHour == SystemArg.hour and 
+                   TimedProcessTab[i].startMinute == SystemArg.minute and
+                   TimedProcessTab[i].processId ~= 0 --序号不为0, 表示该流程有设置
+                then
+                    processId = TimedProcessTab[i].processId;
+                end
+            end
+        end
+        
+    elseif SystemArg.runType == WorkType.controlled then --反控
+
+    end
+    return processId;
+end
+
+--***********************************************************************************************
+--该函数在定时器中调用,当
+--***********************************************************************************************
+
+function excute_process()
+
+end
+
+--***********************************************************************************************
+--  在底部的状态栏显示提示信息
+--***********************************************************************************************
+function SystemStop()
+    SetSysWorkStatus(WorkStatus.stop);--将状态栏显示为停止
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -471,39 +563,39 @@ function process_set1_control_notify(screen,control,value)
         WriteConfigFile(1);
     elseif control == InportBtId then --导入按钮
         if SdPath  ~= nil then
-            ShowSysTips(TipsTab.Importing);
+            ShowSysTips(TipsTab.importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( SdPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
-            ShowSysTips(TipsTab.Imported);
+            ShowSysTips(TipsTab.imported);
             ReadConfigFile(1);--加载流程设置1界面中的参数配置
             ReadConfigFile(2);--加载运行控制界面中的参数配置
         elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab.Importing);
+            ShowSysTips(TipsTab.importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( UsbPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
-            ShowSysTips(TipsTab.Imported);
+            ShowSysTips(TipsTab.imported);
             ReadConfigFile(1);--加载流程设置1界面中的参数配置
             ReadConfigFile(2);--加载运行控制界面中的参数配置
         else
-            ShowSysTips(TipsTab.InsertSdUsb);
+            ShowSysTips(TipsTab.insertSdUsb);
         end;
     elseif control == ExportBtId then --导出按钮(将流程配置导出到SD卡中)
         if SdPath  ~= nil then
-            ShowSysTips(TipsTab.Outporting);
+            ShowSysTips(TipsTab.outporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                     ConfigFileCopy(i, SdPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
-            ShowSysTips(TipsTab.OutPorted);
+            ShowSysTips(TipsTab.outported);
         elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab.Outporting);
+            ShowSysTips(TipsTab.outporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                     ConfigFileCopy(i, UsbPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
-            ShowSysTips(TipsTab.OutPorted);
+            ShowSysTips(TipsTab.outported);
         else
-            ShowSysTips(TipsTab.InsertSdUsb);
+            ShowSysTips(TipsTab.insertSdUsb);
         end;
     elseif control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
@@ -538,33 +630,33 @@ ProcessSelectButtonId = 35;--位于流程设置2
 ProcessSelectId = 38;      --位于流程设置2/3都是这个id
 ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程设置2/3界面中都是这个id
 
---这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:selectId = nameId + 100; nameId = EditId + 100
+--这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:selectId = nameId + 100; nameId = editId + 100
 --其中[1]-[12]中包含的id控件在流程设置2界面中,[13]-[24]中包含的id控件在流程设置3界面中
 TabAction = {
-    [1]  = {selectId = 300, nameId = 200, EditId = 100},
-    [2]  = {selectId = 301, nameId = 201, EditId = 101},
-    [3]  = {selectId = 302, nameId = 202, EditId = 102},
-    [4]  = {selectId = 303, nameId = 203, EditId = 103},
-    [5]  = {selectId = 304, nameId = 204, EditId = 104},
-    [6]  = {selectId = 305, nameId = 205, EditId = 105},
-    [7]  = {selectId = 306, nameId = 206, EditId = 106},
-    [8]  = {selectId = 307, nameId = 207, EditId = 107},
-    [9]  = {selectId = 308, nameId = 208, EditId = 108},
-    [10] = {selectId = 309, nameId = 209, EditId = 109},
-    [11] = {selectId = 310, nameId = 210, EditId = 110},
-    [12] = {selectId = 311, nameId = 211, EditId = 111},
-    [13] = {selectId = 300, nameId = 200, EditId = 100},
-    [14] = {selectId = 301, nameId = 201, EditId = 101},
-    [15] = {selectId = 302, nameId = 202, EditId = 102},
-    [16] = {selectId = 303, nameId = 203, EditId = 103},
-    [17] = {selectId = 304, nameId = 204, EditId = 104},
-    [18] = {selectId = 305, nameId = 205, EditId = 105},
-    [19] = {selectId = 306, nameId = 206, EditId = 106},
-    [20] = {selectId = 307, nameId = 207, EditId = 107},
-    [21] = {selectId = 308, nameId = 208, EditId = 108},
-    [22] = {selectId = 309, nameId = 209, EditId = 109},
-    [23] = {selectId = 310, nameId = 210, EditId = 110},
-    [24] = {selectId = 311, nameId = 211, EditId = 111},
+    [1]  = {selectId = 300, nameId = 200, editId = 100},
+    [2]  = {selectId = 301, nameId = 201, editId = 101},
+    [3]  = {selectId = 302, nameId = 202, editId = 102},
+    [4]  = {selectId = 303, nameId = 203, editId = 103},
+    [5]  = {selectId = 304, nameId = 204, editId = 104},
+    [6]  = {selectId = 305, nameId = 205, editId = 105},
+    [7]  = {selectId = 306, nameId = 206, editId = 106},
+    [8]  = {selectId = 307, nameId = 207, editId = 107},
+    [9]  = {selectId = 308, nameId = 208, editId = 108},
+    [10] = {selectId = 309, nameId = 209, editId = 109},
+    [11] = {selectId = 310, nameId = 210, editId = 110},
+    [12] = {selectId = 311, nameId = 211, editId = 111},
+    [13] = {selectId = 300, nameId = 200, editId = 100},
+    [14] = {selectId = 301, nameId = 201, editId = 101},
+    [15] = {selectId = 302, nameId = 202, editId = 102},
+    [16] = {selectId = 303, nameId = 203, editId = 103},
+    [17] = {selectId = 304, nameId = 204, editId = 104},
+    [18] = {selectId = 305, nameId = 205, editId = 105},
+    [19] = {selectId = 306, nameId = 206, editId = 106},
+    [20] = {selectId = 307, nameId = 207, editId = 107},
+    [21] = {selectId = 308, nameId = 208, editId = 108},
+    [22] = {selectId = 309, nameId = 209, editId = 109},
+    [23] = {selectId = 310, nameId = 210, editId = 110},
+    [24] = {selectId = 311, nameId = 211, editId = 111},
 };
 
 --设置编辑按钮对应的跳转界面
@@ -573,10 +665,10 @@ TabAction = {
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
     if screen == PROCESS_SET2_SCREEN then
-        ReadProcessFile(control-99);--在流程设置2界面, 当编辑按钮id号为100时, 当前动作序号为1, 依次类推
+        ReadProcessTag(control-99);--在流程设置2界面, 当编辑按钮id号为100时, 当前动作序号为1, 依次类推
         set_screen_actionNumber(screen, control-99);
     elseif screen == PROCESS_SET3_SCREEN then
-        ReadProcessFile(control-99+12);
+        ReadProcessTag(control-99+12);
         set_screen_actionNumber(screen, control-99+12);
     end
 
@@ -624,7 +716,7 @@ function process_set2_control_notify(screen,control,value)
 
     elseif (control-100) >= TabAction[1].selectId and (control-100) <= TabAction[12].selectId then--当点击"动作选择"下面的按钮时
         action_select_set(PROCESS_SET2_SCREEN, control-100);
-    elseif control >= TabAction[1].EditId and control <= TabAction[12].EditId then--当点击"编辑"按钮时
+    elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
         if string.len( get_text(PROCESS_SET2_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作选择"id
         end
@@ -646,7 +738,7 @@ function process_set3_control_notify(screen,control,value)
         end
     elseif (control-100) >= TabAction[13].selectId and (control-100) <= TabAction[24].selectId then--当点击"动作选择"下面的按钮时
         action_select_set(PROCESS_SET3_SCREEN, control-100);
-    elseif control >= TabAction[13].EditId and control <= TabAction[24].EditId then--当点击"编辑"按钮时
+    elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
         if string.len( get_text(PROCESS_SET3_SCREEN, control+100) ) ~= 0 then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作选择"id
         end
@@ -699,6 +791,12 @@ function process_start_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--  执行开始流程
+--***********************************************************************************************
+function excute_start_process()
+    ShowSysCurrentAction("开始");
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -730,6 +828,12 @@ function process_get_sample_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--  执行取样流程
+--***********************************************************************************************
+function excute_get_sample_process()
+    ShowSysCurrentAction("取样");--显示当前步骤
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -776,6 +880,12 @@ function process_inject_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--  执行注射泵加液体流程
+--***********************************************************************************************
+function excute_inject_process()
+    ShowSysCurrentAction("注射泵加液");--显示当前步骤
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -801,6 +911,13 @@ function process_peristaltic_control_notify(screen,control,value)
 end
 
 
+--***********************************************************************************************
+--  执行蠕动泵加液体流程
+--***********************************************************************************************
+function excute_peristaltic_process()
+    ShowSysCurrentAction("蠕动泵加液");--显示当前步骤
+end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-消解
@@ -823,6 +940,16 @@ function process_dispel_control_notify(screen,control,value)
 end
 
 
+
+--***********************************************************************************************
+--  执行消解流程
+--***********************************************************************************************
+function excute_dispel_process()
+    ShowSysCurrentAction("消解加液");--显示当前步骤
+end
+
+
+
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-读取信号
 --------------------------------------------------------------------------------------------------------------------]]
@@ -840,6 +967,16 @@ function process_read_signal_control_notify(screen,control,value)
         change_screen(DestScreen);
     end
 end
+
+
+
+--***********************************************************************************************
+--  执行读取信号流程
+--***********************************************************************************************
+function excute_read_signal_process()
+    ShowSysCurrentAction("读取信号");--显示当前步骤
+end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-计算
@@ -859,6 +996,14 @@ function process_calculate_control_notify(screen,control,value)
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
+end
+
+
+--***********************************************************************************************
+--  执行计算流程
+--***********************************************************************************************
+function excute_calculate_process()
+    ShowSysCurrentAction("计算");--显示当前步骤
 end
 
 
@@ -882,6 +1027,15 @@ function process_valve_ctrl_control_notify(screen,control,value)
     end
 end
 
+
+--***********************************************************************************************
+--  执行阀操作流程
+--***********************************************************************************************
+function excute_valve_ctrl_process()
+    ShowSysCurrentAction("阀操作");--显示当前步骤
+end
+
+
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-等待时间
 --------------------------------------------------------------------------------------------------------------------]]
@@ -897,6 +1051,14 @@ function process_wait_time_control_notify(screen,control,value)
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
+end
+
+
+--***********************************************************************************************
+--  执行等待时间流程
+--***********************************************************************************************
+function excute_wait_time_process()
+    ShowSysCurrentAction("等待时间");--显示当前步骤
 end
 
 
@@ -962,7 +1124,7 @@ function process_select2_control_notify(screen,control,value)
             set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
             set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
             if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
-                ReadProcessFile(0);
+                ReadProcessTag(0);
             elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
                 process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
                 WriteConfigFile(2);--2对应<RunCtrl>标签
@@ -1313,6 +1475,10 @@ cfgFileTab = {
 --tagNum = 2 : 修改运行控制界面中的参数
 --***********************************************************************************************
 function WriteConfigFile(tagNum)
+    if tagNum ~= 1 and tagNum ~= 2 then
+        return;
+    end
+
     local configFile = io.open("0", "a+");        --以覆盖写入的方式打开文本
     configFile:seek("set");                       --把文件位置定位到开头
     local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
@@ -1365,8 +1531,28 @@ function ReadConfigFile(tagNum)
             set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
         end
     elseif tagNum == 2 then
+        --将文件中的参数在界面上进行解析
         for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
             set_text(RUN_CONTROL_SCREEN, i, tab[i])
+        end
+        --将文件中的参数赋值给相应的变量
+        SystemArg.runType = tab[RunTypeID];
+        HandProcessTab[1].processId = get_process_Id(tab[HandProcessTab[1].textId]);
+        HandProcessTab[1].times = tonumber(tab[HandProcessTab[1].TimesId]);
+        for i = 1,4,1 do
+            PeriodicTab[i].processId = get_process_Id(tab[i]);
+        end
+        for i = 5,10,1 do
+            PeriodicTab[i].value = tonumber(tab[i+27]);--周期流程的时间是从32开始,所以需要 i+27
+        end
+        for i = 1,24,1 do
+            TimedProcessTab[i].processId = get_process_Id(tab[i+4]);--定时流程的文本id从5开始,所以要 i+4
+        end
+        for i = 1,24,1 do
+            TimedProcessTab[i].startHour = get_process_Id(tab[i+37]);--定时流程的开始小时从38开始,所以需要 i+37
+        end
+        for i = 1,24,1 do
+            TimedProcessTab[i].startMinute = get_process_Id(tab[i+61]);--定时流程的开始分钟从61开始,所以需要 i+61
         end
     end
 end
@@ -1493,10 +1679,10 @@ function WriteProcessFile(actionNumber)
 end
 
 --***********************************************************************************************
---加载动作配置,在流程设置2/3界面点击编辑按钮时,会调用该函数,获取当前配置
+--读配置文件函数,这里每次只读取一个标签里的值, 例如<action1>标签之间的值
 --actionNumber:当前动作为第几步
 --***********************************************************************************************
-function ReadProcessFile(actionNumber)
+function ReadProcessTag(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
     local fileName = 0;
     for i=1,12,1 do--循环查找当前流程名称对应的序号.
@@ -1529,12 +1715,12 @@ function ReadProcessFile(actionNumber)
     end
     
     actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型
-    actionTab = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
-    if actionTab == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
+    local contentTab = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
+    if contentTab == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
         return;
     end
-    tab = split(actionTab, ",");--分割字符串
-    if actionNumber == 0 then --判定位<action0>标签
+    tab = split(contentTab, ",");--分割字符串
+    if actionNumber == 0 then --判定为<action0>标签
         for i=1,12,1 do
             set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId, tab[(i-1)*2+1]);  --把数据显示到文本框中
             set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);   --把数据显示到文本框中
@@ -1605,6 +1791,43 @@ function ReadProcessFile(actionNumber)
         end
     end
 end
+
+
+--***********************************************************************************************
+--读取整个流程配置文件中的值,并统计有多少个步骤
+--actionNumber:当前动作为第几步
+--***********************************************************************************************
+function ReadProcessFile(fileName)
+    local processFile = io.open(fileName, "r");      --打开文本
+    processFile:seek("set");                         --把文件位置定位到开头
+	SystemArg.processFileStr = processFile:read("a");--从当前位置读取整个文件，并赋值到字符串中
+    processFile:close();                             --关闭文本
+
+    --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
+    --SystemArg.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
+    --假如SystemArg.actionTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
+    actionString = GetSubString(SystemArg.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
+    SystemArg.processName = GetSubString(actionString, "<type>","</type>");--获取流程名称
+    contentTab = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
+    tab = split(contentTab, ",");--分割字符串,并将字符串存入tab数组
+    SystemArg.actionNumber = 0; 
+    for i = 1,24,2 do -- tab中[1][2]分别保存了一个动作的类型与名称,占用了2个, 由于我们是统计action个数,所以这里步进需要设置为2
+        if string.len(tab[i]) ~= 1 and string.len(tab[i]) ~= 0 then--判断动作类型不为nil 或者不为一个空格
+            SystemArg.actionNumber = SystemArg.actionNumber + 1;--action个数+1
+            SystemArg.actionTab[SystemArg.actionNumber] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
+        end
+    end
+
+    for i = 25,48,2 do
+        if string.len(tab[i]) ~= 1 and string.len(tab[i]) ~= 0 then
+            SystemArg.actionNumber = SystemArg.actionNumber + 1;
+            SystemArg.actionTab[SystemArg.actionNumber] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
+        end
+    end
+
+end
+
+
 
 --***********************************************************************************************
 --字符串分割函数,str -> 需要分割的字符串;delimiter->分隔符
@@ -1684,5 +1907,24 @@ function ConfigFileCopy(sourcefile, destinationfile)
     sFile:close()
     destFile:close()
 end
+
+--***********************************************************************************************
+--根据流程名称,获取对应的序号
+--name : 流程名称
+--***********************************************************************************************
+function get_process_Id(name)
+    local processId = 0;
+
+    --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
+    for i = 1, 12, 1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), name, 1) ~= nil then
+            processId = i;
+            break;
+        end
+    end
+    return processId;
+end 
+
+
 
 

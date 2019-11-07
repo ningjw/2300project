@@ -154,7 +154,6 @@ function on_init()
     ShowSysUser(User.operator);--开机之后默认为操作员
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
-
 end
 
 --定时器超时，执行此回调函数,定时器编号 0~31
@@ -366,6 +365,7 @@ end
     运行控制                                                                                                          
 --------------------------------------------------------------------------------------------------------------------]]
 
+
 --流程设置相关的按钮id从101 - 129, 其中101为周期流程第一个, id129为手动流程
 RUNCTRL_TextStartId = 1;
 RUNCTRL_TextEndId = 85;
@@ -441,19 +441,19 @@ function run_control_notify(screen,control,value)
         end
     elseif control == RunTypeMenuId then--更改运行方式
         SystemArg.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
-        WriteProcessFile(1);--更新文件中<RunCtrl>标签中的内容
+        WriteProcessFile(2);
     elseif control == HandProcessTab[1].TimesId then--更改手动运行次数
-        HandProcessTab[1].TimesId = tonumber(get_text(RUN_CONTROL_SCREEN,control));
-        WriteProcessFile(1);
+        HandProcessTab[1].times = tonumber(get_text(RUN_CONTROL_SCREEN, control));
+        WriteProcessFile(2);
     elseif control >= PeriodicTab[5].textId and control <= PeriodicTab[10].textId then --更改周期开始时间与频率
         PeriodicTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与频率
-        WriteProcessFile(1);
+        WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startHourId and control <= TimedProcessTab[24].startHourId then--更改定时流程时间中的小时
         TimedProcessTab[control-37].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-37后,对应了定时流程的序号
-        WriteProcessFile(1);
+        WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startMinuteId and control <= TimedProcessTab[24].startMinuteId then--更改定时流程时间中的分钟
         TimedProcessTab[control-61].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-61后,对应了定时流程的序号
-        WriteProcessFile(1);
+        WriteProcessFile(2);
     end
 end
 
@@ -477,15 +477,23 @@ function process_change(control)
     if control == HandProcessTab[1].textId then--手动流程设置
         HandProcessTab[1].processId = processId;
     elseif control >= PeriodicTab[1].textId and control <= PeriodicTab[4].textId then--周期流程
-        for i=1,4,1 do
-            if control == PeriodicTab[i].textId then--找到当前是设置的第几个周期流程
-                PeriodicTab[i].processId = processId;
+        for i=1,4,1 do--找到当前是设置的第几个周期流程, 且流程名称不是一个空格(在流程选择2界面中,提供一个空流程,用于删除功能)
+            if control == PeriodicTab[i].textId  then
+                if get_text(PROCESS_SELECT2_SCREEN,control) == BLANK_SPACE then
+                    PeriodicTab[i].processId = 0;
+                else
+                    PeriodicTab[i].processId = processId;
+                end
             end
         end
     elseif control >= TimedProcessTab[1].textId and control <= TimedProcessTab[24].textId then--定时流程
         for i=1,24,1 do
-            if control == TimedProcessTab[i].textId then --找到当前设置的是定时流程中的哪个
-                TimedProcessTab[i].processId = processId;
+            if control == TimedProcessTab[i].textId  then --找到当前设置的是定时流程中的哪个
+                if  get_text(PROCESS_SELECT2_SCREEN,control) == BLANK_SPACE then
+                    PeriodicTab[i].processId = 0;
+                else
+                    TimedProcessTab[i].processId = processId;
+                end
             end
         end
     end
@@ -594,6 +602,26 @@ function set_period_start_date_time(minFreq)
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[9].textId, PeriodicTab[9].value );
 
     set_period_start_date(math.modf(minTotal / dayHour));
+    WriteProcessFile(2);
+end
+
+--***********************************************************************************************
+--将当前时间设置为本次流程开始时间
+--***********************************************************************************************
+function set_process_start_date_time(year,month,day,hour,minute)
+    PeriodicTab[5].value = year;
+    PeriodicTab[6].value = month;
+    PeriodicTab[7].value = day;
+    PeriodicTab[8].value = hour;
+    PeriodicTab[9].value = minute;
+
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value);
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[8].textId, PeriodicTab[8].value );
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[9].textId, PeriodicTab[9].value );
+
+    WriteProcessFile(2);
 end
 
 --***********************************************************************************************
@@ -604,6 +632,7 @@ function get_current_process_id()
     if SystemArg.status == WorkStatus.run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
         return SystemArg.currentProcessId;
     end
+
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
     if SystemArg.runType == WorkType.hand then 
         processId = HandProcessTab[1].processId;
@@ -626,7 +655,6 @@ function get_current_process_id()
                 else 
                     temp_i = i;
                 end
-
                 if PeriodicTab[temp_i].processId ~= 0 then--流程序号不为0 ,表示该流程有设置,跳出循环, i-diff 表示4个周期流程的第几个流程
                     processId = PeriodicTab[temp_i].processId;--获取流程对应的序号
                     SystemArg.periodicIndex = temp_i;
@@ -643,6 +671,7 @@ function get_current_process_id()
                 end
             end
         end
+
     -------------------------------------------------反控-----------------------------------------------
     elseif SystemArg.runType == WorkType.controlled then 
 
@@ -655,11 +684,15 @@ end
 --***********************************************************************************************
 function process_ready_run()
     SystemArg.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+    
     if SystemArg.currentProcessId ~= 0  and io.open(SystemArg.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         SetSysWorkStatus(WorkStatus.run);                 --设置工作状态为运行
 --        DisableProcessSet();                            --禁止流程设置相关的操作
-        ReadProcessFile(2);                                --读取运行控制界面/流程设置1界面中的参数
-        ReadActionFile(SystemArg.currentProcessId);      --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
+        ReadProcessFile(1);                               --读取流程设置界面界面中的参数
+        ReadProcessFile(2);                               --读取运行控制界面界面中的参数
+        ReadActionFile(SystemArg.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
+        -- local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
+        -- set_process_start_date_time(year,mon,day,hour,min);--设置本次流程开始时间
         SystemArg.actionStep = 1;                         --所有步骤都是从1开始
         SystemArg.actionSubStep = 1;
         SystemArg.handRunTimes = 0;
@@ -733,7 +766,7 @@ function excute_process()
                     SystemArg.periodicIndex = 1;
                 end
                 set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
-                WriteProcessFile(1);
+                WriteProcessFile(2);
                 SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
             ----------------反控模式--------------------
             elseif SystemArg.runType == WorkType.controlled then
@@ -755,8 +788,6 @@ function SystemStop()
     ShowSysCurrentAction("无");
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
 end
-
-
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -792,7 +823,7 @@ InportBtId = 42;--导入按钮
 function process_set1_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
-        WriteProcessFile(2);
+        WriteProcessFile(1);
     elseif control == InportBtId then --导入按钮
         if SdPath  ~= nil then
             ShowSysTips(TipsTab.importing);
@@ -939,13 +970,10 @@ function process_set2_control_notify(screen,control,value)
         end
     elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
         process_select2_set(PROCESS_SET2_SCREEN, ProcessSelectId);--设置流程选择2界面中按确认/返回按钮后,返回流程设置2界面
-        -- if get_text(PROCESS_SET2_SCREEN, ProcessSelectId) ~= BLANK_SPACE  then
-        --     WriteActionFile(0);--在这里调用该函数的含义: 当不存在该流程的配置文件时, 可以自动创建一个
-        -- end
     elseif control == ProcessSelectId then
 
     elseif (control-100) >= TabAction[1].selectId and (control-100) <= TabAction[12].selectId then--当点击"动作选择"下面的按钮时
-        action_select_set(PROCESS_SET2_SCREEN, control-100);
+        action_select_set(PROCESS_SET2_SCREEN, control-100, control-399);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
         if get_text(PROCESS_SET2_SCREEN, control+100) ~= BLANK_SPACE then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作选择"id
@@ -967,7 +995,7 @@ function process_set3_control_notify(screen,control,value)
             WriteActionFile(0);
         end
     elseif (control-100) >= TabAction[13].selectId and (control-100) <= TabAction[24].selectId then--当点击"动作选择"下面的按钮时
-        action_select_set(PROCESS_SET3_SCREEN, control-100);
+        action_select_set(PROCESS_SET3_SCREEN, control-100, control-399);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
         if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作选择"id
@@ -1325,7 +1353,7 @@ function process_select_control_notify(screen, control, value)
 				set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
             end
         end
-        WriteProcessFile(2);
+        WriteProcessFile(1);--保存流程设置1界面中的参数
 	elseif control == CancelButtonId then --取消按钮
 		change_screen(DestScreen);
 	end
@@ -1361,7 +1389,7 @@ function process_select2_control_notify(screen,control,value)
                 ReadActionTag(0);
             elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
                 process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
-                WriteProcessFile(1);--2对应<RunCtrl>标签
+                WriteProcessFile(2);--2对应<RunCtrl>标签
             end
         end
 
@@ -1389,19 +1417,19 @@ function goto_ProcessSelect2()
     --遍历流程1-12,看是否有设置名称,如果设置了名称,则在流程选择2界面中进行显示
     --如果是运行控制界面,除了需要判断是否设置了流程名称, 还需要判断该流程是否有对应的配置文件
     NumberOfProcess = 0;
-    printf(DestScreen);
+
     local processFile = nil;
     for i = 1, 12, 1 do
-        -- if DestScreen == RUN_CONTROL_SCREEN then--当为运行控制界面时,需要判断是否有对应的流程配置文件
-        --     processFile = io.open(i, "r");
-        -- else
+        if DestScreen == RUN_CONTROL_SCREEN then--当为运行控制界面时,需要判断是否有对应的流程配置文件
+            processFile = io.open(i, "r");
+        else
             processFile = 1;
-        -- end
+        end
         if get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId) ~= BLANK_SPACE--获取名称长度,当名称长度不为0时表示有效
            and  processFile ~= nil then--该流程含有配置文件
-            -- if DestScreen == RUN_CONTROL_SCREEN then
-            --     processFile:close();
-            -- end
+            if DestScreen == RUN_CONTROL_SCREEN then
+                processFile:close();
+            end
             NumberOfProcess = NumberOfProcess + 1;--个数+1
             set_visiable(PROCESS_SELECT2_SCREEN, NumberOfProcess,  1);--显示id为NumberOfProcess的文本
             set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,TabProcess[i].nameId))--为该文本框设置内容
@@ -1409,7 +1437,7 @@ function goto_ProcessSelect2()
         end
     end
 
-    if NumberOfProcess ~= 0 and DestScreen ~= RUN_CONTROL_SCREEN then
+    if NumberOfProcess ~= 0 and DestScreen == RUN_CONTROL_SCREEN then
         -- 设置一个为"无"的选项
         NumberOfProcess = NumberOfProcess + 1;
         set_visiable(PROCESS_SELECT2_SCREEN, NumberOfProcess,  1);--显示id为NumberOfProcess的文本
@@ -1435,9 +1463,10 @@ ActionSelectItem = nil;
 
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
-function action_select_set(screen,control)
+function action_select_set(screen,control,actionNumber)
 	DestScreen = screen;
-	DestControl = control;
+    DestControl = control;
+    DestActionNum = actionNumber;
 end
 
 --用户通过触摸修改控件后，执行此回调函数。
@@ -1451,6 +1480,7 @@ function action_select_control_notify(screen,control,value)
             set_text(DestScreen, DestControl, ActionItem[ActionSelectItem]);--动作选择
             set_text(DestScreen, DestControl-100, ActionItem[ActionSelectItem]);--DestControl-100对应动作名称
         end
+        WriteDefaultActionTag(DestActionNum);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -1724,8 +1754,8 @@ cfgFileTab = {
 };
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
---tagNum = 1 : 修改运行控制界面中的参数 
---tagNum = 2 : 修改流程设置界面中的参数
+--tagNum = 1 : 修改流程设置1界面中的参数 
+--tagNum = 2 : 修改运行控制界面中的参数
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
     if tagNum ~= 1 and tagNum ~= 2 then
@@ -1742,15 +1772,15 @@ function WriteProcessFile(tagNum)
     configFile:write(fileString);                 --将处理过的原文件内容重新写入文件
     configFile:write(cfgFileTab[tagNum].sTag);
 
-    if tagNum == 1 then--运行控制界面中的参数
-        for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
-            configFile:write(get_text(RUN_CONTROL_SCREEN,i)..",");
-        end
-    elseif tagNum == 2 then--流程设置1界面中的参数
+    if tagNum == 1 then--流程设置1界面中的参数
         for i=1,12,1 do
             configFile:write(get_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId)..",".. --流程类型选择
                              get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)..","..   --流程名称
                              get_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId)..",");  --流程量程
+        end
+    elseif tagNum == 2 then--运行控制界面中的参数
+        for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
+            configFile:write(get_text(RUN_CONTROL_SCREEN,i)..",");
         end
     end
     configFile:write(cfgFileTab[tagNum].eTag);
@@ -1760,8 +1790,8 @@ end
 
 --***********************************************************************************************
 --读取配置文件中的数据
---tagNum = 1 : 修改运行控制界面中的参数 
---tagNum = 2 : 修改流程设置界面中的参数
+--tagNum = 1 : 修改流程设置1界面中的参数 
+--tagNum = 2 : 修改运行控制界面中的参数
 --***********************************************************************************************
 function ReadProcessFile(tagNum)
 	local configFile = io.open("0", "r")      --打开文本
@@ -1780,7 +1810,15 @@ function ReadProcessFile(tagNum)
         return 
     end
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
-    if tagNum == 1 then--运行控制界面中的参数
+    if tagNum == 1 then--流程设置界面中的参数
+        for i=1,12,1 do
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
+        end
+
+    elseif tagNum == 2 then--运行控制界面中的参数
+        
         --将文件中的参数在界面上进行解析
         for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
             set_text(RUN_CONTROL_SCREEN, i, tab[i]);
@@ -1804,20 +1842,44 @@ function ReadProcessFile(tagNum)
         for i = 1,24,1 do
             TimedProcessTab[i].startMinute = get_process_Id(tab[i+61]);--定时流程的开始分钟从61开始,所以需要 i+61
         end
-    elseif tagNum == 2 then--流程设置界面中的参数
-        for i=1,12,1 do
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
-        end
         
     end
 end
 
 --***********************************************************************************************
+--该函数检测配置文件中是否有<action?>标签, ? 范围1~12. 如果没有该标签,则创建一个默认的配置,如果有则直接返回
+--actionNumber:动作标签,范围:action1~action24
+--***********************************************************************************************
+function WriteDefaultActionTag(actionNumber)
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
+    local fileName = 0;
+
+    for i=1,12,1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+            fileName = i;
+            break;
+        end
+    end
+    WriteActionTag(fileName, 0);--修改<action0>标签中的内容, 增加或者删除一个动作
+    
+    local processFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
+    processFile:seek("set");                       --把文件位置定位到开头
+    local fileString = processFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+    processFile:close();                           --关闭文件
+
+    --如果该配置文件已经有<action?>标签,则直接返回
+    if string.find( fileString, "<action"..actionNumber..">", 1) ~= nil then
+        return;
+    end
+
+    --如果该配置文件已经没有<action?>标签,则继续执行,创建一个默认的标签
+    WriteActionTag(fileName, actionNumber);
+end
+
+--***********************************************************************************************
 --将动作写入配置文件中,该文件在WriteProcessFile中调用
 --fileName:配置文件名称:范围:1-12,对应12个流程(每个流程对应一个配置文件)
---actionNumber:动作标签,范围:action1~action24
+--actionNumber:动作标签,范围:action0~action24
 --***********************************************************************************************
 function WriteActionTag(fileName, actionNumber)
     local processFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
@@ -2175,10 +2237,14 @@ end
 function get_process_Id(name)
     local processId = 0;
 
+    if name == BLANK_SPACE then--空格直接返回0
+        return 0;
+    end
+    
     --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), name, 1) ~= nil then
-            processId = i;
+                processId = i;
             break;
         end
     end

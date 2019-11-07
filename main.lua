@@ -9,7 +9,7 @@ RUN_CONTROL_SCREEN = 1;
 PROCESS_SET1_SCREEN = 2;
 PROCESS_SET2_SCREEN = 3;
 PROCESS_SET3_SCREEN = 4;
-PROCESS_START_SCREEN = 5;
+PROCESS_INIT_SCREEN = 5;
 PROCESS_GET_SANPLE_SCREEN = 6;
 PROCESS_INJECT_SCREEN = 7;
 PROCESS_PERISTALTIC_SCREEN = 8;
@@ -57,8 +57,14 @@ PublicTab = {
 };
 
 BLANK_SPACE = " ";
-PERIOD_PROCESS = 0;
-TIMED_PROCESS = 1;
+PERIOD_PROCESS = 0;--周期流程
+TIMED_PROCESS = 1;--定时流程
+
+COLOR_METHOD = 0; --比色法
+ELEC_METHOD = 1;--电极法
+
+ENABLE = 1.0
+DISABLE = 0.0
 
 TipsTab = {
     insertSdUsb = "请插入SD卡或者U盘",
@@ -95,6 +101,7 @@ User = {
 SystemArg = {
     status = 0,--系统状态:对应WorkStatus中的值
     runType = 0,--运行方式: 对应WorkType中的值
+    analysisType = COLOR_METHOD,--分析方法
     
     dateTime,--系统日期时间,以字符串的形式保存,例如"201911051148"
     minute = 0,--系统时间-分钟
@@ -106,7 +113,7 @@ SystemArg = {
     periodicIndex = 1,--周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
     totalAction = 0,--所有动作类型
     actionStep = 1,--取值范围为1-24,对应了流程设置2/3界面中的共24个步骤
-    actionSubStep = 1,--该变量用于控制""开始""取样""消解""注射泵加液"等等子动作.
+    actionSubStep = 1,--该变量用于控制"初始化"取样""消解""注射泵加液"等等子动作.
     actionTotal = 0,--所有的动作步数,可以通过统计<action>标签获得
     --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
     actionIdTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,
@@ -115,9 +122,9 @@ SystemArg = {
     actionNameTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,
                  [13]= 0,[14]= 0,[15]= 0,[16]= 0,[17]= 0,[18]= 0,[19]= 0,[20] = 0,[21] = 0,[22] = 0,[23] = 0,[24] = 0},
 
-    actionFunction,--用于指向需要执行的动作函数,例如 excute_start_process, excute_get_sample_process等
+    actionFunction,--用于指向需要执行的动作函数,例如 excute_init_process, excute_get_sample_process等
     actionString,--截取流程配置文件中的action标签后, 内容保存到该变量
-    actionType,--用于保存type标签中的内容, 表示该动作是""开始""取样""注射泵加液"等等
+    actionType,--用于保存type标签中的内容, 表示该动作是""初始化""取样""注射泵加液"等等
     contentTabStr,--用于保存content标签中的内容
     contentTab,  --用于保存content标签中的内容,此时已经调用split对contentTabStr中的内容进行了分割
 
@@ -130,6 +137,71 @@ SystemArg = {
     startTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
     resultTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
 }
+
+--[[-----------------------------------------------------------------------------------------------------------------
+    阀/注射泵/蠕动泵控制函数
+--------------------------------------------------------------------------------------------------------------------]]
+
+--***********************************************************************************************
+--控制单个阀关闭
+--id : 阀编号
+--***********************************************************************************************
+function close_single_valve(id)
+    printf("关阀"..id);
+end
+
+--***********************************************************************************************
+--控制单个阀打开
+--id : 阀编号
+--***********************************************************************************************
+function open_single_valve(id)
+    printf("开阀"..id);
+end
+
+--***********************************************************************************************
+--控制多个阀关闭
+--valveIdTab 已Tab的形式保存了多个需要关闭的阀
+--number 参数valveIdTab的长度
+--***********************************************************************************************
+function close_multi_valve(valveIdTab, number)
+    
+end
+
+--***********************************************************************************************
+--控制多个阀打开
+--valveIdTab 已Tab的形式保存了多个需要关闭的阀
+--number 参数valveTab的长度
+--***********************************************************************************************
+function open_multi_valve(valveIdTab, number)
+    
+end
+
+
+--***********************************************************************************************
+--控制十通阀转到设置的通道号
+--channel 十通阀的通道号
+--***********************************************************************************************
+function control_valco(channel)
+    
+end
+
+--***********************************************************************************************
+--控制注射泵
+--***********************************************************************************************
+function control_inject(id, dir, speed, volume, wait)
+
+
+end
+
+--***********************************************************************************************
+--控制蠕动泵
+--***********************************************************************************************
+function control_peristaltic(id, dir, speed, volume, wait)
+
+
+end
+
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -199,8 +271,8 @@ function on_control_notify(screen,control,value)
 		range_select_control_notify(screen,control,value);
 	elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
 		action_select_control_notify(screen,control,value);
-	elseif screen == PROCESS_START_SCREEN then--流程设置-开始界面
-		process_start_control_notify(screen,control,value);
+	elseif screen == PROCESS_INIT_SCREEN then--流程设置-开始界面
+		process_init_control_notify(screen,control,value);
 	elseif screen == PROCESS_GET_SANPLE_SCREEN	then--流程设置-取样界面
 		process_get_sample_control_notify(screen,control,value);
 	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-注射泵加液
@@ -380,7 +452,7 @@ RUNCTRL_TextEndId = 85;
 
 RunTypeID = 30;--运行方式对应的文本空间ID
 RunTypeMenuId = 243;--运行方式菜单
-RunStopButtonId = 229;--运行状态切换按钮"开始""停止"按钮
+RunStopButtonId = 229;--运行状态切换按钮"初始化""停止"按钮
 
 TimedProcessClear = 410;--一键清空所有的定时设置
 
@@ -762,7 +834,7 @@ function excute_process()
         SystemArg.startTime.year,SystemArg.startTime.month,SystemArg.startTime.day,SystemArg.startTime.hour,SystemArg.startTime.minute = get_date_time();--获取当前时间
         ShowSysCurrentAction( SystemArg.processName..":"..SystemArg.actionNameTab[SystemArg.actionStep]);--显示流程名称-动作名称
         if SystemArg.actionType == ActionItem[1] then 
-            SystemArg.actionFunction = excute_start_process;--执行 开始流程
+            SystemArg.actionFunction = excute_init_process;--执行 开始流程
         elseif SystemArg.actionType == ActionItem[2] then 
             SystemArg.actionFunction = excute_get_sample_process;--执行 取样流程
         elseif SystemArg.actionType == ActionItem[3] then
@@ -780,6 +852,7 @@ function excute_process()
         elseif SystemArg.actionType == ActionItem[9] then 
             SystemArg.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
         end
+        SystemArg.actionSubStep = 1;--子流程从第一步开始执行
         SystemArg.processStep = SystemArg.processStep + 1;
     --------------------------------------------------------------------------------------------------
     --第二步: 执行子流程函数
@@ -979,7 +1052,7 @@ function set_edit_screen(para, screen, control)
     end
 
     if para == ActionItem[1] then --开始界面
-        change_screen(PROCESS_START_SCREEN);
+        change_screen(PROCESS_INIT_SCREEN);
     elseif para == ActionItem[2] then --取样界面
         change_screen(PROCESS_GET_SANPLE_SCREEN);
     elseif para == ActionItem[3] then --注射泵加液体
@@ -1062,19 +1135,22 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    流程设置-开始
+    流程设置-初始化
 --------------------------------------------------------------------------------------------------------------------]]
---在所有子界面中("开始/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
+--在所有子界面中("初始化/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
 SureButtonId = 99;--确认按钮
 CancelButtonId = 98;--取消按钮
 DestScreen = nil;
 DestControl = nil;
 DestActionNum = 0;--指向当前动作序号
 
-AnalysisTypeMenuId = 4;
-AnalysisTypeTextId = 7;
-ResetSystemButtonId = 5;--是否硬件复位
+AnalysisTypeMenuId = 200;
+AnalysisTypeTextId = 38;
 
+INIT_BtStartId = 1;
+INIT_BtEndId = 37;
+INIT_TextStartId = 38;
+INIT_TextEndId = 52;
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
 function set_screen_actionNumber(screen,actionNumber)
@@ -1084,7 +1160,7 @@ end
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
-function process_start_control_notify(screen,control,value)
+function process_init_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
         WriteActionFile(DestActionNum);
         change_screen(DestScreen);
@@ -1097,10 +1173,42 @@ end
 --  执行开始流程
 --  paraTab:保存了开始界面中的参数设置
 --***********************************************************************************************
-function excute_start_process(paraTab)
+function excute_init_process(paraTab)
+    if SystemArg.actionSubStep == 1 then
+        if paraTab[1] == ENABLE then--判断是否需要对十通阀进行操作
+        else
+            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+        end
+    --------------------------------------------------------------
+    elseif SystemArg.actionSubStep == 2 then
+        if paraTab[2] == ENABLE then--判断是否需要对输出1进行操作
+        else
+            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+        end
+    --------------------------------------------------------------
+    elseif SystemArg.actionSubStep == 3 then
+        if paraTab[3] == ENABLE then--判断是否需要对输出2进行操作
+        else
+            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+        end
+    --------------------------------------------------------------
+    elseif SystemArg.actionSubStep == 4 then
+        if paraTab[4] == ENABLE then--判断是否需要对注射泵1进行操作
+        else
+            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+        end
+    --------------------------------------------------------------
+    elseif SystemArg.actionSubStep == 5 then
+        if paraTab[5] == ENABLE then--判断是否需要对注射泵2进行操作
+        else
+            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+        end
+    --------------------------------------------------------------
+    elseif SystemArg.actionSubStep == 6 then
+        SystemArg.actionSubStep = 0;
+    end
     
-
-    return 0;
+    return SystemArg.actionSubStep;
 end
 
 
@@ -1504,7 +1612,7 @@ end
 
 ActionStartButtonId = 1;
 ActionEndButtonId = 10;
-ActionItem = {"开始","取样","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE};
+ActionItem = {"初始化","取样","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE};
 ActionSelectItem = nil;
 
 
@@ -1942,7 +2050,7 @@ function WriteActionTag(fileName, actionNumber)
     end
 
     processFile:write("<action"..actionNumber..">");--写入开始标签
-    processFile:write("<type>"..actionType.."</type>");--写入动作类型:开始/取样/消解......
+    processFile:write("<type>"..actionType.."</type>");--写入动作类型:初始化/取样/消解......
     processFile:write("<content>");
     --------------------------------写<action0>标签内容---------------------------------------------
     --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
@@ -1957,8 +2065,12 @@ function WriteActionTag(fileName, actionNumber)
         end
     --------------------------------写开始界面参数----------------------------------------------------
     elseif actionType == ActionItem[1] then 
-        processFile:write(get_text(PROCESS_START_SCREEN, AnalysisTypeTextId)..","..--分析方法
-                          get_value(PROCESS_START_SCREEN,ResetSystemButtonId)..",");--是否硬件复位
+        for i = INIT_BtStartId, INIT_BtEndId, 1 do
+            processFile:write(get_value(PROCESS_INIT_SCREEN, i)..",");--写入按钮值
+        end
+        for i = INIT_TextStartId, INIT_TextEndId, 1 do
+            processFile:write(get_text(PROCESS_INIT_SCREEN, i)..",");--写入文本值
+        end
     --------------------------------写取样界面参数----------------------------------------------------
     elseif actionType == ActionItem[2] then 
         for i = GetSample_BtStartId, GetSample_BtEndId, 1 do
@@ -2091,11 +2203,14 @@ function ReadActionTag(actionNumber)
         end
     --------------------------------读-开始界面参数--------------------------------------------------
     elseif actionType == ActionItem[1] then
-        set_text(PROCESS_START_SCREEN, AnalysisTypeTextId, tab[1]);
-        set_value(PROCESS_START_SCREEN, ResetSystemButtonId, tab[2] );
+        for i = INIT_BtStartId, INIT_BtEndId, 1 do
+            set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
+        end
+        for i = INIT_TextStartId, INIT_TextEndId, 1 do
+            set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
+        end
     --------------------------------读-取样界面参数--------------------------------------------------
     elseif actionType == ActionItem[2] then 
-        set_text(PROCESS_SET2_SCREEN,30, tab[1])
         for i = GetSample_BtStartId, GetSample_BtEndId, 1 do 
             set_value(PROCESS_GET_SANPLE_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end

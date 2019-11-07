@@ -57,6 +57,8 @@ PublicTab = {
 };
 
 BLANK_SPACE = " ";
+PERIOD_PROCESS = 0;
+TIMED_PROCESS = 1;
 
 TipsTab = {
     insertSdUsb = "请插入SD卡或者U盘",
@@ -123,6 +125,10 @@ SystemArg = {
     processFileStr = nil,--读出取流程相关的配置文件后,保存到该变量当中
     processName = nil ,--流程名称
     processStep = 1,--执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
+    isPeriodOrTimed = 0,--使用该变量判断是周期流程还是定时流程
+
+    startTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
+    resultTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
 }
 
 
@@ -284,8 +290,10 @@ LastAnalysisResultId = 18; --分析结果
 LastAnalysisUnitId = 19;   --单位
 LastAnalysisE1Id = 25;     --E1
 LastAnalysisE2Id = 26;     --E2
+NextProcessTimeTextId = 2  --下次启动时间
 
-SysWorkStatusId = 901;      --工作状态
+
+SysWorkStatusId = 901;   --工作状态
 SysCurrentActionId = 902;--当前动作
 SysUserNameId = 903      --显示用户
 SysAlarmId = 904;        --显示当前告警信息
@@ -374,6 +382,9 @@ RunTypeID = 30;--运行方式对应的文本空间ID
 RunTypeMenuId = 243;--运行方式菜单
 RunStopButtonId = 229;--运行状态切换按钮"开始""停止"按钮
 
+TimedProcessClear = 410;--一键清空所有的定时设置
+
+
 --手动设置
 HandProcessTab = {
     --  用于显示流程名称的文本id, 与文本重合的按钮id, 手动分析次数id, 手动分析次数, 流程名称对应的流程序号
@@ -391,6 +402,7 @@ PeriodicTab = { [1] = {textId = 1, buttonId = 101, processId = 0},
                 [8] = {textId = 35, value = 0},--时
                 [9] = {textId = 36, value = 0},--分
                 [10]= {textId = 37, value = 0},--频率
+                nextStartTime = {year=0, month=0, day=0, hour=0, minute=0};
 };
 
 --定时设置  这里注意StartHourId - 37 = 序号; startMinuteId - 61 = 序号
@@ -452,7 +464,17 @@ function run_control_notify(screen,control,value)
         TimedProcessTab[control-37].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-37后,对应了定时流程的序号
         WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startMinuteId and control <= TimedProcessTab[24].startMinuteId then--更改定时流程时间中的分钟
-        TimedProcessTab[control-61].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-61后,对应了定时流程的序号
+        TimedProcessTab[control-61].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-61后,对应了定时流程的序号
+        WriteProcessFile(2);
+    elseif control == TimedProcessClear then--一键清空所有定时设置
+        for i = 1,24,1 do
+            set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].textId, BLANK_SPACE);
+            set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startHourId, string.format( "%02d",i));
+            set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startMinuteId, "00");
+            process_change(i+4);
+            TimedProcessTab[i].startHour   = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startHourId));
+            TimedProcessTab[i].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startMinuteId));
+        end
         WriteProcessFile(2);
     end
 end
@@ -468,7 +490,12 @@ function process_change(control)
     --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), get_text(RUN_CONTROL_SCREEN, control), 1) ~= nil then
-            processId = i;
+            --找到当前是设置的第几个周期流程, 且流程名称不是一个空格(在流程选择2界面中,提供一个空流程,用于删除功能)
+            if get_text(PROCESS_SELECT2_SCREEN, control) == BLANK_SPACE then
+                processId = 0;
+            else
+                processId = i;
+            end
             break;
         end
     end
@@ -477,23 +504,15 @@ function process_change(control)
     if control == HandProcessTab[1].textId then--手动流程设置
         HandProcessTab[1].processId = processId;
     elseif control >= PeriodicTab[1].textId and control <= PeriodicTab[4].textId then--周期流程
-        for i=1,4,1 do--找到当前是设置的第几个周期流程, 且流程名称不是一个空格(在流程选择2界面中,提供一个空流程,用于删除功能)
+        for i=1,4,1 do
             if control == PeriodicTab[i].textId  then
-                if get_text(PROCESS_SELECT2_SCREEN,control) == BLANK_SPACE then
-                    PeriodicTab[i].processId = 0;
-                else
-                    PeriodicTab[i].processId = processId;
-                end
+                PeriodicTab[i].processId = processId;
             end
         end
     elseif control >= TimedProcessTab[1].textId and control <= TimedProcessTab[24].textId then--定时流程
         for i=1,24,1 do
             if control == TimedProcessTab[i].textId  then --找到当前设置的是定时流程中的哪个
-                if  get_text(PROCESS_SELECT2_SCREEN,control) == BLANK_SPACE then
-                    PeriodicTab[i].processId = 0;
-                else
-                    TimedProcessTab[i].processId = processId;
-                end
+                TimedProcessTab[i].processId = processId;
             end
         end
     end
@@ -519,16 +538,19 @@ end
 --diffDays:需要加上的天数
 --***********************************************************************************************
 function set_period_start_date(diffDays)
-
-    if diffDays == 0 then
-        return 
-    end
-
     normalMonthDays = {[1]=31, [2]=28, [3]=31, [4]=30, [5]=31, [6]=30, [7]=31, [8]=31, [9]=30, [10]=31, [11]=30, [12]=31};
     
     local year = PeriodicTab[5].value;
     local month = PeriodicTab[6].value;
     local day = PeriodicTab[7].value;
+
+    PeriodicTab.nextStartTime.year  = year;
+    PeriodicTab.nextStartTime.month = month;
+    PeriodicTab.nextStartTime.day = day;
+
+    if diffDays == 0 then
+        return 
+    end
 
     --1.get years (days >=366 or 365)
     local daysAyear = 365;
@@ -578,9 +600,12 @@ function set_period_start_date(diffDays)
     PeriodicTab[5].value = year;
     PeriodicTab[6].value = month;
     PeriodicTab[7].value = day;
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value)
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value)
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value)
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
+    set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value);
+    PeriodicTab.nextStartTime.year  = year;
+    PeriodicTab.nextStartTime.month = month;
+    PeriodicTab.nextStartTime.day = day;
 end
 
 --***********************************************************************************************
@@ -596,12 +621,21 @@ function set_period_start_date_time(minFreq)
 
     local minRemain = math.fmod(minTotal,dayHour);
     
+    
+    PeriodicTab.nextStartTime.hour = math.modf(minRemain/60);
+    PeriodicTab.nextStartTime.minute = math.fmod(minRemain,60);
+
     PeriodicTab[8].value = math.modf(minRemain/60);
     PeriodicTab[9].value = math.fmod(minRemain,60);
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[8].textId, PeriodicTab[8].value );
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[9].textId, PeriodicTab[9].value );
 
     set_period_start_date(math.modf(minTotal / dayHour));
+    
+    --显示下次自动运行启动流程的时间
+    set_text(MAIN_SCREEN,NextProcessTimeTextId,string.format("%d-%02d-%02d  %02d:%02d",
+             PeriodicTab.nextStartTime.year,PeriodicTab.nextStartTime.month,PeriodicTab.nextStartTime.day,
+             PeriodicTab.nextStartTime.hour,PeriodicTab.nextStartTime.minute));
     WriteProcessFile(2);
 end
 
@@ -642,12 +676,13 @@ function get_current_process_id()
         local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
         SystemArg.hour = hour;
         SystemArg.minute = min;
-        SysDateTime =  string.format("%02d,%02d,%02d,%02d,%02d",year,mon,day,hour,min);
-        SystemArg.periodStartDateTime = string.format("%02d,%02d,%02d,%02d,%02d",
+        SysDateTime =  string.format("%d,%02d,%02d,%02d,%02d",year,mon,day,hour,min);
+        SystemArg.periodStartDateTime = string.format("%d,%02d,%02d,%02d,%02d",
                                                        PeriodicTab[5].value,PeriodicTab[6].value,PeriodicTab[7].value,
                                                        PeriodicTab[8].value,PeriodicTab[9].value);
 
-        if SystemArg.periodStartDateTime <= SysDateTime then--设置的周期开始时间到了,查找定时设置中,是否有满足条件的流程
+
+        if SystemArg.periodStartDateTime <= SysDateTime then--设置的周期开始时间到了,查找是否有满足条件的流程
             local temp_i = 0;
             for i = SystemArg.periodicIndex, SystemArg.periodicIndex + 3, 1 do --因为周期流程有4个,所以需要循环查找四次
                 if i > 4 then
@@ -658,16 +693,21 @@ function get_current_process_id()
                 if PeriodicTab[temp_i].processId ~= 0 then--流程序号不为0 ,表示该流程有设置,跳出循环, i-diff 表示4个周期流程的第几个流程
                     processId = PeriodicTab[temp_i].processId;--获取流程对应的序号
                     SystemArg.periodicIndex = temp_i;
+                    SystemArg.isPeriodOrTimed = PERIOD_PROCESS;
                     break;
                 end
             end
-        else     --循环查找定时设置中,是否有满足条件的流程
+        end
+
+        if  processId == 0 then   --运行到这里,表示没有满足条件的周期流程, 开始循环查找定时设置中,是否有满足条件的流程
+            -- printf(TimedProcessTab[1].startHour..":"..TimedProcessTab[1].startMinute);
             for i=1,24,1 do
                 if TimedProcessTab[i].startHour == SystemArg.hour and 
                    TimedProcessTab[i].startMinute == SystemArg.minute and
                    TimedProcessTab[i].processId ~= 0 --序号不为0, 表示该流程有设置
                 then
-                    processId = TimedProcessTab[i].processId;
+                   processId = TimedProcessTab[i].processId;
+                   SystemArg.isPeriodOrTimed = TIMED_PROCESS;
                 end
             end
         end
@@ -691,8 +731,10 @@ function process_ready_run()
         ReadProcessFile(1);                               --读取流程设置界面界面中的参数
         ReadProcessFile(2);                               --读取运行控制界面界面中的参数
         ReadActionFile(SystemArg.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
-        -- local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
-        -- set_process_start_date_time(year,mon,day,hour,min);--设置本次流程开始时间
+        if SystemArg.isPeriodOrTimed == PERIOD_PROCESS then
+            local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
+            set_process_start_date_time(year,mon,day,hour,min);--设置本次流程开始时间
+        end
         SystemArg.actionStep = 1;                         --所有步骤都是从1开始
         SystemArg.actionSubStep = 1;
         SystemArg.handRunTimes = 0;
@@ -717,7 +759,7 @@ function excute_process()
         SystemArg.actionType    = GetSubString(SystemArg.actionString, "<type>","</type>");--获动作类型
         SystemArg.contentTabStr = GetSubString(SystemArg.actionString,"<content>","</content>");--再截取<content>标签中的内容
         SystemArg.contentTab    = split(SystemArg.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-        
+        SystemArg.startTime.year,SystemArg.startTime.month,SystemArg.startTime.day,SystemArg.startTime.hour,SystemArg.startTime.minute = get_date_time();--获取当前时间
         ShowSysCurrentAction( SystemArg.processName..":"..SystemArg.actionNameTab[SystemArg.actionStep]);--显示流程名称-动作名称
         if SystemArg.actionType == ActionItem[1] then 
             SystemArg.actionFunction = excute_start_process;--执行 开始流程
@@ -761,11 +803,13 @@ function excute_process()
                 end
             ----------------自动模式--------------------
             elseif SystemArg.runType == WorkType.auto then
-                SystemArg.periodicIndex = SystemArg.periodicIndex + 1;--指向下一个流程
-                if SystemArg.periodicIndex > 4 then
-                    SystemArg.periodicIndex = 1;
+                if SystemArg.isPeriodOrTimed == PERIOD_PROCESS then--如果当前流程为周期流程, 则需要设置下次周期流程的时间.
+                    SystemArg.periodicIndex = SystemArg.periodicIndex + 1;--指向下一个流程
+                    if SystemArg.periodicIndex > 4 then
+                        SystemArg.periodicIndex = 1;
+                    end
+                    set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
                 end
-                set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
                 WriteProcessFile(2);
                 SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
             ----------------反控模式--------------------
@@ -848,13 +892,13 @@ function process_set1_control_notify(screen,control,value)
         if SdPath  ~= nil then
             ShowSysTips(TipsTab.exporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
-                    ConfigFileCopy(i, SdPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
+                ConfigFileCopy(i, SdPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
             ShowSysTips(TipsTab.exported);
         elseif UsbPath ~= nil then
             ShowSysTips(TipsTab.exporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
-                    ConfigFileCopy(i, UsbPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
+                ConfigFileCopy(i, UsbPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
             ShowSysTips(TipsTab.exported);
         else
@@ -1264,6 +1308,8 @@ end
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
+    SystemArg.resultTime.year,SystemArg.resultTime.month,SystemArg.resultTime.day,SystemArg.resultTime.hour,SystemArg.resultTime.minute = get_date_time();--获取当前时间
+    
     return 0;
 end
 
@@ -1835,14 +1881,9 @@ function ReadProcessFile(tagNum)
         end
         for i = 1,24,1 do
             TimedProcessTab[i].processId = get_process_Id(tab[i+4]);--定时流程的文本id从5开始,所以要 i+4
+            TimedProcessTab[i].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startHourId));
+            TimedProcessTab[i].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startMinuteId));
         end
-        for i = 1,24,1 do
-            TimedProcessTab[i].startHour = get_process_Id(tab[i+37]);--定时流程的开始小时从38开始,所以需要 i+37
-        end
-        for i = 1,24,1 do
-            TimedProcessTab[i].startMinute = get_process_Id(tab[i+61]);--定时流程的开始分钟从61开始,所以需要 i+61
-        end
-        
     end
 end
 

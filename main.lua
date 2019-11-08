@@ -92,11 +92,11 @@ WorkType = {
     controlled = "反控",--通过上位机发送指令运行流程.
 }
 
-User = {
-    administrator = "管理员",
-    maintainer = "运维员",
+SysUser = {
     operator = "操作员",
-};
+    maintainer = "运维员",
+    administrator = "管理员",
+}
 
 SystemArg = {
     status = 0,--系统状态:对应WorkStatus中的值
@@ -138,6 +138,10 @@ SystemArg = {
     resultTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
 }
 
+
+
+
+
 --[[-----------------------------------------------------------------------------------------------------------------
     阀/注射泵/蠕动泵控制函数
 --------------------------------------------------------------------------------------------------------------------]]
@@ -147,7 +151,7 @@ SystemArg = {
 --id : 阀编号
 --***********************************************************************************************
 function close_single_valve(id)
-    printf("关阀"..id);
+
 end
 
 --***********************************************************************************************
@@ -155,7 +159,7 @@ end
 --id : 阀编号
 --***********************************************************************************************
 function open_single_valve(id)
-    printf("开阀"..id);
+
 end
 
 --***********************************************************************************************
@@ -207,9 +211,11 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     入口函数
 --------------------------------------------------------------------------------------------------------------------]]
---设置全局变量uart_free_protocol，使用自由串口协议
-uart_free_protocol = 1
+
+
+--***********************************************************************************************
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
+--***********************************************************************************************
 function on_init()
     for i = 1,12,1 do
         set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId,BLANK_SPACE);
@@ -228,30 +234,40 @@ function on_init()
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
 
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
-    uart_set_timeout(1000,200);--设置串口超时
-    ShowSysUser(User.operator);--开机之后默认为操作员
+    uart_set_timeout(2000,1);--设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
+    SetSysUser(SysUser.operator);--开机之后默认为操作员
+
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
+
 end
 
+--***********************************************************************************************
 --定时器超时，执行此回调函数,定时器编号 0~31
+--***********************************************************************************************
 function on_timer(timer_id)
     if  timer_id == 0 then --定时器0,定时时间到
         if SystemArg.status == WorkStatus.run then
             excute_process();
         end
+    elseif timer_id == 1 then--串口超时
+        uart_time_out();
     end
 end
 
+--***********************************************************************************************
 --定时回调函数，系统每隔1秒钟自动调用。
+--***********************************************************************************************
 function on_systick()
     if SystemArg.status == WorkStatus.readyRun then           --当系统处于待机状态时,
         process_ready_run();
     end
 end
 
+--***********************************************************************************************
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+--***********************************************************************************************
 function on_control_notify(screen,control,value)
     if screen == MAIN_SCREEN then--首页
         main_control_notify(screen,control,value);
@@ -302,8 +318,9 @@ function on_control_notify(screen,control,value)
 	end
 end
 
-
+--***********************************************************************************************
 --当画面切换时，执行此回调函数，screen为目标画面。
+--***********************************************************************************************
 function on_screen_change(screen)
     if screen == PROCESS_SET1_SCREEN then--流程设置1
         goto_ProcessSet1();
@@ -322,33 +339,169 @@ function on_screen_change(screen)
 	end
 end
 
-
+--***********************************************************************************************
 --插入 U 盘后，执行此回调函数
+--***********************************************************************************************
 function on_usb_inserted(dir)
     ShowSysTips(TipsTab.insertUsb);
     UsbPath = dir;
 end
 
+--***********************************************************************************************
 --拔出 U 盘后，执行此回调函数
+--***********************************************************************************************
 function on_usb_removed()
     ShowSysTips(TipsTab.pullOutUSB);
 end
 
+--***********************************************************************************************
 --插入 SD 卡后，执行此回调函数
+--***********************************************************************************************
 function on_sd_inserted(dir)
     ShowSysTips(TipsTab.insertSd);
     SdPath = dir;
 end
 
+--***********************************************************************************************
 --拔出 SD 卡后，执行此回调函数
+--***********************************************************************************************
 function on_sd_removed()
     ShowSysTips(TipsTab.pullOutUSB);
 end
 
 
---串口自定义函数
-function on_uart_recv_data(packet)
+--[[-----------------------------------------------------------------------------------------------------------------
+    串口收发
+--------------------------------------------------------------------------------------------------------------------]]
 
+--设置全局变量uart_free_protocol，使用自由串口协议
+uart_free_protocol = 1;
+
+uartSendTab = {
+    openV11 = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},--len = 6
+}
+
+REPLY_OK = 0;
+REPLY_FAIL = 1;
+NO_NEED_REPLY = 0;
+NEED_REPLY = 1;--需要回复
+
+UartArg = {
+    lock = 0,--在发送串口数据时,会暂时锁定串口
+    repeat_times = 0,--用于记录重发次数
+    repeat_data ,--用于保存本次重发数据
+    reply_data = {[0] = 0, [1] = 0},--用于保存需要接受到的回复数据
+    reply_flag,--用于指示数据是否回复成功
+};
+
+--***********************************************************************************************
+--右移一位的操作,在计算校验码中使用
+--***********************************************************************************************
+function right_shift_one(data)
+    local new_data;
+    if math.fmod(data,2) == 1 then
+        new_data = math.modf((data-1)/2);
+    else
+        new_data = math.modf(data/2);
+    end
+    return new_data
+end
+
+--***********************************************************************************************
+--异或操作,在计算校验码中使用
+--***********************************************************************************************
+function xor(num1,num2)
+	local tmp1 = num1
+	local tmp2 = num2
+	local str = ""
+	repeat
+		local s1 = tmp1 % 2
+		local s2 = tmp2 % 2
+		if s1 == s2 then
+			str = "0"..str
+		else
+			str = "1"..str
+		end
+		tmp1 = math.modf(tmp1/2)
+		tmp2 = math.modf(tmp2/2)
+	until(tmp1 == 0 and tmp2 == 0)
+	return tonumber(str,2)
+end
+
+
+--***********************************************************************************************
+--计算校验码: ModeBusCRC16
+--***********************************************************************************************
+function CalculateCRC16(data, len)
+    local crc16 = 0xffff;
+    printf(data[0]..","..data[1]..","..data[2]..","..data[3]..","..data[4]..","..data[5]);
+    for i = 0, len-1 ,1 do  
+        crc16 = xor(crc16, data[i]);
+        for j=0, 7, 1 do
+            if math.fmod(crc16,2) == 1 then
+                crc16 = right_shift_one(crc16);
+                crc16 = xor(crc16, 0xA001);
+            else
+                crc16 = right_shift_one(crc16);
+            end
+        end
+    end
+    local crc1 = math.fmod(crc16,256);
+    local crc2 = math.modf(crc16/256);
+    return crc1, crc2;
+end 
+
+
+--***********************************************************************************************
+--串口接受函数 
+--串口波特率为38400, 传送1bit需要 1000000/38400 = 26us, 传送一个字节的数据需要10bit,则传送1Byte数据需要260us
+--***********************************************************************************************
+function on_uart_recv_data(packet)
+    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
+        UartArg.reply_flag = REPLY_OK;
+        UartArg.lock = 0;--解锁串口
+        stop_timer(1)--停止超时定时器
+    end
+end
+
+--***********************************************************************************************
+--发送串口数据
+--packet : 取值为uartSendTab中的参数, 例如uartSendTab.openV11
+--reply : 表示是否是要等待回复,取值 NEED_REPLY  与 NO_NEED_REPLY
+--***********************************************************************************************
+function on_uart_send_data(packet, reply)
+    if UartArg.lock == 1 then
+        return;
+    end
+    if reply == NEED_REPLY then --表示需要等待回复
+        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,1->表示只执行一次
+        UartArg.lock = 1;      --给串口上锁,暂不能使用串口发送数据
+        UartArg.reply_flag = REPLY_FAIL;
+        UartArg.repeat_data = packet;
+        UartArg.reply_data[0] = packet[0];
+        UartArg.reply_data[1] = packet[1];
+    end
+    
+    packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);
+    
+    uart_send_data(packet) --发送指令
+
+end
+
+
+--***********************************************************************************************
+--进入到该函数表示串口一定回复超时, 因为如果回复成功, 在on_uart_recv_data函数中就会停止定时器1,就不会进入到该函数
+--***********************************************************************************************
+function uart_time_out()
+    UartArg.repeat_times = UartArg.repeat_times + 1;
+    if UartArg.repeat_times <= 3 then
+        UartArg.lock = 0;
+        on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
+    else  --重发三次都没有回复,不再重发
+        UartArg.repeat_times = 0;
+        UartArg.reply_flag = REPLY_FAIL;
+        stop_timer(1)--停止超时定时器
+    end
 end
 
 
@@ -432,11 +585,19 @@ function ShowSysAlarm(alarm)
 end
 
 --***********************************************************************************************
---  在底部的状态用户名
+--  设置系统用户
 --***********************************************************************************************
-function ShowSysUser(user)
+function SetSysUser(user)
+    --在底部的状态用户名
     for i = 1,16,1 do
         set_text(PublicTab[i], SysUserNameId, user);
+    end
+    if user == SysUser.operator then -- 操作员
+        set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
+        set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
+    elseif user == SysUser.maintainer then--运维员
+    elseif user == SysUser.administrator then--管理员
     end
 end
 
@@ -772,7 +933,6 @@ function get_current_process_id()
         end
 
         if  processId == 0 then   --运行到这里,表示没有满足条件的周期流程, 开始循环查找定时设置中,是否有满足条件的流程
-            -- printf(TimedProcessTab[1].startHour..":"..TimedProcessTab[1].startMinute);
             for i=1,24,1 do
                 if TimedProcessTab[i].startHour == SystemArg.hour and 
                    TimedProcessTab[i].startMinute == SystemArg.minute and
@@ -1176,6 +1336,10 @@ end
 function excute_init_process(paraTab)
     if SystemArg.actionSubStep == 1 then
         if paraTab[1] == ENABLE then--判断是否需要对十通阀进行操作
+            for i = 6,21,1 do--6为输出1第一个按钮, 表示阀1
+                if tab[1] == ENABLE then
+                end
+            end
         else
             SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
         end
@@ -1729,19 +1893,16 @@ end
     手动操作1
 --------------------------------------------------------------------------------------------------------------------]]
 
-Valve16BtId = 67;
-Valve16Close = {53,0,0,0,0,154,127};
-Valve16Open  = {53,0,1,0,0,155,239};
-Valve16Close[0] = 224;
-Valve16Open[0] = 224;
+Valve11BtId = 43;
+
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate1_control_notify(screen, control, value)
-    if control == Valve16BtId then
-        if get_value(HAND_OPERATE1_SCREEN, Valve16BtId) == 1.0 then
-            uart_send_data(Valve16Close);
+    if control == Valve11BtId then
+        if get_value(HAND_OPERATE1_SCREEN, Valve11BtId) == ENABLE then
+            on_uart_send_data(uartSendTab.openV11, NEED_REPLY);
         else
-            uart_send_data(Valve16Open);
+            
         end
     end
 end
@@ -1819,17 +1980,6 @@ OperatorLoginId = 72;
 maintainerLoginId = 47;
 administratorLoginId = 48;
 
-PwdSetTab = {
-    [maintainerPwdSetId] = {userName = "运维员"},
-    [administratorPwdSetId] = {userName = "管理员"}
-};
-
-LoginTab = {
-    [OperatorLoginId] = {userName = "操作员"},
-    [maintainerLoginId] = {userName = "运维员"},
-    [administratorLoginId] = {userName = "管理员"}
-};
-
 
 --设置仪器型号
 function set_equipment_type()
@@ -1841,14 +1991,20 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function system_info_control_notify(screen,control,value)
-    if control == EquipmentTypeSetId then
+    if control == EquipmentTypeSetId then--设置仪器型号
         set_equipment_type();
-    elseif control == maintainerPwdSetId or control == administratorPwdSetId then--运维员与管理员密码设置按钮
-        password_set_set(PwdSetTab[control].userName);
-    elseif control == OperatorLoginId or control == maintainerLoginId or control == administratorLoginId then--操作员/运维员/管理员密码设置按钮
-        login_system_set(LoginTab[control].userName);
+    elseif control == maintainerPwdSetId then--运维员密码设置
+        set_user_name(SysUser.maintainer);
+    elseif control == administratorPwdSetId then--管理员密码设置
+        set_user_name(SysUser.administrator);
+    elseif control == OperatorLoginId then --操作员登录
+        set_user_name(SysUser.operator);
+    elseif control == maintainerLoginId then--运维员登录
+        set_user_name(SysUser.maintainer);
         change_screen(LOGIN_SYSTEM_SCREEN);
-
+    elseif control == administratorLoginId then--管理员登录
+        set_user_name(SysUser.administrator);
+        change_screen(LOGIN_SYSTEM_SCREEN);
     end
 end
 
@@ -1856,10 +2012,12 @@ end
     密码设置
 --------------------------------------------------------------------------------------------------------------------]]
 
-UserNameId = 26;
+UserNameId = 26; --在密码设置与系统登录界面都是该id
 
---该函数在on_control_notify中进行调用,当点击系统信息中的密码设置相关按钮时调用该函数
-function password_set_set(user)
+--***********************************************************************************************
+--在系统信息界面,点击权限登录或者设置密码时都会调用该函数(权限登录->操作员例外)
+--***********************************************************************************************
+function set_user_name(user)
     userName = user;
 end
 
@@ -1878,12 +2036,6 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     登录系统
 --------------------------------------------------------------------------------------------------------------------]]
-
-
---该函数在on_control_notify中进行调用,当点击系统信息中的密码设置相关按钮时调用该函数
-function login_system_set(user)
-    userName = user;
-end
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。

@@ -239,7 +239,6 @@ function on_init()
 
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
-
 end
 
 --***********************************************************************************************
@@ -430,11 +429,10 @@ end
 
 
 --***********************************************************************************************
---计算校验码
+--计算校验码: ModeBusCRC16
 --***********************************************************************************************
 function CalculateCRC16(data, len)
     local crc16 = 0xffff;
-    printf(data[0]..","..data[1]..","..data[2]..","..data[3]..","..data[4]..","..data[5]);
     for i = 0, len-1 ,1 do  
         crc16 = xor(crc16, data[i]);
         for j=0, 7, 1 do
@@ -446,11 +444,11 @@ function CalculateCRC16(data, len)
             end
         end
     end
-    printf(data[0]..","..data[1]..","..data[2]..","..data[3]..","..data[4]..","..data[5]..","..crc16);
     local crc1 = math.fmod(crc16,256);
     local crc2 = math.modf(crc16/256);
     return crc1, crc2;
 end 
+
 
 --***********************************************************************************************
 --串口接受函数 
@@ -483,9 +481,7 @@ function on_uart_send_data(packet, reply)
     end
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);
-    
     uart_send_data(packet) --发送指令
-
 end
 
 
@@ -951,6 +947,76 @@ function get_current_process_id()
     return processId;
 end
 
+
+--***********************************************************************************************
+--禁止流程设置相关的操作
+--state : 取值 ENABLE / DISABLE
+--***********************************************************************************************
+function set_process_edit_state(state)
+    --------------------------------流程设置1/2/3界面的参数------------------------------
+    for i = 1,12,1 do
+        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].selectId ,state);
+        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].nameId   ,state);
+        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].rangeId  ,state);
+        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].deleteId ,state);
+
+        set_enable(PROCESS_SET2_SCREEN, TabAction[i].selectId, state);
+        set_enable(PROCESS_SET2_SCREEN, TabAction[i].nameId,   state);
+
+        set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].selectId, state);
+        set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].nameId,   state);
+    end
+
+--------------------------------初始化界面参数修改---------------------------------------------
+    for i = INIT_BtStartId, INIT_TextEndId, 1 do
+        set_enable(PROCESS_INIT_SCREEN, i, state)
+    end
+--------------------------------取样界面参数----------------------------------------------------
+    for i = GetSample_BtStartId, GetSample_BtEndId, 1 do
+        set_enable(PROCESS_GET_SANPLE_SCREEN, i, state);
+    end
+    set_enable(PROCESS_GET_SANPLE_SCREEN, GetSample_Out1WaitTimeId, state);
+    set_enable(PROCESS_GET_SANPLE_SCREEN, GetSample_Out2WaitTimeId, state);
+-------------------------------注射泵加液参数--------------------------------------------------
+    for i = INJECT_BtStartId, INJECT_TextEndId, 1 do
+        set_enable(PROCESS_INJECT_SCREEN, i, state);
+    end
+--------------------------------读取信号参数----------------------------------------------------
+    for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
+        set_enable(PROCESS_READ_SIGNAL_SCREEN, i, state)
+    end
+--------------------------------蠕动泵加液参数--------------------------------------------------
+    for i = PERISTALTIC_BtStartId, PERISTALTIC_TextEndId, 1 do
+        set_enable(PROCESS_PERISTALTIC_SCREEN, i, state)
+    end
+-------------------------------计算参数--------------------------------------------------------
+    for i = CALCULATE_BtStartId, CALCULATE_TextEndId, 1 do
+        set_enable(PROCESS_CALCULATE_SCREEN, i, state)
+    end
+--------------------------------等待时间参数----------------------------------------------------
+    set_enable(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId, state)
+--------------------------------禁止-消解参数--------------------------------------------------------
+    for i = DISPEL_BtStartId, DISPEL_TextEndId, 1 do
+        set_enable(PROCESS_DISPEL_SCREEN, i, state)
+    end
+--------------------------------阀操作参数------------------------------------------------------
+    for i = VALVE_BtStartId, VALVE_TextEndId, 1 do
+        set_enable(PROCESS_VALVE_CTRL_SCREEN, i, state)
+    end
+    ----------------------------以上各界面中的""确定"按钮-----------------------------------------
+    set_enable(PROCESS_INIT_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_GET_SANPLE_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_INJECT_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_READ_SIGNAL_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_PERISTALTIC_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_CALCULATE_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_WAIT_TIME_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_VALVE_CTRL_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_SELECT_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_SELECT2_SCREEN, SureButtonId, state)
+    set_enable(ACTION_SELECT_SCREEN, SureButtonId, state)
+end
+
 --***********************************************************************************************
 --在开始执行流程前,需要一些准备工作
 --***********************************************************************************************
@@ -959,7 +1025,7 @@ function process_ready_run()
     
     if SystemArg.currentProcessId ~= 0  and io.open(SystemArg.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         SetSysWorkStatus(WorkStatus.run);                 --设置工作状态为运行
---        DisableProcessSet();                            --禁止流程设置相关的操作
+        set_process_edit_state(DISABLE);                  --禁止流程设置相关的操作
         ReadProcessFile(1);                               --读取流程设置界面界面中的参数
         ReadProcessFile(2);                               --读取运行控制界面界面中的参数
         ReadActionFile(SystemArg.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数

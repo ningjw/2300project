@@ -5871,190 +5871,122 @@
 
 #define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY89                                  905
 
+#define  _BTN_系统信息_BUTTON24                                                   16
+
+//画面系统信息中按钮Button9弹起时的图片
+#define  _IMG_系统信息_BUTTON9_UP                                                 72
+
+//画面系统信息中按钮Button9按下时的图片
+#define  _IMG_系统信息_BUTTON9_DOWN                                               73
+
+#define  _BTN_系统信息_BUTTON9                                                    17
+
+//画面系统信息中按钮Button10弹起时的图片
+#define  _IMG_系统信息_BUTTON10_UP                                                72
+
+//画面系统信息中按钮Button10按下时的图片
+#define  _IMG_系统信息_BUTTON10_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON10                                                   18
+
+//画面系统信息中按钮Button12弹起时的图片
+#define  _IMG_系统信息_BUTTON12_UP                                                72
+
+//画面系统信息中按钮Button12按下时的图片
+#define  _IMG_系统信息_BUTTON12_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON12                                                   14
+
+//画面系统信息中按钮Button13弹起时的图片
+#define  _IMG_系统信息_BUTTON13_UP                                                72
+
+//画面系统信息中按钮Button13按下时的图片
+#define  _IMG_系统信息_BUTTON13_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON13                                                   15
+
+//画面系统信息中按钮Button14弹起时的图片
+#define  _IMG_系统信息_BUTTON14_UP                                                72
+
+//画面系统信息中按钮Button14按下时的图片
+#define  _IMG_系统信息_BUTTON14_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON14                                                   19
+
+//画面系统信息中按钮Button15弹起时的图片
+#define  _IMG_系统信息_BUTTON15_UP                                                72
+
+//画面系统信息中按钮Button15按下时的图片
+#define  _IMG_系统信息_BUTTON15_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON15                                                   20
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY4                                          1
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY1                                          2
+
+//画面系统信息中图片Image3使用的图片
+#define  _IMG_系统信息_IMAGE3                                                     75
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY2                                          3
+
+#define  _RTC_系统信息_RTC3                                                       12
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY3                                          4
+
+//画面系统信息中图片Image5使用的图片
+#define  _IMG_系统信息_IMAGE5                                                     76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY5                                          5
+
+//画面系统信息中图片Image6使用的图片
+#define  _IMG_系统信息_IMAGE6                                                     76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY6                                          6
+
+//画面系统信息中图片Image7使用的图片
+#define  _IMG_系统信息_IMAGE7                                                     76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY11                                         7
+
+//画面系统信息中图片Image8使用的图片
+#define  _IMG_系统信息_IMAGE8                                                     76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY12                                         8
+
+//画面系统信息中图片Image10使用的图片
+#define  _IMG_系统信息_IMAGE10                                                    76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY13                                         9
+
+//画面系统信息中图片Image11使用的图片
+#define  _IMG_系统信息_IMAGE11                                                    76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY14                                        10
+
+//画面系统信息中图片Image12使用的图片
+#define  _IMG_系统信息_IMAGE12                                                    76
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY15                                        11
+
+//画面系统信息中按钮Button17弹起时的图片
+#define  _IMG_系统信息_BUTTON17_UP                                                72
+
+//画面系统信息中按钮Button17按下时的图片
+#define  _IMG_系统信息_BUTTON17_DOWN                                              73
+
+#define  _BTN_系统信息_BUTTON17                                                   21
+
+#define  _RECORD_系统信息_RECORD1                                                 13
+
+#define  _RTC_系统信息_RTC1                                                      111
+
+#define  _RTC_系统信息_RTC2                                                      112
+
 //画面系统信息中图片Image1使用的图片
 #define  _IMG_系统信息_IMAGE1                                                      0
 
-//画面系统信息中按钮Button24弹起时的图片
-#define  _IMG_系统信息_BUTTON24_UP                                                19
-
-//画面系统信息中按钮Button24按下时的图片
-#define  _IMG_系统信息_BUTTON24_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON24                                                   72
-
-//画面系统信息中按钮Button9弹起时的图片
-#define  _IMG_系统信息_BUTTON9_UP                                                 19
-
-//画面系统信息中按钮Button9按下时的图片
-#define  _IMG_系统信息_BUTTON9_DOWN                                               20
-
-#define  _BTN_系统信息_BUTTON9                                                    47
-
-//画面系统信息中按钮Button10弹起时的图片
-#define  _IMG_系统信息_BUTTON10_UP                                                19
-
-//画面系统信息中按钮Button10按下时的图片
-#define  _IMG_系统信息_BUTTON10_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON10                                                   48
-
-//画面系统信息中按钮Button12弹起时的图片
-#define  _IMG_系统信息_BUTTON12_UP                                                19
-
-//画面系统信息中按钮Button12按下时的图片
-#define  _IMG_系统信息_BUTTON12_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON12                                                   50
-
-//画面系统信息中按钮Button13弹起时的图片
-#define  _IMG_系统信息_BUTTON13_UP                                                19
-
-//画面系统信息中按钮Button13按下时的图片
-#define  _IMG_系统信息_BUTTON13_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON13                                                   51
-
-//画面系统信息中按钮Button14弹起时的图片
-#define  _IMG_系统信息_BUTTON14_UP                                                19
-
-//画面系统信息中按钮Button14按下时的图片
-#define  _IMG_系统信息_BUTTON14_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON14                                                   52
-
-//画面系统信息中按钮Button15弹起时的图片
-#define  _IMG_系统信息_BUTTON15_UP                                                19
-
-//画面系统信息中按钮Button15按下时的图片
-#define  _IMG_系统信息_BUTTON15_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON15                                                   53
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY4                                         60
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY1                                         55
-
-//画面系统信息中图片Image3使用的图片
-#define  _IMG_系统信息_IMAGE3                                                     73
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY2                                         57
-
-#define  _RTC_系统信息_RTC3                                                       62
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY3                                         36
-
-//画面系统信息中图片Image5使用的图片
-#define  _IMG_系统信息_IMAGE5                                                     74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY5                                         73
-
-//画面系统信息中图片Image6使用的图片
-#define  _IMG_系统信息_IMAGE6                                                     74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY6                                         75
-
-//画面系统信息中图片Image7使用的图片
-#define  _IMG_系统信息_IMAGE7                                                     74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY11                                        80
-
-//画面系统信息中图片Image8使用的图片
-#define  _IMG_系统信息_IMAGE8                                                     74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY12                                        82
-
-//画面系统信息中图片Image10使用的图片
-#define  _IMG_系统信息_IMAGE10                                                    74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY13                                        86
-
-//画面系统信息中图片Image11使用的图片
-#define  _IMG_系统信息_IMAGE11                                                    74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY14                                        88
-
-//画面系统信息中图片Image12使用的图片
-#define  _IMG_系统信息_IMAGE12                                                    74
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY15                                        92
-
-//画面系统信息中按钮Button1弹起时的图片
-#define  _IMG_系统信息_BUTTON1_UP                                                  4
-
-//画面系统信息中按钮Button1按下时的图片
-#define  _IMG_系统信息_BUTTON1_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON1                                                     5
-
-//画面系统信息中按钮Button2弹起时的图片
-#define  _IMG_系统信息_BUTTON2_UP                                                  4
-
-//画面系统信息中按钮Button2按下时的图片
-#define  _IMG_系统信息_BUTTON2_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON2                                                    12
-
-//画面系统信息中按钮Button3弹起时的图片
-#define  _IMG_系统信息_BUTTON3_UP                                                  4
-
-//画面系统信息中按钮Button3按下时的图片
-#define  _IMG_系统信息_BUTTON3_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON3                                                    14
-
-//画面系统信息中按钮Button4弹起时的图片
-#define  _IMG_系统信息_BUTTON4_UP                                                  4
-
-//画面系统信息中按钮Button4按下时的图片
-#define  _IMG_系统信息_BUTTON4_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON4                                                    16
-
-//画面系统信息中按钮Button5弹起时的图片
-#define  _IMG_系统信息_BUTTON5_UP                                                  4
-
-//画面系统信息中按钮Button5按下时的图片
-#define  _IMG_系统信息_BUTTON5_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON5                                                    18
-
-//画面系统信息中按钮Button6弹起时的图片
-#define  _IMG_系统信息_BUTTON6_UP                                                  4
-
-//画面系统信息中按钮Button6按下时的图片
-#define  _IMG_系统信息_BUTTON6_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON6                                                    20
-
-//画面系统信息中按钮Button7弹起时的图片
-#define  _IMG_系统信息_BUTTON7_UP                                                  4
-
-//画面系统信息中按钮Button7按下时的图片
-#define  _IMG_系统信息_BUTTON7_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON7                                                    23
-
-//画面系统信息中按钮Button8弹起时的图片
-#define  _IMG_系统信息_BUTTON8_UP                                                  3
-
-//画面系统信息中按钮Button8按下时的图片
-#define  _IMG_系统信息_BUTTON8_DOWN                                                3
-
-#define  _BTN_系统信息_BUTTON8                                                    25
-
-//画面系统信息中按钮Button17弹起时的图片
-#define  _IMG_系统信息_BUTTON17_UP                                                19
-
-//画面系统信息中按钮Button17按下时的图片
-#define  _IMG_系统信息_BUTTON17_DOWN                                              20
-
-#define  _BTN_系统信息_BUTTON17                                                   15
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY88                                        11
-
-#define  _RTC_系统信息_RTC1                                                        4
-
-#define  _RTC_系统信息_RTC2                                                       10
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY16                                       900
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY7                                        901
 
@@ -6066,7 +5998,178 @@
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY89                                       905
 
-#define  _RECORD_系统信息_RECORD1                                                  6
+//画面系统信息中按钮Button1弹起时的图片
+#define  _IMG_系统信息_BUTTON1_UP                                                  4
+
+//画面系统信息中按钮Button1按下时的图片
+#define  _IMG_系统信息_BUTTON1_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON1                                                   201
+
+//画面系统信息中按钮Button2弹起时的图片
+#define  _IMG_系统信息_BUTTON2_UP                                                  4
+
+//画面系统信息中按钮Button2按下时的图片
+#define  _IMG_系统信息_BUTTON2_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON2                                                   202
+
+//画面系统信息中按钮Button3弹起时的图片
+#define  _IMG_系统信息_BUTTON3_UP                                                  4
+
+//画面系统信息中按钮Button3按下时的图片
+#define  _IMG_系统信息_BUTTON3_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON3                                                   203
+
+//画面系统信息中按钮Button4弹起时的图片
+#define  _IMG_系统信息_BUTTON4_UP                                                  4
+
+//画面系统信息中按钮Button4按下时的图片
+#define  _IMG_系统信息_BUTTON4_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON4                                                   204
+
+//画面系统信息中按钮Button5弹起时的图片
+#define  _IMG_系统信息_BUTTON5_UP                                                  4
+
+//画面系统信息中按钮Button5按下时的图片
+#define  _IMG_系统信息_BUTTON5_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON5                                                   200
+
+//画面系统信息中按钮Button6弹起时的图片
+#define  _IMG_系统信息_BUTTON6_UP                                                  4
+
+//画面系统信息中按钮Button6按下时的图片
+#define  _IMG_系统信息_BUTTON6_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON6                                                   205
+
+//画面系统信息中按钮Button7弹起时的图片
+#define  _IMG_系统信息_BUTTON7_UP                                                  4
+
+//画面系统信息中按钮Button7按下时的图片
+#define  _IMG_系统信息_BUTTON7_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON7                                                   206
+
+//画面系统信息中按钮Button8弹起时的图片
+#define  _IMG_系统信息_BUTTON8_UP                                                  3
+
+//画面系统信息中按钮Button8按下时的图片
+#define  _IMG_系统信息_BUTTON8_DOWN                                                3
+
+#define  _BTN_系统信息_BUTTON8                                                   207
+
+//画面系统信息中按钮Button11按下时的图片
+#define  _IMG_系统信息_BUTTON11_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON11                                                  104
+
+//画面系统信息中按钮Button16弹起时的图片
+#define  _IMG_系统信息_BUTTON16_UP                                                77
+
+//画面系统信息中按钮Button16按下时的图片
+#define  _IMG_系统信息_BUTTON16_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON16                                                  106
+
+//画面系统信息中按钮Button18弹起时的图片
+#define  _IMG_系统信息_BUTTON18_UP                                                77
+
+//画面系统信息中按钮Button18按下时的图片
+#define  _IMG_系统信息_BUTTON18_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON18                                                  107
+
+//画面系统信息中按钮Button19弹起时的图片
+#define  _IMG_系统信息_BUTTON19_UP                                                77
+
+//画面系统信息中按钮Button19按下时的图片
+#define  _IMG_系统信息_BUTTON19_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON19                                                  108
+
+//画面系统信息中按钮Button20弹起时的图片
+#define  _IMG_系统信息_BUTTON20_UP                                                77
+
+//画面系统信息中按钮Button20按下时的图片
+#define  _IMG_系统信息_BUTTON20_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON20                                                  109
+
+//画面系统信息中按钮Button21弹起时的图片
+#define  _IMG_系统信息_BUTTON21_UP                                                77
+
+//画面系统信息中按钮Button21按下时的图片
+#define  _IMG_系统信息_BUTTON21_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON21                                                  110
+
+//画面系统信息中按钮Button22弹起时的图片
+#define  _IMG_系统信息_BUTTON22_UP                                                77
+
+//画面系统信息中按钮Button22按下时的图片
+#define  _IMG_系统信息_BUTTON22_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON22                                                  114
+
+//画面系统信息中按钮Button23弹起时的图片
+#define  _IMG_系统信息_BUTTON23_UP                                                77
+
+//画面系统信息中按钮Button23按下时的图片
+#define  _IMG_系统信息_BUTTON23_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON23                                                  115
+
+//画面系统信息中按钮Button25弹起时的图片
+#define  _IMG_系统信息_BUTTON25_UP                                                77
+
+//画面系统信息中按钮Button25按下时的图片
+#define  _IMG_系统信息_BUTTON25_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON25                                                  116
+
+//画面系统信息中按钮Button26弹起时的图片
+#define  _IMG_系统信息_BUTTON26_UP                                                77
+
+//画面系统信息中按钮Button26按下时的图片
+#define  _IMG_系统信息_BUTTON26_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON26                                                  117
+
+//画面系统信息中按钮Button27弹起时的图片
+#define  _IMG_系统信息_BUTTON27_UP                                                77
+
+//画面系统信息中按钮Button27按下时的图片
+#define  _IMG_系统信息_BUTTON27_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON27                                                  118
+
+//画面系统信息中按钮Button28弹起时的图片
+#define  _IMG_系统信息_BUTTON28_UP                                                77
+
+//画面系统信息中按钮Button28按下时的图片
+#define  _IMG_系统信息_BUTTON28_DOWN                                              77
+
+#define  _BTN_系统信息_BUTTON28                                                  139
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY17                                        22
+
+//画面系统信息中按钮Button46弹起时的图片
+#define  _IMG_系统信息_BUTTON46_UP                                                62
+
+//画面系统信息中按钮Button46按下时的图片
+#define  _IMG_系统信息_BUTTON46_DOWN                                              63
+
+#define  _BTN_系统信息_BUTTON46                                                   26
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY18                                        23
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY19                                        24
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY20                                        25
 
 //画面密码设置中按钮Button3弹起时的图片
 #define  _IMG_密码设置_BUTTON3_UP                                                 31
@@ -6087,17 +6190,17 @@
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY2                                          1
 
 //画面密码设置中图片Image2使用的图片
-#define  _IMG_密码设置_IMAGE2                                                     75
+#define  _IMG_密码设置_IMAGE2                                                     79
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY1                                          2
 
 //画面密码设置中图片Image3使用的图片
-#define  _IMG_密码设置_IMAGE3                                                     75
+#define  _IMG_密码设置_IMAGE3                                                     79
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY3                                          3
 
 //画面密码设置中图片Image4使用的图片
-#define  _IMG_密码设置_IMAGE4                                                     75
+#define  _IMG_密码设置_IMAGE4                                                     79
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY4                                          4
 
@@ -6124,12 +6227,12 @@
 #define  _BTN_登录系统_BUTTON1                                                    98
 
 //画面登录系统中图片Image1使用的图片
-#define  _IMG_登录系统_IMAGE1                                                     75
+#define  _IMG_登录系统_IMAGE1                                                     79
 
 #define  _TXT_DIS__登录系统_TEXT_DISPLAY2                                          1
 
 //画面登录系统中图片Image2使用的图片
-#define  _IMG_登录系统_IMAGE2                                                     75
+#define  _IMG_登录系统_IMAGE2                                                     79
 
 #define  _TXT_DIS__登录系统_TEXT_DISPLAY1                                          2
 

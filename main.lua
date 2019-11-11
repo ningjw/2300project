@@ -110,10 +110,10 @@ Sys = {
     periodStartDateTime,--周期流程开始时间
 
     periodicIndex = 1,--周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
-    totalAction = 0,--所有动作类型
     actionStep = 1,--取值范围为1-24,对应了流程设置2/3界面中的共24个步骤
     actionSubStep = 1,--该变量用于控制"初始化"取样""消解""注射泵加液"等等子动作.
     actionTotal = 0,--所有的动作步数,可以通过统计<action>标签获得
+    step = 1,--用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
     --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
     actionIdTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,
                  [13]= 0,[14]= 0,[15]= 0,[16]= 0,[17]= 0,[18]= 0,[19]= 0,[20] = 0,[21] = 0,[22] = 0,[23] = 0,[24] = 0},
@@ -132,6 +132,8 @@ Sys = {
     processName = nil ,--流程名称
     processStep = 1,--执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
     isPeriodOrTimed = 0,--使用该变量判断是周期流程还是定时流程
+
+    waitTimeFlag = 0;--用于标志是否正在等待超时时间到; 取值0或者1; 1=当前正在等待超时
 
     startTime =  {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--开始时间
     resultTime = {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--结果时间
@@ -181,12 +183,43 @@ function open_multi_valve(valveIdTab, number)
 end
 
 
+function start_wait_time(wait_time)
+    Sys.waitTimeFlag = 1;
+    start_timer(2, wait_time, 1, 1); --开启定时器1，超时时间 3s, 1->使用倒计时方式,1->表示只执行一次
+end
+
 --***********************************************************************************************
 --控制十通阀转到设置的通道号
 --channel 十通阀的通道号
 --***********************************************************************************************
-function control_valco(channel)
+function control_valco(channel, wait_time)
+    channel = tonumber(channel);
+    wait_time = tonumber(channel) * 1000;
     
+    if Sys.step == 0 then 
+        Sys.step = 1;
+    end
+
+    if Sys.step == 1  then 
+        if UartArg.lock == UNLOCKED then--发送串口指令开阀
+            printf("开十通阀");
+            Sys.step = Sys.step + 1;
+        end
+    elseif Sys.step == 2  then
+        if UartArg.reply_flag == REPLY_OK then--等待串口回复成功
+            Sys.step = Sys.step + 1;
+        end
+    elseif Sys.step == 3 then--开启定时器进行定时
+        if wait_time ~= 0 then
+            start_wait_time(wait_time)
+        end
+        Sys.step = Sys.step + 1;
+    elseif Sys.step == 4 then--等待超时时间到
+        if Sys.waitTimeFlag == 1 then
+            Sys.step = 0;--完成
+        end
+    end
+    return Sys.step;
 end
 
 --***********************************************************************************************
@@ -256,6 +289,7 @@ function on_timer(timer_id)
         end
     elseif timer_id == 1 then--串口超时
         uart_time_out();
+    elseif timer_id == 2 then--等待时间完成
     end
 end
 
@@ -386,6 +420,8 @@ end
 uart_free_protocol = 1;
 
 uartSendTab = {
+    openValco = {[0] = 0xE0 ,len = 6, note = "十通阀"},--开十通阀
+    openV1  = {[0] = 0xE0 ,len = 6, note = "开阀1"},--开十通阀
     openV11 = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},--len = 6
     openV12 = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},--len = 6
 }
@@ -394,6 +430,8 @@ REPLY_OK = 0;
 REPLY_FAIL = 1;
 NO_NEED_REPLY = 0;
 NEED_REPLY = 1;--需要回复
+LOCKED = 1;
+UNLOCKED = 0;
 
 UartArg = {
     lock = 0,--在发送串口数据时,会暂时锁定串口
@@ -476,7 +514,7 @@ function on_uart_recv_data(packet)
 
     if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
         UartArg.reply_flag = REPLY_OK;
-        UartArg.lock = 0;--解锁串口
+        UartArg.lock = UNLOCKED;--解锁串口
         stop_timer(1)--停止超时定时器
 
         local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
@@ -494,12 +532,12 @@ end
 --reply : 表示是否是要等待回复,取值 NEED_REPLY  与 NO_NEED_REPLY
 --***********************************************************************************************
 function on_uart_send_data(packet, reply)
-    if UartArg.lock == 1 then
+    if UartArg.lock == LOCKED then
         return;
     end
     if reply == NEED_REPLY then --表示需要等待回复
-        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,1->表示只执行一次
-        UartArg.lock = 1;      --给串口上锁,暂不能使用串口发送数据
+        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,0->表示无限重复
+        UartArg.lock = LOCKED;      --给串口上锁,暂不能使用串口发送数据
         UartArg.reply_flag = REPLY_FAIL;
         UartArg.repeat_data = packet;
         UartArg.reply_data[0] = packet[0];
@@ -524,7 +562,7 @@ end
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
     if UartArg.repeat_times <= 3 then
-        UartArg.lock = 0;
+        UartArg.lock = UNLOCKED;
         on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
     else  --重发三次都没有回复,不再重发
         UartArg.repeat_times = 0;
@@ -546,13 +584,11 @@ LastAnalysisE1Id = 25;     --E1
 LastAnalysisE2Id = 26;     --E2
 NextProcessTimeTextId = 2  --下次启动时间
 
-
 SysWorkStatusId = 901;   --工作状态
 SysCurrentActionId = 902;--当前动作
 SysUserNameId = 903      --显示用户
 SysAlarmId = 904;        --显示当前告警信息
 SysTipsId = 905;         --界面底部用于显示提示信息的文本id
-
 
 
 function main_control_notify(screen,control,value)
@@ -1052,6 +1088,7 @@ function process_ready_run()
         end
         Sys.actionStep = 1;                         --所有步骤都是从1开始
         Sys.actionSubStep = 1;
+        Sys.step = 1;
         Sys.handRunTimes = 0;
     end
 end
@@ -1097,6 +1134,7 @@ function excute_process()
             Sys.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
         end
         Sys.actionSubStep = 1;--子流程从第一步开始执行
+        Sys.step = 1;
         Sys.processStep = Sys.processStep + 1;
     --------------------------------------------------------------------------------------------------
     --第二步: 执行子流程函数
@@ -1414,15 +1452,16 @@ function process_init_control_notify(screen,control,value)
 end
 
 --***********************************************************************************************
---  执行开始流程
---  paraTab:保存了开始界面中的参数设置
+--  执行初始化流程
+--  paraTab:保存了开始界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素,
+--          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
 --***********************************************************************************************
 function excute_init_process(paraTab)
+    --------------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE then--判断是否需要对十通阀进行操作
-            for i = 6,21,1 do--6为输出1第一个按钮, 表示阀1
-                if tab[1] == ENABLE then
-                end
+            if control_valco(paraTab[39], paraTab[40]) == 0 then--39,40分别对应了通道号与等待时间
+                Sys.actionSubStep = Sys.actionSubStep + 1;
             end
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -1452,7 +1491,7 @@ function excute_init_process(paraTab)
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif Sys.actionSubStep == 6 then
+    elseif Sys.actionSubStep == 6 then--结束
         Sys.actionSubStep = 0;
     end
     
@@ -2062,15 +2101,20 @@ UartRecordId = 1--串口通讯记录空间id
 --[[-----------------------------------------------------------------------------------------------------------------
     系统信息
 --------------------------------------------------------------------------------------------------------------------]]
-maintainerPwdSetId = 50;
-administratorPwdSetId = 51;
-EquipmentTypeSetId = 60;
-EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是11
-OperatorLoginId = 72;
-maintainerLoginId = 47;
-administratorLoginId = 48;
-pwdRecordId = 6;--用于保存密码的记录控件
+maintainerPwdSetId = 14;
+administratorPwdSetId = 15;
+EquipmentTypeSetId = 1;
+EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是900
+OperatorLoginId = 16;
+maintainerLoginId = 17;
+administratorLoginId = 18;
+pwdRecordId = 13;--用于保存密码的记录控件
 
+ftpAddr1Id = 22;
+ftpAddr2Id = 23;
+ftpAddr3Id = 24;
+ftpAddr4Id = 25;
+ftpStartBtId = 26;
 --设置仪器型号
 function set_equipment_type()
     for i = 1,16,1 do
@@ -2095,6 +2139,7 @@ function system_info_control_notify(screen,control,value)
     elseif control == administratorLoginId then--管理员登录
         set_user_name(SysUser.administrator);
         change_screen(LOGIN_SYSTEM_SCREEN);
+    elseif control == ftpStartBtId then--ftp远程升级
     end
 end
 

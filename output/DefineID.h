@@ -4859,9 +4859,6 @@
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY89                                      905
 
-//画面手动操作3中图片Image1使用的图片
-#define  _IMG_手动操作3_IMAGE1                                                     0
-
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY1                                        63
 
 //画面手动操作3中图片Image2使用的图片
@@ -5171,12 +5168,6 @@
 
 #define  _BTN_手动操作3_BUTTON35                                                  15
 
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY88                                       11
-
-#define  _RTC_手动操作3_RTC1                                                       4
-
-#define  _RTC_手动操作3_RTC2                                                      10
-
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY7                                       901
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY8                                       903
@@ -5187,8 +5178,14 @@
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY89                                      905
 
-//画面手动操作4中图片Image1使用的图片
-#define  _IMG_手动操作4_IMAGE1                                                     0
+#define  _RTC_手动操作3_RTC1                                                       2
+
+#define  _RTC_手动操作3_RTC2                                                       3
+
+//画面手动操作3中图片Image1使用的图片
+#define  _IMG_手动操作3_IMAGE1                                                     0
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY29                                      900
 
 //画面手动操作4中按钮Button1弹起时的图片
 #define  _IMG_手动操作4_BUTTON1_UP                                                 4
@@ -5286,13 +5283,16 @@
 
 #define  _BTN_手动操作4_BUTTON35                                                  15
 
-#define  _RECORD_手动操作4_RECORD1                                                 2
+#define  _RECORD_手动操作4_RECORD1                                                 1
 
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY88                                       11
+#define  _RTC_手动操作4_RTC1                                                     111
 
-#define  _RTC_手动操作4_RTC1                                                       4
+#define  _RTC_手动操作4_RTC2                                                     112
 
-#define  _RTC_手动操作4_RTC2                                                      10
+//画面手动操作4中图片Image1使用的图片
+#define  _IMG_手动操作4_IMAGE1                                                     0
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY16                                      900
 
 #define  _TXT_DIS__手动操作4_TEXT_DISPLAY7                                       901
 
@@ -6066,6 +6066,8 @@
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY89                                       905
 
+#define  _RECORD_系统信息_RECORD1                                                  6
+
 //画面密码设置中按钮Button3弹起时的图片
 #define  _IMG_密码设置_BUTTON3_UP                                                 31
 
@@ -6082,22 +6084,28 @@
 
 #define  _BTN_密码设置_BUTTON1                                                    98
 
-#define  _TXT_DIS__密码设置_TEXT_DISPLAY2                                         26
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY2                                          1
 
 //画面密码设置中图片Image2使用的图片
 #define  _IMG_密码设置_IMAGE2                                                     75
 
-#define  _TXT_DIS__密码设置_TEXT_DISPLAY1                                          4
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY1                                          2
 
 //画面密码设置中图片Image3使用的图片
 #define  _IMG_密码设置_IMAGE3                                                     75
 
-#define  _TXT_DIS__密码设置_TEXT_DISPLAY3                                          8
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY3                                          3
 
 //画面密码设置中图片Image4使用的图片
 #define  _IMG_密码设置_IMAGE4                                                     75
 
-#define  _TXT_DIS__密码设置_TEXT_DISPLAY4                                         11
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY4                                          4
+
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY30                                         5
+
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY5                                          6
+
+#define  _TXT_DIS__密码设置_TEXT_DISPLAY6                                          7
 
 //画面登录系统中按钮Button3弹起时的图片
 #define  _IMG_登录系统_BUTTON3_UP                                                 31
@@ -6118,12 +6126,14 @@
 //画面登录系统中图片Image1使用的图片
 #define  _IMG_登录系统_IMAGE1                                                     75
 
-#define  _TXT_DIS__登录系统_TEXT_DISPLAY2                                         26
+#define  _TXT_DIS__登录系统_TEXT_DISPLAY2                                          1
 
 //画面登录系统中图片Image2使用的图片
 #define  _IMG_登录系统_IMAGE2                                                     75
 
-#define  _TXT_DIS__登录系统_TEXT_DISPLAY1                                          4
+#define  _TXT_DIS__登录系统_TEXT_DISPLAY1                                          2
+
+#define  _TXT_DIS__登录系统_TEXT_DISPLAY30                                         3
 
 #define  _BTN_联系我们_BUTTON1                                                     2
 

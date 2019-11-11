@@ -1,6 +1,6 @@
 --下面列出了常用的回调函数
 --更多功能请阅读<<物联型LUA脚本API.pdf>>
---建议使用visual code studio 并安装Bookmarks插件,通过打开同目录下的2300project.code-workspace工作空间查看该文件.
+--建议使用visual code studio 并安装Bookmarks与vscode-lua插件,通过打开同目录下的2300project.code-workspace工作空间查看该文件.
 
 
 --定义对界面id进行宏定义
@@ -77,7 +77,8 @@ TipsTab = {
     exporting   = "正在导出配置文件...",
     exported    = "配置文件导出成功",
     exportTips  = "请在SD卡或U盘创建config文件夹后重试",
-    selectProcess = "请选择流程"
+    selectProcess = "请选择流程",
+    pwdErr      = "密码不正确",
 };
 
 WorkStatus = {
@@ -98,17 +99,15 @@ SysUser = {
     administrator = "管理员",
 }
 
-SystemArg = {
+Sys = {
+    userName = SysUser.operator,--用于保存当前用户
     status = 0,--系统状态:对应WorkStatus中的值
     runType = 0,--运行方式: 对应WorkType中的值
     analysisType = COLOR_METHOD,--分析方法
     
-    dateTime,--系统日期时间,以字符串的形式保存,例如"201911051148"
-    minute = 0,--系统时间-分钟
-    hour = 0,--系统时间-小时
-    periodStartDateTime,--周期流程开始时间
-
     handRunTimes = 0;--记录了手动运行次数
+
+    periodStartDateTime,--周期流程开始时间
 
     periodicIndex = 1,--周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
     totalAction = 0,--所有动作类型
@@ -134,8 +133,9 @@ SystemArg = {
     processStep = 1,--执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
     isPeriodOrTimed = 0,--使用该变量判断是周期流程还是定时流程
 
-    startTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
-    resultTime = {year = 0, month=0, day = 0, hour = 0, minute = 0},
+    startTime =  {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--开始时间
+    resultTime = {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--结果时间
+    dateTime =   {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--系统日期时间,在1S定时器中不断刷新
 }
 
 
@@ -234,11 +234,16 @@ function on_init()
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
 
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
-    uart_set_timeout(2000,1);--设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
-    SetSysUser(SysUser.operator);--开机之后默认为操作员
+    uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
+    SetSysUser(SysUser.operator);   --开机之后默认为操作员
 
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
+
+    if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
+        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
+        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
+    end
 end
 
 --***********************************************************************************************
@@ -246,7 +251,7 @@ end
 --***********************************************************************************************
 function on_timer(timer_id)
     if  timer_id == 0 then --定时器0,定时时间到
-        if SystemArg.status == WorkStatus.run then
+        if Sys.status == WorkStatus.run then
             excute_process();
         end
     elseif timer_id == 1 then--串口超时
@@ -258,9 +263,13 @@ end
 --定时回调函数，系统每隔1秒钟自动调用。
 --***********************************************************************************************
 function on_systick()
-    if SystemArg.status == WorkStatus.readyRun then           --当系统处于待机状态时,
+    Sys.dateTime.year,Sys.dateTime.mon,Sys.dateTime.day,
+    Sys.dateTime.hour,Sys.dateTime.min,Sys.dateTime.sec = get_date_time();--获取当前时间
+    
+    if Sys.status == WorkStatus.readyRun then           --当系统处于待机状态时,
         process_ready_run();
     end
+
 end
 
 --***********************************************************************************************
@@ -310,10 +319,10 @@ function on_control_notify(screen,control,value)
         hand_operate1_control_notify(screen,control,value);	
 	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
 		system_info_control_notify(screen,control,value);	
-	elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
+    elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
 		login_system_control_notify(screen,control,value);	
 	elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
-		login_system_control_notify(screen,control,value);		
+		password_set_control_notify(screen,control,value);		
 	end
 end
 
@@ -378,6 +387,7 @@ uart_free_protocol = 1;
 
 uartSendTab = {
     openV11 = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},--len = 6
+    openV12 = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},--len = 6
 }
 
 REPLY_OK = 0;
@@ -455,10 +465,26 @@ end
 --串口波特率为38400, 传送1bit需要 1000000/38400 = 26us, 传送一个字节的数据需要10bit,则传送1Byte数据需要260us
 --***********************************************************************************************
 function on_uart_recv_data(packet)
+
+    local rev_len = 0;
+    for i=0,20,1 do
+        rev_len = i;
+        if packet[i] == nil then
+            break;
+        end
+    end
+
     if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
         UartArg.reply_flag = REPLY_OK;
         UartArg.lock = 0;--解锁串口
         stop_timer(1)--停止超时定时器
+
+        local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
+        local UartData = "";--将需要发送的数据保存到该字符串中
+        for i=0, rev_len-1, 1 do
+            UartData = UartData..string.format("%02x ", packet[i]);
+        end
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";".."回复");--添加通信记录
     end
 end
 
@@ -482,6 +508,13 @@ function on_uart_send_data(packet, reply)
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);
     uart_send_data(packet) --发送指令
+
+    local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
+    local UartData = "";--将需要发送的数据保存到该字符串中
+    for i=0, packet.len+1, 1 do
+        UartData = UartData..string.format("%02x ", packet[i]);
+    end
+    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
 end
 
 
@@ -550,7 +583,7 @@ end
 --  设置工作状态
 --***********************************************************************************************
 function SetSysWorkStatus(status)
-    SystemArg.status = status;--设置系统状态为运行
+    Sys.status = status;--设置系统状态为运行
     --在底部的状态栏显示工作状态:停止/运行/待机
     for i = 1,16,1 do
         set_text(PublicTab[i], SysWorkStatusId, status);
@@ -580,22 +613,7 @@ function ShowSysAlarm(alarm)
     end
 end
 
---***********************************************************************************************
---  设置系统用户
---***********************************************************************************************
-function SetSysUser(user)
-    --在底部的状态用户名
-    for i = 1,16,1 do
-        set_text(PublicTab[i], SysUserNameId, user);
-    end
-    if user == SysUser.operator then -- 操作员
-        set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
-        set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
-        set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
-    elseif user == SysUser.maintainer then--运维员
-    elseif user == SysUser.administrator then--管理员
-    end
-end
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -631,7 +649,7 @@ PeriodicTab = { [1] = {textId = 1, buttonId = 101, processId = 0},
                 [8] = {textId = 35, value = 0},--时
                 [9] = {textId = 36, value = 0},--分
                 [10]= {textId = 37, value = 0},--频率
-                nextStartTime = {year=0, month=0, day=0, hour=0, minute=0};
+                nextStartTime = {year=0, mon=0, day=0, hour=0, min=0};
 };
 
 --定时设置  这里注意StartHourId - 37 = 序号; startMinuteId - 61 = 序号
@@ -681,7 +699,7 @@ function run_control_notify(screen,control,value)
             SystemStop();
         end
     elseif control == RunTypeMenuId then--更改运行方式
-        SystemArg.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
+        Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
         WriteProcessFile(2);
     elseif control == HandProcessTab[1].TimesId then--更改手动运行次数
         HandProcessTab[1].times = tonumber(get_text(RUN_CONTROL_SCREEN, control));
@@ -770,11 +788,11 @@ function set_period_start_date(diffDays)
     normalMonthDays = {[1]=31, [2]=28, [3]=31, [4]=30, [5]=31, [6]=30, [7]=31, [8]=31, [9]=30, [10]=31, [11]=30, [12]=31};
     
     local year = PeriodicTab[5].value;
-    local month = PeriodicTab[6].value;
+    local mon = PeriodicTab[6].value;
     local day = PeriodicTab[7].value;
 
     PeriodicTab.nextStartTime.year  = year;
-    PeriodicTab.nextStartTime.month = month;
+    PeriodicTab.nextStartTime.mon = mon;
     PeriodicTab.nextStartTime.day = day;
 
     if diffDays == 0 then
@@ -799,15 +817,15 @@ function set_period_start_date(diffDays)
     if isLeapYear(year) then
         normalMonthDays[2]=29;
     end
-    while math.modf(diffDays/normalMonthDays[month]) >= 1  do
-		diffDays = diffDays - normalMonthDays[month];
-		month = month + 1;
-		if month >= 13 then
+    while math.modf(diffDays/normalMonthDays[mon]) >= 1  do
+		diffDays = diffDays - normalMonthDays[mon];
+		mon = mon + 1;
+		if mon >= 13 then
 			year = year + 1;
 			if isLeapYear(year) then
 				normalMonthDays[2]=29;
             end
-			month = math.fmod(month,12);
+			mon = math.fmod(mon,12);
         end
     end
     
@@ -815,25 +833,25 @@ function set_period_start_date(diffDays)
     if isLeapYear(year) then
         normalMonthDays[2]=29;
     end
-    if(diffDays + day <= normalMonthDays[month]) then
+    if(diffDays + day <= normalMonthDays[mon]) then
 		day = diffDays + day;
 	else
-		day = diffDays + day - normalMonthDays[month];
-		month = month + 1;
-		if month > 12 then
+		day = diffDays + day - normalMonthDays[mon];
+		mon = mon + 1;
+		if mon > 12 then
 			year = year + 1;
-			month = math.fmod(month,12);
+			mon = math.fmod(mon,12);
         end
     end
 
     PeriodicTab[5].value = year;
-    PeriodicTab[6].value = month;
+    PeriodicTab[6].value = mon;
     PeriodicTab[7].value = day;
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value);
     PeriodicTab.nextStartTime.year  = year;
-    PeriodicTab.nextStartTime.month = month;
+    PeriodicTab.nextStartTime.mon = mon;
     PeriodicTab.nextStartTime.day = day;
 end
 
@@ -844,15 +862,15 @@ end
 function set_period_start_date_time(minFreq)
     local dayHour = 1440;--24 * 60 一天有多少分钟
     local hour = PeriodicTab[8].value;
-    local minute = PeriodicTab[9].value;
+    local min = PeriodicTab[9].value;
     
-    local minTotal = minFreq + hour * 60 + minute;--math.fmod(minFreq,dayHour) + ;
+    local minTotal = minFreq + hour * 60 + min;--math.fmod(minFreq,dayHour) + ;
 
     local minRemain = math.fmod(minTotal,dayHour);
     
     
     PeriodicTab.nextStartTime.hour = math.modf(minRemain/60);
-    PeriodicTab.nextStartTime.minute = math.fmod(minRemain,60);
+    PeriodicTab.nextStartTime.min = math.fmod(minRemain,60);
 
     PeriodicTab[8].value = math.modf(minRemain/60);
     PeriodicTab[9].value = math.fmod(minRemain,60);
@@ -863,20 +881,20 @@ function set_period_start_date_time(minFreq)
     
     --显示下次自动运行启动流程的时间
     set_text(MAIN_SCREEN,NextProcessTimeTextId,string.format("%d-%02d-%02d  %02d:%02d",
-             PeriodicTab.nextStartTime.year,PeriodicTab.nextStartTime.month,PeriodicTab.nextStartTime.day,
-             PeriodicTab.nextStartTime.hour,PeriodicTab.nextStartTime.minute));
+             PeriodicTab.nextStartTime.year,PeriodicTab.nextStartTime.mon,PeriodicTab.nextStartTime.day,
+             PeriodicTab.nextStartTime.hour,PeriodicTab.nextStartTime.min));
     WriteProcessFile(2);
 end
 
 --***********************************************************************************************
 --将当前时间设置为本次流程开始时间
 --***********************************************************************************************
-function set_process_start_date_time(year,month,day,hour,minute)
+function set_process_start_date_time(year,mon,day,hour,min)
     PeriodicTab[5].value = year;
-    PeriodicTab[6].value = month;
+    PeriodicTab[6].value = mon;
     PeriodicTab[7].value = day;
     PeriodicTab[8].value = hour;
-    PeriodicTab[9].value = minute;
+    PeriodicTab[9].value = min;
 
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
     set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
@@ -892,28 +910,28 @@ end
 --***********************************************************************************************
 function get_current_process_id()
     local processId = 0;
-    if SystemArg.status == WorkStatus.run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
-        return SystemArg.currentProcessId;
+    if Sys.status == WorkStatus.run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
+        return Sys.currentProcessId;
     end
 
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
-    if SystemArg.runType == WorkType.hand then 
+    if Sys.runType == WorkType.hand then 
         processId = HandProcessTab[1].processId;
     ----------------------自动模式  自动模式中的定时时间错过了会直接跳过该流程--------------------------
-    elseif SystemArg.runType == WorkType.auto then 
+    elseif Sys.runType == WorkType.auto then 
 
-        local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
-        SystemArg.hour = hour;
-        SystemArg.minute = min;
-        SysDateTime =  string.format("%d,%02d,%02d,%02d,%02d",year,mon,day,hour,min);
-        SystemArg.periodStartDateTime = string.format("%d,%02d,%02d,%02d,%02d",
+        local currentDateTime =  string.format("%d%02d%02d%02d%02d",
+                                          Sys.dateTime.year, Sys.dateTime.mon,Sys.dateTime.day,
+                                          Sys.dateTime.hour, Sys.dateTime.min);
+
+        Sys.periodStartDateTime = string.format("%d%02d%02d%02d%02d",
                                                        PeriodicTab[5].value,PeriodicTab[6].value,PeriodicTab[7].value,
                                                        PeriodicTab[8].value,PeriodicTab[9].value);
 
 
-        if SystemArg.periodStartDateTime <= SysDateTime then--设置的周期开始时间到了,查找是否有满足条件的流程
+        if Sys.periodStartDateTime <= currentDateTime then--设置的周期开始时间到了,查找是否有满足条件的流程
             local temp_i = 0;
-            for i = SystemArg.periodicIndex, SystemArg.periodicIndex + 3, 1 do --因为周期流程有4个,所以需要循环查找四次
+            for i = Sys.periodicIndex, Sys.periodicIndex + 3, 1 do --因为周期流程有4个,所以需要循环查找四次
                 if i > 4 then
                     temp_i = i - 4;
                 else 
@@ -921,8 +939,8 @@ function get_current_process_id()
                 end
                 if PeriodicTab[temp_i].processId ~= 0 then--流程序号不为0 ,表示该流程有设置,跳出循环, i-diff 表示4个周期流程的第几个流程
                     processId = PeriodicTab[temp_i].processId;--获取流程对应的序号
-                    SystemArg.periodicIndex = temp_i;
-                    SystemArg.isPeriodOrTimed = PERIOD_PROCESS;
+                    Sys.periodicIndex = temp_i;
+                    Sys.isPeriodOrTimed = PERIOD_PROCESS;
                     break;
                 end
             end
@@ -930,18 +948,18 @@ function get_current_process_id()
 
         if  processId == 0 then   --运行到这里,表示没有满足条件的周期流程, 开始循环查找定时设置中,是否有满足条件的流程
             for i=1,24,1 do
-                if TimedProcessTab[i].startHour == SystemArg.hour and 
-                   TimedProcessTab[i].startMinute == SystemArg.minute and
+                if TimedProcessTab[i].startHour == Sys.dateTime.hour and 
+                   TimedProcessTab[i].startMinute == Sys.dateTime.min and
                    TimedProcessTab[i].processId ~= 0 --序号不为0, 表示该流程有设置
                 then
                    processId = TimedProcessTab[i].processId;
-                   SystemArg.isPeriodOrTimed = TIMED_PROCESS;
+                   Sys.isPeriodOrTimed = TIMED_PROCESS;
                 end
             end
         end
 
     -------------------------------------------------反控-----------------------------------------------
-    elseif SystemArg.runType == WorkType.controlled then 
+    elseif Sys.runType == WorkType.controlled then 
 
     end
     return processId;
@@ -1021,104 +1039,104 @@ end
 --在开始执行流程前,需要一些准备工作
 --***********************************************************************************************
 function process_ready_run()
-    SystemArg.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+    Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     
-    if SystemArg.currentProcessId ~= 0  and io.open(SystemArg.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
+    if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         SetSysWorkStatus(WorkStatus.run);                 --设置工作状态为运行
         set_process_edit_state(DISABLE);                  --禁止流程设置相关的操作
         ReadProcessFile(1);                               --读取流程设置界面界面中的参数
         ReadProcessFile(2);                               --读取运行控制界面界面中的参数
-        ReadActionFile(SystemArg.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
-        if SystemArg.isPeriodOrTimed == PERIOD_PROCESS then
-            local year,mon,day,hour,min,sec,week = get_date_time();--获取当前时间
-            set_process_start_date_time(year,mon,day,hour,min);--设置本次流程开始时间
+        ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
+        if Sys.isPeriodOrTimed == PERIOD_PROCESS then
+            set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
         end
-        SystemArg.actionStep = 1;                         --所有步骤都是从1开始
-        SystemArg.actionSubStep = 1;
-        SystemArg.handRunTimes = 0;
+        Sys.actionStep = 1;                         --所有步骤都是从1开始
+        Sys.actionSubStep = 1;
+        Sys.handRunTimes = 0;
     end
 end
 
 --***********************************************************************************************
 --该函数在定时器中调用,在运行状态时调用该函数
 --系统为运行状态,此时SystemArg.currentProcessId保存了当前需要运行的流程序号, 而该以该序号为名的流程配置文件保存了该流程的所有动作,通过解析该文件可以知道该做什么动作.
---SystemArg.actionNumber统计了action的总数
---SystemArg.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
---SystemArg.actionTab中保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
---SystemArg.processFileStr中已经读取了配置文件中的所有数据.(还未经过任何处理)
---SystemArg.actionStep用于控制当前执行的动作序号.
+--Sys.actionNumber统计了action的总数
+--Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
+--Sys.actionTab中保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
+--Sys.processFileStr中已经读取了配置文件中的所有数据.(还未经过任何处理)
+--Sys.actionStep用于控制当前执行的动作序号.
 --***********************************************************************************************
 function excute_process()
     --------------------------------------------------------------------------
     --第一步:解析action表中type标签获得动作类型,通过动作类型可以知道该执行什么动作函数, 解析content中的内容,该内容作为动作函数的参数
-    if SystemArg.processStep == 1 then
-        local actionId = SystemArg.actionIdTab[SystemArg.actionStep];
-        SystemArg.actionString  = GetSubString(SystemArg.processFileStr, "<action"..actionId..">", "</action"..actionId..">");--截取文件中<action?>标签之间的字符串
-        SystemArg.actionType    = GetSubString(SystemArg.actionString, "<type>","</type>");--获动作类型
-        SystemArg.contentTabStr = GetSubString(SystemArg.actionString,"<content>","</content>");--再截取<content>标签中的内容
-        SystemArg.contentTab    = split(SystemArg.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-        SystemArg.startTime.year,SystemArg.startTime.month,SystemArg.startTime.day,SystemArg.startTime.hour,SystemArg.startTime.minute = get_date_time();--获取当前时间
-        ShowSysCurrentAction( SystemArg.processName..":"..SystemArg.actionNameTab[SystemArg.actionStep]);--显示流程名称-动作名称
-        if SystemArg.actionType == ActionItem[1] then 
-            SystemArg.actionFunction = excute_init_process;--执行 开始流程
-        elseif SystemArg.actionType == ActionItem[2] then 
-            SystemArg.actionFunction = excute_get_sample_process;--执行 取样流程
-        elseif SystemArg.actionType == ActionItem[3] then
-            SystemArg.actionFunction = excute_inject_process;--执行 注射泵加液流程
-        elseif SystemArg.actionType == ActionItem[4] then 
-            SystemArg.actionFunction = excute_read_signal_process;--执行-读取信号流程
-        elseif SystemArg.actionType == ActionItem[5] then 
-            SystemArg.actionFunction = excute_peristaltic_process--执行-蠕动泵加液流程
-        elseif SystemArg.actionType == ActionItem[6] then 
-            SystemArg.actionFunction = excute_calculate_process;--执行-计算流程
-        elseif SystemArg.actionType == ActionItem[7] then 
-            SystemArg.actionFunction = excute_wait_time_process;--执行-等待时间流程
-        elseif SystemArg.actionType == ActionItem[8] then 
-            SystemArg.actionFunction = excute_dispel_process;--执行-消解流程
-        elseif SystemArg.actionType == ActionItem[9] then 
-            SystemArg.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
+    if Sys.processStep == 1 then
+        local actionId = Sys.actionIdTab[Sys.actionStep];
+        Sys.actionString  = GetSubString(Sys.processFileStr, "<action"..actionId..">", "</action"..actionId..">");--截取文件中<action?>标签之间的字符串
+        Sys.actionType    = GetSubString(Sys.actionString, "<type>","</type>");--获动作类型
+        Sys.contentTabStr = GetSubString(Sys.actionString,"<content>","</content>");--再截取<content>标签中的内容
+        Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
+        --Sys.startTime.year,Sys.startTime.mon,Sys.startTime.day,Sys.startTime.hour,Sys.startTime.min--获取当前时间
+        Sys.startTime = Sys.dateTime;
+        ShowSysCurrentAction( Sys.processName..":"..Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
+        if Sys.actionType == ActionItem[1] then 
+            Sys.actionFunction = excute_init_process;--执行 开始流程
+        elseif Sys.actionType == ActionItem[2] then 
+            Sys.actionFunction = excute_get_sample_process;--执行 取样流程
+        elseif Sys.actionType == ActionItem[3] then
+            Sys.actionFunction = excute_inject_process;--执行 注射泵加液流程
+        elseif Sys.actionType == ActionItem[4] then 
+            Sys.actionFunction = excute_read_signal_process;--执行-读取信号流程
+        elseif Sys.actionType == ActionItem[5] then 
+            Sys.actionFunction = excute_peristaltic_process--执行-蠕动泵加液流程
+        elseif Sys.actionType == ActionItem[6] then 
+            Sys.actionFunction = excute_calculate_process;--执行-计算流程
+        elseif Sys.actionType == ActionItem[7] then 
+            Sys.actionFunction = excute_wait_time_process;--执行-等待时间流程
+        elseif Sys.actionType == ActionItem[8] then 
+            Sys.actionFunction = excute_dispel_process;--执行-消解流程
+        elseif Sys.actionType == ActionItem[9] then 
+            Sys.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
         end
-        SystemArg.actionSubStep = 1;--子流程从第一步开始执行
-        SystemArg.processStep = SystemArg.processStep + 1;
+        Sys.actionSubStep = 1;--子流程从第一步开始执行
+        Sys.processStep = Sys.processStep + 1;
     --------------------------------------------------------------------------------------------------
     --第二步: 执行子流程函数
-    elseif SystemArg.processStep == 2 then
-        if SystemArg.actionFunction(SystemArg.contentTab) == 0 then
-            SystemArg.processStep = SystemArg.processStep + 1;
+    elseif Sys.processStep == 2 then
+        if Sys.actionFunction(Sys.contentTab) == 0 then
+            Sys.processStep = Sys.processStep + 1;
         end
     ---------------------------------------------------------------------------------------------------
     --第三步:判断动作是否执行完毕
-    elseif SystemArg.processStep == 3 then
+    elseif Sys.processStep == 3 then
         ----------------所有动作执行完毕-------------------------------------------
-        if SystemArg.actionStep >= SystemArg.actionTotal then
+        if Sys.actionStep >= Sys.actionTotal then
             ----------------手动模式--------------------
-            if SystemArg.runType == WorkType.hand then                    
-                SystemArg.handRunTimes = SystemArg.handRunTimes + 1;      --分析次数+1
-                if  SystemArg.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
+            if Sys.runType == WorkType.hand then                    
+                Sys.handRunTimes = Sys.handRunTimes + 1;      --分析次数+1
+                if  Sys.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
                     SystemStop();
                 else                                                --当前已运行的次数小于设置的次数,此时返回继续进行下一次流程
-                    SystemArg.actionStep = 1;                       --指向第一个动作
-                    SystemArg.processStep = 1;                      --返回第一步执行动作
+                    Sys.actionStep = 1;                       --指向第一个动作
+                    Sys.processStep = 1;                      --返回第一步执行动作
                 end
             ----------------自动模式--------------------
-            elseif SystemArg.runType == WorkType.auto then
-                if SystemArg.isPeriodOrTimed == PERIOD_PROCESS then--如果当前流程为周期流程, 则需要设置下次周期流程的时间.
-                    SystemArg.periodicIndex = SystemArg.periodicIndex + 1;--指向下一个流程
-                    if SystemArg.periodicIndex > 4 then
-                        SystemArg.periodicIndex = 1;
+            elseif Sys.runType == WorkType.auto then
+                if Sys.isPeriodOrTimed == PERIOD_PROCESS then--如果当前流程为周期流程, 则需要设置下次周期流程的时间.
+                    Sys.periodicIndex = Sys.periodicIndex + 1;--指向下一个流程
+                    if Sys.periodicIndex > 4 then
+                        Sys.periodicIndex = 1;
                     end
                     set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
                 end
                 WriteProcessFile(2);
                 SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
             ----------------反控模式--------------------
-            elseif SystemArg.runType == WorkType.controlled then
+            elseif Sys.runType == WorkType.controlled then
                 SystemStop();
             end
         ----------------动作未执行完,继续下一个动作-------------------------------------------
         else
-            SystemArg.actionStep = SystemArg.actionStep + 1;--指向下一个动作
-            SystemArg.processStep = 1;                      --返回第一步执行下一个动作
+            Sys.actionStep = Sys.actionStep + 1;--指向下一个动作
+            Sys.processStep = 1;                      --返回第一步执行下一个动作
         end
     end
 end
@@ -1400,45 +1418,45 @@ end
 --  paraTab:保存了开始界面中的参数设置
 --***********************************************************************************************
 function excute_init_process(paraTab)
-    if SystemArg.actionSubStep == 1 then
+    if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE then--判断是否需要对十通阀进行操作
             for i = 6,21,1 do--6为输出1第一个按钮, 表示阀1
                 if tab[1] == ENABLE then
                 end
             end
         else
-            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif SystemArg.actionSubStep == 2 then
+    elseif Sys.actionSubStep == 2 then
         if paraTab[2] == ENABLE then--判断是否需要对输出1进行操作
         else
-            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif SystemArg.actionSubStep == 3 then
+    elseif Sys.actionSubStep == 3 then
         if paraTab[3] == ENABLE then--判断是否需要对输出2进行操作
         else
-            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif SystemArg.actionSubStep == 4 then
+    elseif Sys.actionSubStep == 4 then
         if paraTab[4] == ENABLE then--判断是否需要对注射泵1进行操作
         else
-            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif SystemArg.actionSubStep == 5 then
+    elseif Sys.actionSubStep == 5 then
         if paraTab[5] == ENABLE then--判断是否需要对注射泵2进行操作
         else
-            SystemArg.actionSubStep = SystemArg.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
-    elseif SystemArg.actionSubStep == 6 then
-        SystemArg.actionSubStep = 0;
+    elseif Sys.actionSubStep == 6 then
+        Sys.actionSubStep = 0;
     end
     
-    return SystemArg.actionSubStep;
+    return Sys.actionSubStep;
 end
 
 
@@ -1646,8 +1664,7 @@ end
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
-    SystemArg.resultTime.year,SystemArg.resultTime.month,SystemArg.resultTime.day,SystemArg.resultTime.hour,SystemArg.resultTime.minute = get_date_time();--获取当前时间
-    
+    Sys.resultTime = Sys.dateTime;--获取当前时间
     return 0;
 end
 
@@ -1958,7 +1975,8 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作1
 --------------------------------------------------------------------------------------------------------------------]]
-
+Valve1BtId = 35
+Valve2BtId = 2
 Valve11BtId = 43;
 
 --用户通过触摸修改控件后，执行此回调函数。
@@ -1970,6 +1988,10 @@ function hand_operate1_control_notify(screen, control, value)
         else
             
         end
+    elseif control == Valve1BtId then
+
+    elseif control == Valve2BtId then
+
     end
 end
 
@@ -1993,7 +2015,9 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作4
 --------------------------------------------------------------------------------------------------------------------]]
+--虽然命名为手动操作4, 其实是通讯记录界面
 
+UartRecordId = 1--串口通讯记录空间id
 
 
 
@@ -2045,7 +2069,7 @@ EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是11
 OperatorLoginId = 72;
 maintainerLoginId = 47;
 administratorLoginId = 48;
-
+pwdRecordId = 6;--用于保存密码的记录控件
 
 --设置仪器型号
 function set_equipment_type()
@@ -2074,44 +2098,162 @@ function system_info_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--  设置系统用户
+--***********************************************************************************************
+function SetSysUser(user)
+    
+    Sys.userName = user;
+
+    --在底部的状态用户名
+    for i = 1,16,1 do
+        set_text(PublicTab[i], SysUserNameId, user);
+    end
+
+    if user == SysUser.operator then -- 操作员
+        set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
+        set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
+        set_process_edit_state(DISABLE);--禁止流程设置
+    elseif user == SysUser.maintainer then--运维员
+        set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, ENABLE);
+        set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
+        set_process_edit_state(ENABLE);--允许编辑流程
+    elseif user == SysUser.administrator then--管理员
+        set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, administratorLoginId, ENABLE);
+        set_process_edit_state(ENABLE);--允许编辑流程
+    end
+end
+
 --[[-----------------------------------------------------------------------------------------------------------------
     密码设置
 --------------------------------------------------------------------------------------------------------------------]]
 
-UserNameId = 26; --在密码设置与系统登录界面都是该id
-
+UserNameId = 1; --在密码设置与系统登录界面都是该id
+OldPwdId = 2;
+NewPwdId = 3;
+NewPwdConfirmId = 4;
+OldPwdTipsId = 5;
+NewPwdConfirmTipsId = 6;
+NewPwdLenTipsId = 7;
+PwdRecordPosition = 0;--该变量取值0或者1; 0表示运维密码在历史界面中的位置,1表示管理员密码在记录空间中的位置
 --***********************************************************************************************
 --在系统信息界面,点击权限登录或者设置密码时都会调用该函数(权限登录->操作员例外)
 --***********************************************************************************************
 function set_user_name(user)
-    userName = user;
+    userNameSet = user; --userNameSet: 在界面切换至系统登录界面或者密码设置界面时,该变量保存了需要操作的用户名.
 end
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function password_set_control_notify(screen,control,value)
 
+    local oldPwdInput = get_text(PASSWORD_SET_SCREEN, PwdId);--获取密码
+
+    ------------------------确认按钮-----------------------------------------------------
+    if control == SureButtonId then
+        if oldPwdInput == record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) and --旧密码输入正确
+           get_text(PASSWORD_SET_SCREEN, NewPwdId) == get_text(PASSWORD_SET_SCREEN, NewPwdConfirmId) and--新密码两次输入一致
+           string.len(get_text(PASSWORD_SET_SCREEN, NewPwdId)) == 6 then
+            password = get_text(PASSWORD_SET_SCREEN, NewPwdId);
+            record_modify(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition, password);--修改记录
+            change_screen(SYSTEM_INFO_SCREEN);
+        elseif oldPwdInput ~= record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--显示"密码错误"
+            set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 1);
+        elseif string.len(get_text(PASSWORD_SET_SCREEN, NewPwdId)) ~= 6 then--显示"密码需为6位数字"
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 1);
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 0);
+        elseif get_text(PASSWORD_SET_SCREEN, NewPwdId) ~= get_text(PASSWORD_SET_SCREEN, NewPwdConfirmId) then--显示"两次输入的密码不一致"
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 1);
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 0);
+        end
+    ------------------------取消按钮-----------------------------------------------------
+    elseif control == CancelButtonId then
+        change_screen(SYSTEM_INFO_SCREEN);
+    ------------------------旧密码输入完成-------------------------------------------------
+    elseif control == OldPwdId then
+        if oldPwdInput ~= record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--密码输入不正确
+            set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 1);--显示密码错误提示信息
+        else
+            set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 0);
+        end
+    elseif control == NewPwdId then --输入新密码
+        if string.len(get_text(PASSWORD_SET_SCREEN,NewPwdId)) ~= 6 then
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 1);--显示"密码需为6位数字"
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 0);
+        else
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 0);
+        end
+    elseif control == NewPwdConfirmId then--确认新密码
+        if get_text(PASSWORD_SET_SCREEN, NewPwdId) ~= get_text(PASSWORD_SET_SCREEN, NewPwdConfirmId) then
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 1);--显示"两次输入的密码不一致"
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 0);
+        else
+            set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 0);
+        end
+    end
 end
 
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function goto_PasswordSet()
-    set_text(PASSWORD_SET_SCREEN, UserNameId, userName);
+    set_text(PASSWORD_SET_SCREEN, UserNameId, userNameSet);
+    set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 0);--隐藏"密码错误"
+    set_visiable(PASSWORD_SET_SCREEN, NewPwdConfirmTipsId, 0);--隐藏"两次输入的密码不一致"
+    set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 0);--隐藏"密码需为6位数字"
+    set_text(PASSWORD_SET_SCREEN, OldPwdId, "");
+    set_text(PASSWORD_SET_SCREEN, NewPwdId, "");
+    set_text(PASSWORD_SET_SCREEN, NewPwdConfirmId, "");
+    if userNameSet == SysUser.maintainer then
+        PwdRecordPosition = 0;
+    elseif userNameSet == SysUser.administrator then
+        PwdRecordPosition = 1;
+    end
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     登录系统
 --------------------------------------------------------------------------------------------------------------------]]
-
+PwdId = 2;
+PwdTipsId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function login_system_control_notify(screen,control,value)
-    
+    local pwdInput = get_text(LOGIN_SYSTEM_SCREEN, PwdId);--获取密码
+
+    if control == SureButtonId then--确认按键
+        if pwdInput == record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--运维员密码输入正确
+            SetSysUser(userNameSet);
+            change_screen(SYSTEM_INFO_SCREEN);
+        else
+            set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 1);--显示密码错误提示信息
+        end
+    elseif control == CancelButtonId then--取消按键
+        SetSysUser(Sys.userName);
+        change_screen(SYSTEM_INFO_SCREEN);
+    elseif control == PwdId then --密码输入
+        if pwdInput ~= record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--密码输入不正确
+            set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 1);--显示密码错误提示信息
+        else
+            set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 0);
+        end
+    end
 end
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function goto_LoginSystem()
-    set_text(LOGIN_SYSTEM_SCREEN, UserNameId, userName);
+    set_text(LOGIN_SYSTEM_SCREEN, UserNameId, userNameSet);
+    set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 0);--隐藏密码错误提示信息
+    set_text(LOGIN_SYSTEM_SCREEN, PwdId, "");
+
+    if userNameSet == SysUser.maintainer then
+        PwdRecordPosition = 0;
+    elseif userNameSet == SysUser.administrator then
+        PwdRecordPosition = 1;
+    end
 end
 
 
@@ -2196,7 +2338,7 @@ function ReadProcessFile(tagNum)
             set_text(RUN_CONTROL_SCREEN, i, tab[i]);
         end
         --将文件中的参数赋值给相应的变量
-        SystemArg.runType = tab[RunTypeID];
+        Sys.runType = tab[RunTypeID];
         HandProcessTab[1].processId = get_process_Id(tab[HandProcessTab[1].textId]);
         HandProcessTab[1].times = tonumber(tab[HandProcessTab[1].TimesId]);
         for i = 1,4,1 do
@@ -2386,7 +2528,7 @@ function ReadActionTag(actionNumber)
     if processFile == nil then--还没有该文件,则创建一个新的配置文件,并返回
         --将流程设置2/3界面清空
         for i = TabAction[1].selectId,TabAction[12].selectId,1 do
-            set_text(PROCESS_SET2_SCREEN, i,BLANK_SPACE);     --将对应动作选择的文本清空
+            set_text(PROCESS_SET2_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
             set_text(PROCESS_SET2_SCREEN, i-100,BLANK_SPACE);--将对应动作名称的文本清空
             set_text(PROCESS_SET3_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
             set_text(PROCESS_SET3_SCREEN, i-100,BLANK_SPACE);--将对应动作名称的文本清空
@@ -2494,33 +2636,32 @@ function ReadActionFile(fileName)
     local processFile = io.open(fileName, "r");      --打开文本
 
     processFile:seek("set");                         --把文件位置定位到开头
-	SystemArg.processFileStr = processFile:read("a");--从当前位置读取整个文件，并赋值到字符串中
+	Sys.processFileStr = processFile:read("a");--从当前位置读取整个文件，并赋值到字符串中
     processFile:close();                             --关闭文本
 
     --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
-    --SystemArg.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
+    --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
     --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
-    local actionString = GetSubString(SystemArg.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
-    SystemArg.processName = GetSubString(actionString, "<type>","</type>");--获取流程名称
+    local actionString = GetSubString(Sys.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
+    Sys.processName = GetSubString(actionString, "<type>","</type>");--获取流程名称
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     local tab = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-    SystemArg.actionTotal = 0; 
+    Sys.actionTotal = 0; 
     for i = 1,24,2 do -- tab中[1][2]分别保存了一个动作的类型与名称,占用了2个, 由于我们是统计action个数,所以这里步进需要设置为2
         if tab[i] ~= BLANK_SPACE then--判断动作类型不为nil
-            SystemArg.actionTotal = SystemArg.actionTotal + 1;--action个数+1
-            SystemArg.actionIdTab[SystemArg.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2 (1,3,5...)
-            SystemArg.actionNameTab[SystemArg.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
+            Sys.actionTotal = Sys.actionTotal + 1;--action个数+1
+            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2 (1,3,5...)
+            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
         end
     end
 
     for i = 25,48,2 do
         if tab[i] ~= BLANK_SPACE then
-            SystemArg.actionTotal = SystemArg.actionTotal + 1;
-            SystemArg.actionIdTab[SystemArg.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
-            SystemArg.actionNameTab[SystemArg.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
+            Sys.actionTotal = Sys.actionTotal + 1;
+            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
+            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
         end
     end
-
 end
 
 
@@ -2575,7 +2716,7 @@ end
 
 --***********************************************************************************************
 ---遍历历字符串，删除字符串1与字符串2之间的字符串,返回新字符串
--- @param str  待解取字符串；  
+-- @param str  待截取字符串;
 --        substr1 指定字符串1；  
 --        substr2 指定字符串2; 
 -- @return 截取后的字符串
@@ -2624,9 +2765,5 @@ function get_process_Id(name)
     end
     return processId;
 end 
-
-
-
-
 
 

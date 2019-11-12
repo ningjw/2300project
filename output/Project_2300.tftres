@@ -5,8 +5,8 @@
         <page name="流程设置1" id="2" />
         <page name="流程设置2" id="3" />
         <page name="流程设置3" id="4" />
-        <page name="流程设置-开始" id="5" />
-        <page name="流程设置-取样" id="6" />
+        <page name="流程设置-初始化" id="5" />
+        <page name="流程设置-注射泵" id="6" />
         <page name="流程设置-注射泵加液" id="7" />
         <page name="流程设置-蠕动泵加液" id="8" />
         <page name="流程设置-消解" id="9" />

@@ -1068,42 +1068,6 @@ function set_process_edit_state(state)
         set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].nameId,   state);
     end
 
---------------------------------初始化界面参数修改---------------------------------------------
-    for i = INIT_BtStartId, INIT_TextEndId, 1 do
-        set_enable(PROCESS_INIT_SCREEN, i, state)
-    end
---------------------------------取样界面参数----------------------------------------------------
-    for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-        set_enable(PROCESS_INJECT_SCREEN, i, state);
-    end
-    set_enable(PROCESS_INJECT_SCREEN, GetSample_Out1WaitTimeId, state);
-    set_enable(PROCESS_INJECT_SCREEN, GetSample_Out2WaitTimeId, state);
--------------------------------注射泵加液参数--------------------------------------------------
-    for i = INJECT_ADD_BtStartId, INJECT_ADD_TextEndId, 1 do
-        set_enable(PROCESS_INJECT_ADD_SCREEN, i, state);
-    end
---------------------------------读取信号参数----------------------------------------------------
-    for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
-        set_enable(PROCESS_READ_SIGNAL_SCREEN, i, state)
-    end
---------------------------------蠕动泵加液参数--------------------------------------------------
-    for i = PERISTALTIC_BtStartId, PERISTALTIC_TextEndId, 1 do
-        set_enable(PROCESS_PERISTALTIC_SCREEN, i, state)
-    end
--------------------------------计算参数--------------------------------------------------------
-    for i = CALCULATE_BtStartId, CALCULATE_TextEndId, 1 do
-        set_enable(PROCESS_CALCULATE_SCREEN, i, state)
-    end
---------------------------------等待时间参数----------------------------------------------------
-    set_enable(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId, state)
---------------------------------禁止-消解参数--------------------------------------------------------
-    for i = DISPEL_BtStartId, DISPEL_TextEndId, 1 do
-        set_enable(PROCESS_DISPEL_SCREEN, i, state)
-    end
---------------------------------阀操作参数------------------------------------------------------
-    for i = VALVE_BtStartId, VALVE_TextEndId, 1 do
-        set_enable(PROCESS_VALVE_CTRL_SCREEN, i, state)
-    end
     ----------------------------以上各界面中的""确定"按钮-----------------------------------------
     set_enable(PROCESS_INIT_SCREEN, SureButtonId, state)
     set_enable(PROCESS_INJECT_SCREEN, SureButtonId, state)

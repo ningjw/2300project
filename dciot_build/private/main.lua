@@ -10,8 +10,8 @@ PROCESS_SET1_SCREEN = 2;
 PROCESS_SET2_SCREEN = 3;
 PROCESS_SET3_SCREEN = 4;
 PROCESS_INIT_SCREEN = 5;
-PROCESS_GET_SANPLE_SCREEN = 6;
-PROCESS_INJECT_SCREEN = 7;
+PROCESS_INJECT_SCREEN = 6;
+PROCESS_INJECT_ADD_SCREEN = 7;
 PROCESS_PERISTALTIC_SCREEN = 8;
 PROCESS_DISPEL_SCREEN = 9;
 PROCESS_READ_SIGNAL_SCREEN = 10;
@@ -78,6 +78,9 @@ OK = 0;
 OPEN = 1;
 CLOSE = 0;
 
+E1 = "E1"
+E2 = "E2"
+
 Dir = {
     FWD = "正转",
     REV = "反转"
@@ -95,7 +98,6 @@ TipsTab = {
     exported    = "配置文件导出成功",
     exportTips  = "请在SD卡或U盘创建config文件夹后重试",
     selectProcess = "请选择流程",
-    pwdErr      = "密码不正确",
 };
 
 WorkStatus = {
@@ -132,12 +134,11 @@ Sys = {
     handRunTimes = 0;--记录了手动运行次数
 
     periodStartDateTime,--周期流程开始时间
-
     periodicIndex = 1,--周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
-    actionStep = 1,--取值范围为1-24,对应了流程设置2/3界面中的共24个步骤
-    actionSubStep = 1,--该变量用于控制"初始化"取样""消解""注射泵加液"等等子动作.
+
     actionTotal = 0,--所有的动作步数,可以通过统计<action>标签获得
-    step = 1,--用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
+    actionStep = 1,--取值范围为1-24,对应了流程设置2/3界面中的共24个步骤
+    actionSubStep = 1,--该变量用于控制"初始化"注射泵""消解""注射泵加液"等等子动作.
     --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
     actionIdTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,
                  [13]= 0,[14]= 0,[15]= 0,[16]= 0,[17]= 0,[18]= 0,[19]= 0,[20] = 0,[21] = 0,[22] = 0,[23] = 0,[24] = 0},
@@ -147,7 +148,7 @@ Sys = {
 
     actionFunction,--用于指向需要执行的动作函数,例如 excute_init_process, excute_get_sample_process等
     actionString,--截取流程配置文件中的action标签后, 内容保存到该变量
-    actionType,--用于保存type标签中的内容, 表示该动作是""初始化""取样""注射泵加液"等等
+    actionType,--用于保存type标签中的内容, 表示该动作是""初始化""注射泵""注射泵加液"等等
     contentTabStr,--用于保存content标签中的内容
     contentTab,  --用于保存content标签中的内容,此时已经调用split对contentTabStr中的内容进行了分割
 
@@ -161,6 +162,9 @@ Sys = {
     resultTime = {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--结果时间
     dateTime =   {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--系统日期时间,在1S定时器中不断刷新
 
+    step = 1,--用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
+    step1Func,--当step=1时,需要执行的函数,比如调用开阀函数/关阀函数/操作注射泵函数/等等
+
     waitTimeFlag = 0,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
     waitTime = 0,--用于保存需要等待的时间
 
@@ -173,6 +177,21 @@ Sys = {
     injectSpeed = 0,
     injectVolume = 0,
     injectDir = Dir.FWD;--默认为正转
+
+    peristalticId = 1,--取值1/2/3
+    peristalticSpeed = 0,
+    peristalticVolume = 0,
+    peristalticDir = Dir.FWD;--默认为正转
+
+    dispelTemp,--消解温度
+    dispelTime,--消解时间
+    dispelEmptyTemp,--消解排空温度
+
+    signalE1,--用于保存信号E1的值
+    signalE2,--用于保存信号E2的值
+    signalDrift,--信号漂移
+    rSignalMinTime,--读取信号最小时间
+    rSignalMaxTime,--读取信号最大时间
 }
 
 
@@ -211,7 +230,7 @@ function on_init()
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
-    SetSysUser(SysUser.maintainer);   --开机之后默认为操作员
+    SetSysUser(SysUser.maintainer);   --开机之后默认为运维员
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
 
@@ -276,10 +295,10 @@ function on_control_notify(screen,control,value)
 		action_select_control_notify(screen,control,value);
 	elseif screen == PROCESS_INIT_SCREEN then--流程设置-开始界面
 		process_init_control_notify(screen,control,value);
-	elseif screen == PROCESS_GET_SANPLE_SCREEN	then--流程设置-取样界面
-		process_get_sample_control_notify(screen,control,value);
-	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-注射泵加液
+	elseif screen == PROCESS_INJECT_SCREEN	then--流程设置-取样界面
 		process_inject_control_notify(screen,control,value);
+	elseif screen == PROCESS_INJECT_ADD_SCREEN	then--流程设置-注射泵加液
+		process_inject_add_control_notify(screen,control,value);
 	elseif screen == PROCESS_PERISTALTIC_SCREEN	then--流程设置-蠕动泵加液
 		process_peristaltic_control_notify(screen,control,value);
 	elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
@@ -656,7 +675,7 @@ driver = {
         if Sys.waitTime ~= 0 then
             print("启动定时器"..Sys.waitTime);
             Sys.waitTimeFlag = SET;
-            start_timer(2, Sys.waitTime, 1, 1); --开启定时器1，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
+            start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器1，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
             Sys.step = Sys.step + 1;
         else
             Sys.step = 5;--完成 (无需等待)
@@ -1049,46 +1068,10 @@ function set_process_edit_state(state)
         set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].nameId,   state);
     end
 
---------------------------------初始化界面参数修改---------------------------------------------
-    for i = INIT_BtStartId, INIT_TextEndId, 1 do
-        set_enable(PROCESS_INIT_SCREEN, i, state)
-    end
---------------------------------取样界面参数----------------------------------------------------
-    for i = GetSample_BtStartId, GetSample_BtEndId, 1 do
-        set_enable(PROCESS_GET_SANPLE_SCREEN, i, state);
-    end
-    set_enable(PROCESS_GET_SANPLE_SCREEN, GetSample_Out1WaitTimeId, state);
-    set_enable(PROCESS_GET_SANPLE_SCREEN, GetSample_Out2WaitTimeId, state);
--------------------------------注射泵加液参数--------------------------------------------------
-    for i = INJECT_BtStartId, INJECT_TextEndId, 1 do
-        set_enable(PROCESS_INJECT_SCREEN, i, state);
-    end
---------------------------------读取信号参数----------------------------------------------------
-    for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
-        set_enable(PROCESS_READ_SIGNAL_SCREEN, i, state)
-    end
---------------------------------蠕动泵加液参数--------------------------------------------------
-    for i = PERISTALTIC_BtStartId, PERISTALTIC_TextEndId, 1 do
-        set_enable(PROCESS_PERISTALTIC_SCREEN, i, state)
-    end
--------------------------------计算参数--------------------------------------------------------
-    for i = CALCULATE_BtStartId, CALCULATE_TextEndId, 1 do
-        set_enable(PROCESS_CALCULATE_SCREEN, i, state)
-    end
---------------------------------等待时间参数----------------------------------------------------
-    set_enable(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId, state)
---------------------------------禁止-消解参数--------------------------------------------------------
-    for i = DISPEL_BtStartId, DISPEL_TextEndId, 1 do
-        set_enable(PROCESS_DISPEL_SCREEN, i, state)
-    end
---------------------------------阀操作参数------------------------------------------------------
-    for i = VALVE_BtStartId, VALVE_TextEndId, 1 do
-        set_enable(PROCESS_VALVE_CTRL_SCREEN, i, state)
-    end
     ----------------------------以上各界面中的""确定"按钮-----------------------------------------
     set_enable(PROCESS_INIT_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_GET_SANPLE_SCREEN, SureButtonId, state)
     set_enable(PROCESS_INJECT_SCREEN, SureButtonId, state)
+    set_enable(PROCESS_INJECT_ADD_SCREEN, SureButtonId, state)
     set_enable(PROCESS_READ_SIGNAL_SCREEN, SureButtonId, state)
     set_enable(PROCESS_PERISTALTIC_SCREEN, SureButtonId, state)
     set_enable(PROCESS_CALCULATE_SCREEN, SureButtonId, state)
@@ -1110,7 +1093,7 @@ function process_ready_run()
         set_process_edit_state(DISABLE);                  --禁止流程设置相关的操作
         ReadProcessFile(1);                               --读取流程设置界面界面中的参数
         ReadProcessFile(2);                               --读取运行控制界面界面中的参数
-        ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/取样/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
+        ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/注射泵/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
         end
@@ -1145,9 +1128,9 @@ function excute_process()
         if Sys.actionType == ActionItem[1] then 
             Sys.actionFunction = excute_init_process;--执行 开始流程
         elseif Sys.actionType == ActionItem[2] then 
-            Sys.actionFunction = excute_get_sample_process;--执行 取样流程
+            Sys.actionFunction = excute_inject_process;--执行 取样流程
         elseif Sys.actionType == ActionItem[3] then
-            Sys.actionFunction = excute_inject_process;--执行 注射泵加液流程
+            Sys.actionFunction = excute_inject_add_process;--执行 注射泵加液流程
         elseif Sys.actionType == ActionItem[4] then 
             Sys.actionFunction = excute_read_signal_process;--执行-读取信号流程
         elseif Sys.actionType == ActionItem[5] then 
@@ -1366,9 +1349,9 @@ function set_edit_screen(para, screen, control)
     if para == ActionItem[1] then --开始界面
         change_screen(PROCESS_INIT_SCREEN);
     elseif para == ActionItem[2] then --取样界面
-        change_screen(PROCESS_GET_SANPLE_SCREEN);
-    elseif para == ActionItem[3] then --注射泵加液体
         change_screen(PROCESS_INJECT_SCREEN);
+    elseif para == ActionItem[3] then --注射泵加液体
+        change_screen(PROCESS_INJECT_ADD_SCREEN);
     elseif para == ActionItem[4] then --读取信号
         change_screen(PROCESS_READ_SIGNAL_SCREEN);
     elseif para == ActionItem[5] then --蠕动泵加液
@@ -1449,7 +1432,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-初始化
 --------------------------------------------------------------------------------------------------------------------]]
---在所有子界面中("初始化/取样/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
+--在所有子界面中("初始化/注射泵/消解/......"),确认按钮的id都是99,取消按钮的id都是98.
 SureButtonId = 99;--确认按钮
 CancelButtonId = 98;--取消按钮
 DestScreen = nil;
@@ -1483,7 +1466,7 @@ end
 
 --***********************************************************************************************
 --  执行初始化流程
---  paraTab:保存了开始界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素,
+--  paraTab:保存了相应界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素的值,
 --          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
 --***********************************************************************************************
 function excute_init_process(paraTab)
@@ -1492,6 +1475,7 @@ function excute_init_process(paraTab)
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀复位
             Sys.valcoChannel = tonumber(paraTab[23]);--id为23的控件为通道号
             Sys.waitTime = 0;
+            -- driver[Sys.step]();
             driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -1517,6 +1501,7 @@ function excute_init_process(paraTab)
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
         if paraTab[4] == ENABLE_STRING then--判断是否需要对注射泵2进行复位
+            -- Sys.step1Func = ;
             Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -1524,6 +1509,7 @@ function excute_init_process(paraTab)
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 5 then
         if paraTab[4] == ENABLE_STRING then--判断是否需要对消解进行复位
+            -- Sys.step1Func = ;
             -- driver[Sys.step]();
             Sys.actionSubStep = Sys.actionSubStep + 1;
         else
@@ -1539,109 +1525,15 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    流程设置-取样
+    流程设置-注射泵
 --------------------------------------------------------------------------------------------------------------------]]
 
+INJECT_BtStartId = 1;--注射泵界面中按钮开始id
+INJECT_BtEndId = 2; --注射泵界面中按钮结束id
 
-GetSample_BtStartId = 1;--取样界面中按钮开始id
-GetSample_BtEndId = 34; --取样界面中按钮结束id
-GetSample_Out1EnableId = 1;--取样界面中输出1使能按钮id (GS->GetSample)
-GS_OUT1_Valve1Id = 2;--输出1中阀1的id
-GS_OUT1_Valve16Id= 17;--输出1中阀16的id
+INJECT_TextStartId = 3;--取样界面中文本开始id
+INJECT_TextEndId = 10; --取样界面中文本结束id
 
-GS_OUT2_EnableId = 18;--取样界面中输出1使能按钮id (GS->GetSample)
-GS_OUT2_Valve1Id = 19;--输出1中阀1的id
-GS_OUT2_Valve16Id= 34;--输出1中阀16的id
-
-GetSample_Out1WaitTimeId = 35;--输出1等待时间
-GetSample_Out2WaitTimeId = 36;--输出1等待时间
-
---用户通过触摸修改控件后，执行此回调函数。
---点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
-function process_get_sample_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
-    elseif control == CancelButtonId then --取消按钮
-        change_screen(DestScreen);
-    end
-end
-
---***********************************************************************************************
---  执行取样流程
---***********************************************************************************************
-function excute_get_sample_process(paraTab)
-
-    if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作(开阀)
-            Sys.waitTime = tonumber( paraTab[35]) * 1000
-            Sys.valveOperate = ValveStatus.open;
-            driver[Sys.step]();
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
-    elseif Sys.actionSubStep == 2 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作(关阀)
-            Sys.waitTime = 0
-            Sys.valveOperate = ValveStatus.close;
-            driver[Sys.step]();
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
-    elseif Sys.actionSubStep == 3 then
-        if paraTab[18] == ENABLE_STRING then--判断是否需要对输出2进行操作(开阀)
-            Sys.waitTime = tonumber( paraTab[36]) * 1000
-            driver[Sys.step]();
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
-    elseif Sys.actionSubStep == 4 then
-        if paraTab[18] == ENABLE_STRING then--判断是否需要对输出2进行操作(关阀)
-            Sys.waitTime = 0;
-            driver[Sys.step]();
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
-    elseif Sys.actionSubStep == 5 then--结束
-        Sys.actionSubStep = 0;
-    end
-    return Sys.actionSubStep;
-end
-
-
---[[-----------------------------------------------------------------------------------------------------------------
-    流程设置-注射泵加液
---------------------------------------------------------------------------------------------------------------------]]
-
-INJECT_VALCO_EnableId = 1;--十通阀使能
-INJECT_VALCO_ChannelId = 40;--十通阀通道号
-INJECT_VALCO_WaitTimeId = 41;--十通阀等待时间
-INJECT_OUT1_EnableId = 2;
-INJECT_OUT1_Valve1Id = 8;
-INJECT_OUT1_Valve16Id = 23;
-INJECT_OUT1_WaitTimeId = 42;
-INJECT_OUT1_OnOffId = 43;
-INJECT_NUM11_EnableId = 3;
-INJECT_NUM11_SpeedId = 44;
-INJECT_NUM11_VolumeId = 45;
-INJECT_NUM11_DirectionId = 46;
-INJECT_NUM11_WaitTimeId = 47;
-INJECT_NUM12_EnableId = 3;
-INJECT_NUM12_SpeedId = 48;
-INJECT_NUM12_VolumeId = 49;
-INJECT_NUM12_DirectionId = 50;
-INJECT_NUM12_WaitTimeId = 51;
-INJECT_OUT2_EnableId = 5;
-INJECT_OUT2_Valve1Id = 24;
-INJECT_OUT2_Valve16Id = 39;
-INJECT_OUT2_WaitTimeId = 52;
-INJECT_OUT2_OnOffId = 53;
-
-
-INJECT_BtStartId = 1;
-INJECT_BtEndId = 39;
-INJECT_TextStartId = 40;
-INJECT_TextEndId = 61;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_control_notify(screen,control,value)
@@ -1654,24 +1546,172 @@ function process_inject_control_notify(screen,control,value)
 end
 
 --***********************************************************************************************
---  执行注射泵加液体流程
+--  执行注射泵流程
+--  paraTab:保存了相应界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素的值,
+--          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
 --***********************************************************************************************
 function excute_inject_process(paraTab)
+
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
-            Sys.valcoChannel = tonumber(paraTab[40]);--id为40的控件为通道号
-            Sys.waitTime = tonumber(paraTab[41]) * 1000;
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对注射泵1进行操作
+            Sys.injectSpeed = tonumber(paraTab[3]);
+            Sys.injectVolume = tonumber(paraTab[4]);
+            Sys.injectDir = paraTab[5];
+            Sys.waitTime = tonumber(paraTab[6]);
+            -- Sys.step1Func = ;
             driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 2 then--
-        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行
+    elseif Sys.actionSubStep == 2 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对注射泵2进行操作
+            Sys.injectSpeed = tonumber(paraTab[7]);
+            Sys.injectVolume = tonumber(paraTab[8]);
+            Sys.injectDir = paraTab[9];
+            Sys.waitTime = tonumber(paraTab[10]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 3 then
+    elseif Sys.actionSubStep == 3 then--结束
+        Sys.actionSubStep = 0;
     end
+    return Sys.actionSubStep;
+end
+
+
+--[[-----------------------------------------------------------------------------------------------------------------
+    流程设置-注射泵加液
+--------------------------------------------------------------------------------------------------------------------]]
+
+INJECT_ADD_BtStartId = 1;
+INJECT_ADD_BtEndId = 39;
+INJECT_ADD_TextStartId = 40;
+INJECT_ADD_TextEndId = 61;
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function process_inject_add_control_notify(screen,control,value)
+    if control == SureButtonId then --确认按钮
+        WriteActionFile(DestActionNum);
+        change_screen(DestScreen);
+    elseif control == CancelButtonId then --取消按钮
+        change_screen(DestScreen);
+    end
+end
+
+--***********************************************************************************************
+--  执行注射泵加液体流程
+--  paraTab:保存了相应界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素的值,
+--          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
+--***********************************************************************************************
+function excute_inject_add_process(paraTab)
+    -----------------------------------------------------------------
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            Sys.valcoChannel = tonumber(paraTab[40]);--通道号
+            Sys.waitTime = tonumber(paraTab[41]);--等待时间
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 2 then--
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+7];
+            end
+            Sys.valveOperate = ValveStatus.open;
+            Sys.waitTime = tonumber(paraTab[42]);--等待时间
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[3] == ENABLE_STRING then
+            Sys.injectSpeed = tonumber(paraTab[44]);
+            Sys.injectVolume = tonumber(paraTab[45]);
+            Sys.injectDir = paraTab[46];
+            Sys.waitTime = tonumber(paraTab[47]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        elseif paraTab[4] == ENABLE_STRING then
+            Sys.injectSpeed = tonumber(paraTab[48]);
+            Sys.injectVolume = tonumber(paraTab[49]);
+            Sys.injectDir = paraTab[50];
+            Sys.waitTime = tonumber(paraTab[51]);
+            -- Sys.step1Func = ;
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+7];
+            end
+            Sys.valveOperate = ValveStatus.close;
+            Sys.waitTime = 0
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+23];
+            end
+            Sys.valveOperate = ValveStatus.open;
+            Sys.waitTime = tonumber(paraTab[52]);
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 6 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[6] == ENABLE_STRING then
+            Sys.injectId = 1;
+            Sys.injectSpeed = tonumber(paraTab[54]);
+            Sys.injectVolume = tonumber(paraTab[55]);
+            Sys.injectDir = paraTab[56];
+            Sys.waitTime = tonumber(paraTab[57]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        elseif paraTab[7] == ENABLE_STRING then
+            Sys.injectId = 2;
+            Sys.injectSpeed = tonumber(paraTab[58]);
+            Sys.injectVolume = tonumber(paraTab[59]);
+            Sys.injectDir = paraTab[60];
+            Sys.waitTime = tonumber(paraTab[61]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 7 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+23];
+            end
+            Sys.valveOperate = ValveStatus.close;
+            Sys.waitTime = 0;
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 8 then--结束
+        Sys.actionSubStep = 0;
+    end
+    
     return Sys.actionSubStep;
 end
 
@@ -1701,18 +1741,78 @@ end
 
 --***********************************************************************************************
 --  执行蠕动泵加液体流程
+--  paraTab:保存了相应界面中的参数设置, 该表中第i个元素,表示初始化界面中编号为i的控件的元素的值,
+--          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
 --***********************************************************************************************
 function excute_peristaltic_process(paraTab)
+    ----------------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
-            
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            Sys.valcoChannel = tonumber(paraTab[22]);--通道号
+            Sys.waitTime = tonumber(paraTab[23]);--等待时间
+            -- Sys.step1Func = ;
             driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
+    ----------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
-
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+5];
+            end
+            Sys.valveOperate = ValveStatus.open;
+            Sys.waitTime = tonumber(paraTab[24]);
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    ----------------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
+        if paraTab[3] == ENABLE_STRING then--判断对蠕动泵的操作
+            Sys.periodicIndex = 1;
+            Sys.periodicSpeed = tonumber(paraTab[25]);
+            Sys.periodicVolume = tonumber(paraTab[26]);
+            Sys.periodicDir = paraTab[27];
+            Sys.waitTime = tonumber(paraTab[28]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        elseif paraTab[4] == ENABLE_STRING then
+            Sys.periodicIndex = 2;
+            Sys.periodicSpeed = tonumber(paraTab[29]);
+            Sys.periodicVolume = tonumber(paraTab[30]);
+            Sys.periodicDir = paraTab[31];
+            Sys.waitTime = tonumber(paraTab[32]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        elseif paraTab[5] == ENABLE_STRING then
+            Sys.periodicIndex = 3;
+            Sys.periodicSpeed = tonumber(paraTab[33]);
+            Sys.periodicVolume = tonumber(paraTab[34]);
+            Sys.periodicDir = paraTab[35];
+            Sys.waitTime = tonumber(paraTab[36]);
+            -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    ----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+5];
+            end
+            Sys.valveOperate = ValveStatus.close;
+            Sys.waitTime = 0;
+        -- Sys.step1Func = ;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    ----------------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then--结束
+        Sys.actionSubStep = 0;
     end
     return Sys.actionSubStep;
 end
@@ -1723,9 +1823,9 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 DISPEL_BtStartId = 1;
-DISPEL_BtEndId = 23;
-DISPEL_TextStartId = 24;
-DISPEL_TextEndId = 46;
+DISPEL_BtEndId = 1;
+DISPEL_TextStartId = 2;
+DISPEL_TextEndId = 5;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -1745,15 +1845,18 @@ end
 --***********************************************************************************************
 function excute_dispel_process(paraTab)
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
-            
+        if paraTab[1] == ENABLE_STRING then--判断是否需要消解
+            Sys.dispelTemp = tonumber(paraTab[24]);
+            Sys.dispelTime = tonumber(paraTab[25]);
+            Sys.dispelEmptyTemp = tonumber(paraTab[26]);
+            Sys.waitTime = tonumber(paraTab[27]);
+            -- Sys.step1Func = ;
             driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     elseif Sys.actionSubStep == 2 then
-
-    elseif Sys.actionSubStep == 3 then
+        Sys.actionSubStep = 0;--结束
     end
     return Sys.actionSubStep;
 end
@@ -1784,16 +1887,41 @@ end
 --  执行读取信号流程
 --***********************************************************************************************
 function excute_read_signal_process(paraTab)
+    -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
-            
-            driver[Sys.step]();
-        else
+        Sys.signalDrift = tonumber(paraTab[2]);
+        Sys.rSignalMinTime = tonumber(paraTab[3]);
+        Sys.rSignalMaxTime = tonumber(paraTab[4]);
+
+        start_timer(2, Sys.rSignalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
+        getValidSignalData = RESET;
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 2 then
+        if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
+            start_timer(2, (Sys.rSignalMaxTime - Sys.rSignalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 2 then
-
+    -----------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
+        if UartArg.lock == UNLOCKED then--通过串口读取信号
+            --发送串口指令
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
+        if UartArg.reply_flag == REPLY_OK then--解析串口数据, 并判断是否满足信号漂移要求
+            local signalE = 0;
+            if paraTab[1] == "E1" then
+                Sys.signalE1 = signalE;
+            elseif paraTab[1] == "E2" then
+                Sys.signalE2 = signalE;
+            end
+
+            if Sys.waitTimeFlag == RESET and getValidSignalData == SET then--最大定时时间到
+                Sys.actionSubStep = Sys.actionSubStep + 1;
+            end
+        end
     end
     return Sys.actionSubStep;
 end
@@ -2041,7 +2169,7 @@ end
 
 ActionStartButtonId = 1;
 ActionEndButtonId = 10;
-ActionItem = {"初始化","取样","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE};
+ActionItem = {"初始化","注射泵","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE};
 ActionSelectItem = nil;
 
 
@@ -2598,7 +2726,7 @@ function WriteActionTag(fileName, actionNumber)
     end
 
     processFile:write("<action"..actionNumber..">");--写入开始标签
-    processFile:write("<type>"..actionType.."</type>");--写入动作类型:初始化/取样/消解......
+    processFile:write("<type>"..actionType.."</type>");--写入动作类型:初始化/注射泵/消解......
     processFile:write("<content>");
     --------------------------------写<action0>标签内容---------------------------------------------
     --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
@@ -2621,18 +2749,19 @@ function WriteActionTag(fileName, actionNumber)
         end
     --------------------------------写取样界面参数----------------------------------------------------
     elseif actionType == ActionItem[2] then 
-        for i = GetSample_BtStartId, GetSample_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_GET_SANPLE_SCREEN, i)..",");--写入输出1按钮值
-        end
-        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, GetSample_Out1WaitTimeId)..",");--写入输出1等待时间
-        processFile:write(get_text(PROCESS_GET_SANPLE_SCREEN, GetSample_Out2WaitTimeId));--写入输出2等待时间
-    --------------------------------写注射泵加液参数--------------------------------------------------
-    elseif actionType == ActionItem[3] then
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_INJECT_SCREEN, i)..",");--写入按钮值
+            processFile:write(get_value(PROCESS_INJECT_SCREEN, i)..",");--写入输出1按钮值
         end
         for i = INJECT_TextStartId, INJECT_TextEndId, 1 do
             processFile:write(get_text(PROCESS_INJECT_SCREEN, i)..",");--写入文本值
+        end
+    --------------------------------写注射泵加液参数--------------------------------------------------
+    elseif actionType == ActionItem[3] then
+        for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
+            processFile:write(get_value(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入按钮值
+        end
+        for i = INJECT_ADD_TextStartId, INJECT_ADD_TextEndId, 1 do
+            processFile:write(get_text(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-读取信号参数----------------------------------------------------
     elseif actionType == ActionItem[4] then 
@@ -2749,7 +2878,7 @@ function ReadActionTag(actionNumber)
            set_text(PROCESS_SET3_SCREEN, TabAction[i].selectId, tab[(i-1)*2+1]);  --把数据显示到文本框中
            set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);  --把数据显示到文本框中
         end
-    --------------------------------读-开始界面参数--------------------------------------------------
+    --------------------------------读-初始化界面参数--------------------------------------------------
     elseif actionType == ActionItem[1] then
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
             set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
@@ -2757,20 +2886,21 @@ function ReadActionTag(actionNumber)
         for i = INIT_TextStartId, INIT_TextEndId, 1 do
             set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
         end
-    --------------------------------读-取样界面参数--------------------------------------------------
+    --------------------------------读-折射泵界面参数--------------------------------------------------
     elseif actionType == ActionItem[2] then 
-        for i = GetSample_BtStartId, GetSample_BtEndId, 1 do 
-            set_value(PROCESS_GET_SANPLE_SCREEN, i, tab[i]);--tab中前17个位按钮值
+        for i = INJECT_BtStartId, INJECT_BtEndId, 1 do 
+            set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
-        set_text(PROCESS_GET_SANPLE_SCREEN, GetSample_Out1WaitTimeId, tab[35]);--第18个为输出1等待时间值
-        set_text(PROCESS_GET_SANPLE_SCREEN, GetSample_Out2WaitTimeId, tab[36]);--第36个为输出2等待时间值
+        for i = INJECT_TextStartId, INJECT_TextEndId, 1 do 
+            set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
+        end
     --------------------------------读-注射泵加液参数-------------------------------------------------
     elseif actionType == ActionItem[3] then
-        for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-            set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--写入按钮值
+        for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
+            set_value(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入按钮值
         end
-        for i = INJECT_TextStartId, INJECT_TextEndId, 1 do
-            set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--写入文本值
+        for i = INJECT_ADD_TextStartId, INJECT_ADD_TextEndId, 1 do
+            set_text(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-读取信号参数--------------------------------------------------
     elseif actionType == ActionItem[4] then

@@ -63,8 +63,25 @@ TIMED_PROCESS = 1;--定时流程
 COLOR_METHOD = 0; --比色法
 ELEC_METHOD = 1;--电极法
 
+ENABLE_STRING = "1.0"
+DISABLE_STRING = "0.0"
+
 ENABLE = 1.0
 DISABLE = 0.0
+
+SET = 1;
+RESET = 0;
+
+ERR = 1;
+OK = 0;
+
+OPEN = 1;
+CLOSE = 0;
+
+Dir = {
+    FWD = "正转",
+    REV = "反转"
+}
 
 TipsTab = {
     insertSdUsb = "请插入SD卡或者U盘",
@@ -98,6 +115,13 @@ SysUser = {
     maintainer = "运维员",
     administrator = "管理员",
 }
+
+ValveStatus = {
+    open = "打开",
+    close = "关闭"
+}
+
+
 
 Sys = {
     userName = SysUser.operator,--用于保存当前用户
@@ -136,88 +160,25 @@ Sys = {
     startTime =  {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--开始时间
     resultTime = {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--结果时间
     dateTime =   {year = 0, mon=0, day = 0, hour = 0, min = 0, sec = 0},--系统日期时间,在1S定时器中不断刷新
+
+    waitTimeFlag = 0,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
+    waitTime = 0,--用于保存需要等待的时间
+
+    valcoChannel = 0,                 --用于保存在运行流程时的十通阀通道号
+    valveOperate = ValveStatus.close, --用于指示关阀还是开阀
+                                      --valveIdTab 保存16个阀是否选中
+    valveIdTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,[13]= 0,[14]= 0,[15]= 0,[16]= 0},
+    
+    injectId = 1,--取值1或者2 表示注射泵1或者注射泵2
+    injectSpeed = 0,
+    injectVolume = 0,
+    injectDir = Dir.FWD;--默认为正转
 }
 
 
 
 
 
---[[-----------------------------------------------------------------------------------------------------------------
-    阀/注射泵/蠕动泵控制函数
---------------------------------------------------------------------------------------------------------------------]]
-
---***********************************************************************************************
---控制单个阀关闭
---id : 阀编号
---***********************************************************************************************
-function close_single_valve(id)
-
-end
-
---***********************************************************************************************
---控制单个阀打开
---id : 阀编号
---***********************************************************************************************
-function open_single_valve(id)
-
-end
-
---***********************************************************************************************
---控制多个阀关闭
---valveIdTab 已Tab的形式保存了多个需要关闭的阀
---number 参数valveIdTab的长度
---***********************************************************************************************
-function close_multi_valve(valveIdTab, number)
-    
-end
-
---***********************************************************************************************
---控制多个阀打开
---valveIdTab 已Tab的形式保存了多个需要关闭的阀
---number 参数valveTab的长度
---***********************************************************************************************
-function open_multi_valve(valveIdTab, number)
-    
-end
-
-
---***********************************************************************************************
---控制十通阀转到设置的通道号
---channel 十通阀的通道号
---***********************************************************************************************
-function control_valco(channel, wait_time)
-    channel = tonumber(channel);
-    wait_time = tonumber(channel) * 1000;
-    if Sys.step == 1  then 
-        if UartArg.lock == UNLOCKED then--发送串口指令开阀
-            printf("开十通阀");
-            Sys.step = Sys.step + 1;
-        end
-    elseif Sys.step == 2  then
-        if UartArg.reply_flag == REPLY_OK then--等待串口回复成功
-            Sys.step = Sys.step + 1;
-        end
-    elseif Sys.step == 3 then--开启定时器进行定时
-        start_timer(2, wait_time, 1, 1); --开启定时器1，超时时间 3s, 1->使用倒计时方式,1->表示只执行一次
-    end
-    return Sys.step;
-end
-
---***********************************************************************************************
---控制注射泵
---***********************************************************************************************
-function control_inject(id, dir, speed, volume, wait)
-
-
-end
-
---***********************************************************************************************
---控制蠕动泵
---***********************************************************************************************
-function control_peristaltic(id, dir, speed, volume, wait)
-
-
-end
 
 
 
@@ -249,8 +210,8 @@ function on_init()
 
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
-    SetSysUser(SysUser.operator);   --开机之后默认为操作员
-
+    -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
+    SetSysUser(SysUser.maintainer);   --开机之后默认为操作员
     ReadProcessFile(1);--加载流程设置1界面中的参数配置
     ReadProcessFile(2);--加载运行控制界面中的参数配置
 
@@ -258,6 +219,7 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
+
 end
 
 --***********************************************************************************************
@@ -271,8 +233,11 @@ function on_timer(timer_id)
     elseif timer_id == 1 then--串口超时
         uart_time_out();
     elseif timer_id == 2 then--等待时间完成
+        Sys.waitTimeFlag = RESET ;
     end
 end
+
+ 
 
 --***********************************************************************************************
 --定时回调函数，系统每隔1秒钟自动调用。
@@ -284,7 +249,6 @@ function on_systick()
     if Sys.status == WorkStatus.readyRun then           --当系统处于待机状态时,
         process_ready_run();
     end
-
 end
 
 --***********************************************************************************************
@@ -629,6 +593,89 @@ function ShowSysAlarm(alarm)
         set_text(PublicTab[i], SysAlarmId, alarm);
     end
 end
+
+--[[-----------------------------------------------------------------------------------------------------------------
+    阀/注射泵/蠕动泵控制函数
+--------------------------------------------------------------------------------------------------------------------]]
+
+
+--***********************************************************************************************
+--控制单个阀关闭
+--id : 阀编号
+--***********************************************************************************************
+function close_single_valve(id)
+
+end
+
+--***********************************************************************************************
+--控制单个阀打开
+--id : 阀编号
+--***********************************************************************************************
+function open_single_valve(id)
+
+end
+
+--***********************************************************************************************
+--控制多个阀打开或者关闭,
+--***********************************************************************************************
+function operate_multi_valve()
+    
+end
+
+--***********************************************************************************************
+--控制注射泵
+--***********************************************************************************************
+function control_inject(id, dir, speed, volume, wait)
+
+
+end
+
+--***********************************************************************************************
+--控制蠕动泵
+--***********************************************************************************************
+function control_peristaltic(id, dir, speed, volume, wait)
+
+
+end
+
+
+driver = {
+    [1] = function()  
+        if UartArg.lock == UNLOCKED then--发送串口指令
+            print("发送串口指令");
+            Sys.step = Sys.step + 1;
+        end
+    end,
+    [2] = function()  
+        print("等待回复");
+        -- if UartArg.reply_flag == REPLY_OK then--等待串口回复成功
+            Sys.step = Sys.step + 1;
+        -- end
+    end,
+    [3] = function()                     --启动定时器
+        if Sys.waitTime ~= 0 then
+            print("启动定时器"..Sys.waitTime);
+            Sys.waitTimeFlag = SET;
+            start_timer(2, Sys.waitTime, 1, 1); --开启定时器1，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
+            Sys.step = Sys.step + 1;
+        else
+            Sys.step = 5;--完成 (无需等待)
+        end
+    end,
+    [4] = function()
+        if Sys.waitTimeFlag == RESET then--等待定时完成
+            Sys.step = 5;--完成
+            print("定时完成");
+        end
+    end,
+    [5] = function()
+        Sys.step = 1;
+        Sys.actionSubStep = Sys.actionSubStep + 1;--本次串口指令执行完成,继续执行下一个动作
+    end,
+}
+
+
+
 
 
 
@@ -1114,9 +1161,9 @@ function excute_process()
         elseif Sys.actionType == ActionItem[9] then 
             Sys.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
         end
+        Sys.step = 1;--孙流程从第一步开始
         Sys.actionSubStep = 1;--子流程从第一步开始执行
-        Sys.step = 1;
-        Sys.processStep = Sys.processStep + 1;
+        Sys.processStep = Sys.processStep + 1;--跳转到下一步执行子流程
     --------------------------------------------------------------------------------------------------
     --第二步: 执行子流程函数
     elseif Sys.processStep == 2 then
@@ -1128,14 +1175,13 @@ function excute_process()
     elseif Sys.processStep == 3 then
         ----------------所有动作执行完毕-------------------------------------------
         if Sys.actionStep >= Sys.actionTotal then
+            Sys.actionStep = 1;                       --指向第一个动作
+            Sys.processStep = 1;                      --返回第一步执行动作
             ----------------手动模式--------------------
             if Sys.runType == WorkType.hand then                    
-                Sys.handRunTimes = Sys.handRunTimes + 1;      --分析次数+1
+                Sys.handRunTimes = Sys.handRunTimes + 1;  --分析次数+1
                 if  Sys.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
                     SystemStop();
-                else                                                --当前已运行的次数小于设置的次数,此时返回继续进行下一次流程
-                    Sys.actionStep = 1;                       --指向第一个动作
-                    Sys.processStep = 1;                      --返回第一步执行动作
                 end
             ----------------自动模式--------------------
             elseif Sys.runType == WorkType.auto then
@@ -1167,6 +1213,9 @@ function SystemStop()
     SetSysWorkStatus(WorkStatus.stop);--将状态栏显示为停止
     ShowSysCurrentAction("无");
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
+    if user == SysUser.maintainer or  user == SysUser.administrator then--运维员/管理员
+        set_process_edit_state(ENABLE);--允许编辑流程
+    end
 end
 
 
@@ -1407,16 +1456,16 @@ DestScreen = nil;
 DestControl = nil;
 DestActionNum = 0;--指向当前动作序号
 
-AnalysisTypeMenuId = 200;
-AnalysisTypeTextId = 38;
+AnalysisTypeMenuId = 108;
+AnalysisTypeTextId = 22;
 
 INIT_BtStartId = 1;
-INIT_BtEndId = 37;
-INIT_TextStartId = 38;
-INIT_TextEndId = 52;
+INIT_BtEndId = 21;
+INIT_TextStartId = 22;
+INIT_TextEndId = 23;
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
-function set_screen_actionNumber(screen,actionNumber)
+function set_screen_actionNumber(screen, actionNumber)
     DestScreen = screen;
     DestActionNum = actionNumber;
 end
@@ -1440,34 +1489,43 @@ end
 function excute_init_process(paraTab)
     --------------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE then--判断是否需要对十通阀进行操作
-            if control_valco(paraTab[39], paraTab[40]) == 0 then--39,40分别对应了通道号与等待时间
-                Sys.actionSubStep = Sys.actionSubStep + 1;
-            end
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀复位
+            Sys.valcoChannel = tonumber(paraTab[23]);--id为23的控件为通道号
+            Sys.waitTime = 0;
+            driver[Sys.step]();
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
-        if paraTab[2] == ENABLE then--判断是否需要对输出1进行操作
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对阀进行复位
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = tonumber(paraTab[i+5]);--将阀状态保存到valveIdTab中,如果值为1.0表示需要复位,如果值为0.0则不需要
+            end
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
+
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
-        if paraTab[3] == ENABLE then--判断是否需要对输出2进行操作
+        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
-        if paraTab[4] == ENABLE then--判断是否需要对注射泵1进行操作
+        if paraTab[4] == ENABLE_STRING then--判断是否需要对注射泵2进行复位
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 5 then
-        if paraTab[5] == ENABLE then--判断是否需要对注射泵2进行操作
+        if paraTab[4] == ENABLE_STRING then--判断是否需要对消解进行复位
+            -- driver[Sys.step]();
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1513,7 +1571,41 @@ end
 --  执行取样流程
 --***********************************************************************************************
 function excute_get_sample_process(paraTab)
-    return 0;
+
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作(开阀)
+            Sys.waitTime = tonumber( paraTab[35]) * 1000
+            Sys.valveOperate = ValveStatus.open;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作(关阀)
+            Sys.waitTime = 0
+            Sys.valveOperate = ValveStatus.close;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 3 then
+        if paraTab[18] == ENABLE_STRING then--判断是否需要对输出2进行操作(开阀)
+            Sys.waitTime = tonumber( paraTab[36]) * 1000
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 4 then
+        if paraTab[18] == ENABLE_STRING then--判断是否需要对输出2进行操作(关阀)
+            Sys.waitTime = 0;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 5 then--结束
+        Sys.actionSubStep = 0;
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1565,7 +1657,22 @@ end
 --  执行注射泵加液体流程
 --***********************************************************************************************
 function excute_inject_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            Sys.valcoChannel = tonumber(paraTab[40]);--id为40的控件为通道号
+            Sys.waitTime = tonumber(paraTab[41]) * 1000;
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then--
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1596,7 +1703,18 @@ end
 --  执行蠕动泵加液体流程
 --***********************************************************************************************
 function excute_peristaltic_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
+            
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1626,7 +1744,18 @@ end
 --  执行消解流程
 --***********************************************************************************************
 function excute_dispel_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
+            
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1655,7 +1784,18 @@ end
 --  执行读取信号流程
 --***********************************************************************************************
 function excute_read_signal_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
+            
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1696,7 +1836,7 @@ end
 VALVE_BtStartId = 1;
 VALVE_BtEndId = 18;
 VALVE_TextStartId = 19;
-VALVE_TextEndId = 23;
+VALVE_TextEndId = 22;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -1714,7 +1854,18 @@ end
 --  执行阀操作流程
 --***********************************************************************************************
 function excute_valve_ctrl_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
+            
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 
@@ -1740,7 +1891,18 @@ end
 --  执行等待时间流程
 --***********************************************************************************************
 function excute_wait_time_process(paraTab)
-    return 0;
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
+            
+            driver[Sys.step]();
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 2 then
+
+    elseif Sys.actionSubStep == 3 then
+    end
+    return Sys.actionSubStep;
 end
 
 

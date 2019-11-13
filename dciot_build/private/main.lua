@@ -1,6 +1,6 @@
 --下面列出了常用的回调函数
 --更多功能请阅读<<物联型LUA脚本API.pdf>>
---建议使用visual code studio 并安装Bookmarks与luaide-lite插件,通过打开同目录下的2300project.code-workspace工作空间查看该文件.
+--建议使用visual code studio 并安装Bookmarks与luaide-lite(LuaCoderAssist)插件,通过打开同目录下的2300project.code-workspace工作空间查看该文件.
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -127,12 +127,19 @@ ValveStatus = {
 }
 
 
+CalcType = {
+    log = "取对数",
+    diff = "取差值",
+}
+
+ProcessItem = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE};
 
 Sys = {
     userName = SysUser.operator,--用于保存当前用户
     status = 0,--系统状态:对应WorkStatus中的值
     runType = 0,--运行方式: 对应WorkType中的值
     analysisType = COLOR_METHOD,--分析方法
+    rangeSelectId = 1,--用于记录量程选择
 
     handRunTimes = 0;--记录了手动运行次数
 
@@ -158,6 +165,7 @@ Sys = {
     currentProcessId = 0,--当前正在执行的流程,所对应的的序号.
     processFileStr = nil,--读出取流程相关的配置文件后,保存到该变量当中
     processName = nil ,--流程名称
+    processType = nil,--流程类型, 通过该变量判断是校正 还是 非校正. 校正使用一种算法, 非校正使用另一种算法
     processStep = 1,--执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
     isPeriodOrTimed = 0,--使用该变量判断是周期流程还是定时流程
 
@@ -201,6 +209,10 @@ Sys = {
     signalDrift = 0,--信号漂移
     signalMinTime = 0,--读取信号最小时间
     signalMaxTime = 0,--读取信号最大时间
+
+    calculateType = "",--计算类型: 取对数 或者 取差值 方式
+    analysisResult = 0,--分析结果
+    calibrateResult = 0,--校正结果
 }
 
 
@@ -215,8 +227,8 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     for i = 1,12,1 do
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId,BLANK_SPACE);
-        set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,  BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId,BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,  BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId,BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,BLANK_SPACE);
         set_text(PROCESS_SET3_SCREEN, TabAction[i+12].selectId,BLANK_SPACE);
@@ -241,7 +253,6 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
-
 end
 
 --***********************************************************************************************
@@ -859,7 +870,7 @@ function run_control_notify(screen,control,value)
     --当按下开始时, 首先设置系统状态为待机状态,因为只有在该状态调用get_current_process_id返回值才是需要执行的流程序号
     --得到流程序号后, 就可以读取已该序号命名的配置文件,该配置文件保存了该流程的所有动作.
     elseif control == RunStopButtonId then
-        if get_value(RUN_CONTROL_SCREEN,control) == 1.0 then      --按钮按下,此时系统状态变为运行
+        if get_value(RUN_CONTROL_SCREEN,control) == ENABLE then      --按钮按下,此时系统状态变为运行
             SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态
             process_ready_run();--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
@@ -903,7 +914,7 @@ function process_change(control)
 
     --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), get_text(RUN_CONTROL_SCREEN, control), 1) ~= nil then
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), get_text(RUN_CONTROL_SCREEN, control), 1) ~= nil then
             --找到当前是设置的第几个周期流程, 且流程名称不是一个空格(在流程选择2界面中,提供一个空流程,用于删除功能)
             if get_text(PROCESS_SELECT2_SCREEN, control) == BLANK_SPACE then
                 processId = 0;
@@ -1140,10 +1151,10 @@ end
 function set_process_edit_state(state)
     --------------------------------流程设置1/2/3界面的参数------------------------------
     for i = 1,12,1 do
-        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].selectId ,state);
-        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].nameId   ,state);
-        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].rangeId  ,state);
-        set_enable(PROCESS_SET1_SCREEN, TabProcess[i].deleteId ,state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].selectId ,state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].nameId   ,state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId  ,state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].deleteId ,state);
 
         set_enable(PROCESS_SET2_SCREEN, TabAction[i].selectId, state);
         set_enable(PROCESS_SET2_SCREEN, TabAction[i].nameId,   state);
@@ -1294,7 +1305,7 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 --流程设置表中各控件Id,注意selecId与nameId的数学关系:selectId = nameId + 100, selectId = deleteId + 220 等等
-TabProcess = {[1] = {selectId = 300, nameId = 200, rangeId = 312, deleteId = 80},
+ProcessTab = {[1] = {selectId = 300, nameId = 200, rangeId = 312, deleteId = 80},
               [2] = {selectId = 301, nameId = 201, rangeId = 313, deleteId = 81},
               [3] = {selectId = 302, nameId = 202, rangeId = 314, deleteId = 82},
               [4] = {selectId = 303, nameId = 203, rangeId = 315, deleteId = 83},
@@ -1361,11 +1372,11 @@ function process_set1_control_notify(screen,control,value)
         end;
     elseif control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
-    elseif (control-100) >= TabProcess[1].selectId and (control-100) <= TabProcess[12].selectId then --这里是流程选择下的各个按钮
+    elseif (control-100) >= ProcessTab[1].selectId and (control-100) <= ProcessTab[12].selectId then --这里是流程选择下的各个按钮
         process_select_set(screen, control-100);
-    elseif (control-100) >= TabProcess[1].rangeId and (control-100) <= TabProcess[12].rangeId  then --这里是量程选择下的各个按钮
+    elseif (control-100) >= ProcessTab[1].rangeId and (control-100) <= ProcessTab[12].rangeId  then --这里是量程选择下的各个按钮
         range_select_set(screen, control-100);
-    elseif control >= TabProcess[1].deleteId and control <= TabProcess[12].deleteId then--删除按钮
+    elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[12].deleteId then--删除按钮
         if get_text(PROCESS_SET1_SCREEN, control+120) ~= BLANK_SPACE then --名称不为空格
             set_text(PROCESS_SET1_SCREEN, control+220,BLANK_SPACE);
 			set_text(PROCESS_SET1_SCREEN, control+120,BLANK_SPACE);
@@ -2047,13 +2058,49 @@ function process_calculate_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--  计算校正结果
+--***********************************************************************************************
+function calc_calibrate_result(type)
+    if type == CalcType.log then
+
+    else
+
+    end
+end
+
+--***********************************************************************************************
+--  计算分析结果
+--***********************************************************************************************
+function calc_analysis_result(type)
+    if type == CalcType.log then
+
+    else
+
+    end
+end
 
 --***********************************************************************************************
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
+    Sys.calculateType = paraTab[10];
+    if Sys.processType == ProcessItem[2] then--当前流程类型为校正
+        calc_calibrate_result(Sys.calculateType);
+    else
+        calc_analysis_result(Sys.calculateType);
+        if paraTab[1] == ENABLE_STRING then--结果校正
+            Sys.analysisResult = tonumber(paraTab[4]) * Sys.analysisResult + tonumber(paraTab[5]);
+        end
+    end
+
+    if 1  then
+    end
+
+    
     Sys.resultTime = Sys.dateTime;--获取当前时间
-    return 0;
+
+    return FINISHED;
 end
 
 
@@ -2151,7 +2198,6 @@ end
 AnalysisButtonId = 1;--分析按钮
 NullButtonId = 8;--空按钮
 
-ProcessItem = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE};
 ProcessSelectItem = nil;
 
 --该函数在on_control_notify中进行调用（当需要选择流程时）
@@ -2246,14 +2292,14 @@ function goto_ProcessSelect2()
         else
             processFile = 1;
         end
-        if get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId) ~= BLANK_SPACE--获取名称长度,当名称长度不为0时表示有效
+        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId) ~= BLANK_SPACE--获取名称长度,当名称长度不为0时表示有效
            and  processFile ~= nil then--该流程含有配置文件
             if DestScreen == RUN_CONTROL_SCREEN then
                 processFile:close();
             end
             NumberOfProcess = NumberOfProcess + 1;--个数+1
             set_visiable(PROCESS_SELECT2_SCREEN, NumberOfProcess,  1);--显示id为NumberOfProcess的文本
-            set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,TabProcess[i].nameId))--为该文本框设置内容
+            set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,ProcessTab[i].nameId))--为该文本框设置内容
             set_visiable(PROCESS_SELECT2_SCREEN,100+NumberOfProcess,1);--显示与该文本框对应的按钮
         end
     end
@@ -2714,9 +2760,9 @@ function WriteProcessFile(tagNum)
 
     if tagNum == 1 then--流程设置1界面中的参数
         for i=1,12,1 do
-            configFile:write(get_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId)..",".. --流程类型选择
-                             get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId)..","..   --流程名称
-                             get_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId)..",");  --流程量程
+            configFile:write(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId)..",".. --流程类型选择
+                             get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)..","..   --流程名称
+                             get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)..",");  --流程量程
         end
     elseif tagNum == 2 then--运行控制界面中的参数
         for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
@@ -2752,9 +2798,9 @@ function ReadProcessFile(tagNum)
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
     if tagNum == 1 then--流程设置界面中的参数
         for i=1,12,1 do
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, TabProcess[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
         end
 
     elseif tagNum == 2 then--运行控制界面中的参数
@@ -2790,7 +2836,7 @@ function WriteDefaultActionTag(actionNumber)
     local fileName = 0;
 
     for i=1,12,1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
             fileName = i;
             break;
         end
@@ -2826,17 +2872,20 @@ function WriteActionTag(fileName, actionNumber)
     fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--将原来的<action?>-</action?>标签之间的字符串删除
     processFile:write(fileString);                 --将处理过的原文件内容重写写入文件
 
-    local actionType
+    local actionType, actionName
     if actionNumber == 0 then
-        actionType = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--当前流程名称
+        actionType = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].selectId);--当前流程名称
+        actionName = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].nameId);--当前流程名称
     elseif actionNumber >= 1 and actionNumber <= 12 then
         actionType = get_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].selectId);--获取当前动作类型
+        actionName = get_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId);--获取当前动作名称
     elseif actionNumber >= 13 and actionNumber <= 24 then 
         actionType = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].selectId);--获取当前动作类型
+        actionName = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].nameId);--获取当前动作名称
     end
 
     processFile:write("<action"..actionNumber..">");--写入开始标签
-    processFile:write("<type>"..actionType.."</type>");--写入动作类型:初始化/注射泵/消解......
+    processFile:write("<type>"..actionType..","..actionName.."</type>");--写入动作类型与动作名称(或流程类型与名称):初始化/注射泵/消解......
     processFile:write("<content>");
     --------------------------------写<action0>标签内容---------------------------------------------
     --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
@@ -2930,7 +2979,7 @@ function WriteActionFile(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
 
     for i=1,12,1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
             WriteActionTag(i, 0);--修改<action0>标签中的内容
             WriteActionTag(i, actionNumber);--保存数据到文件中,文件名为1~12, 保存的内容为action0~action12标签
         end
@@ -2945,7 +2994,7 @@ function ReadActionTag(actionNumber)
     local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
     local fileName = 0;
     for i=1,12,1 do--循环查找当前流程名称对应的序号.
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
             fileName = i;
             break;
         end
@@ -2973,7 +3022,7 @@ function ReadActionTag(actionNumber)
         return 
     end
     
-    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型
+    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型与动作名称
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
         return;
@@ -2989,7 +3038,7 @@ function ReadActionTag(actionNumber)
            set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);  --把数据显示到文本框中
         end
     --------------------------------读-初始化界面参数--------------------------------------------------
-    elseif actionType == ActionItem[1] then
+    elseif actionType[1] == ActionItem[1] then
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
             set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -2997,7 +3046,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-折射泵界面参数--------------------------------------------------
-    elseif actionType == ActionItem[2] then 
+    elseif actionType[1] == ActionItem[2] then 
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do 
             set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
@@ -3005,7 +3054,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
     --------------------------------读-注射泵加液参数-------------------------------------------------
-    elseif actionType == ActionItem[3] then
+    elseif actionType[1] == ActionItem[3] then
         for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
             set_value(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3013,12 +3062,12 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-读取信号参数--------------------------------------------------
-    elseif actionType == ActionItem[4] then
+    elseif actionType[1] == ActionItem[4] then
         for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
             set_text(PROCESS_READ_SIGNAL_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-蠕动泵加液参数------------------------------------------------
-    elseif actionType == ActionItem[5] then 
+    elseif actionType[1] == ActionItem[5] then 
         for i = PERISTALTIC_BtStartId, PERISTALTIC_BtEndId, 1 do
             set_value(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3026,7 +3075,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-计算参数------------------------------------------------------
-    elseif actionType == ActionItem[6] then 
+    elseif actionType[1] == ActionItem[6] then 
         for i = CALCULATE_BtStartId, CALCULATE_BtEndId, 1 do
             set_value(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3034,10 +3083,10 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-等待时间参数--------------------------------------------------
-    elseif actionType == ActionItem[7] then 
+    elseif actionType[1] == ActionItem[7] then 
         set_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId, tab[1]);
     --------------------------------读-消解参数------------------------------------------------------
-    elseif actionType == ActionItem[8] then 
+    elseif actionType[1] == ActionItem[8] then 
         for i = DISPEL_BtStartId, DISPEL_BtEndId, 1 do
             set_value(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3045,7 +3094,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-阀操作参数------------------------------------------------------
-    elseif actionType == ActionItem[9] then 
+    elseif actionType[1] == ActionItem[9] then 
         for i = VALVE_BtStartId, VALVE_BtEndId, 1 do
             set_value(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3071,7 +3120,10 @@ function ReadActionFile(fileName)
     --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
     --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
     local actionString = GetSubString(Sys.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
-    Sys.processName = GetSubString(actionString, "<type>","</type>");--获取流程名称
+    local tab = GetSubString(actionString, "<type>","</type>");--获取流程类型与流程名称
+    Sys.processType = tab[1];
+    Sys.processName = tab[2];
+    Sys.rangeSelectId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].rangeId));
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     local tab = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
     Sys.actionTotal = 0; 
@@ -3186,7 +3238,7 @@ function get_process_Id(name)
     
     --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, TabProcess[i].nameId), name, 1) ~= nil then
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), name, 1) ~= nil then
                 processId = i;
             break;
         end

@@ -2074,9 +2074,7 @@ end
 --***********************************************************************************************
 function calc_analysis_result(type)
     if type == CalcType.log then
-        if 
     else
-
     end
 end
 

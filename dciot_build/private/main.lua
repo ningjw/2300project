@@ -2074,7 +2074,7 @@ end
 --***********************************************************************************************
 function calc_analysis_result(type)
     if type == CalcType.log then
-
+        if 
     else
 
     end
@@ -2217,7 +2217,7 @@ function process_select_control_notify(screen, control, value)
 		if ProcessSelectItem ~= nil then
 			set_text(DestScreen, DestControl, ProcessItem[ProcessSelectItem]);--DestControl对应流程选择
 			if DestScreen == PROCESS_SET1_SCREEN  then
-				set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
+                set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
             end
         end
         WriteProcessFile(1);--保存流程设置1界面中的参数
@@ -2358,27 +2358,21 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 --在量程设置/量程选择界面中,量程1/2/3文本的id都是一样的
-Range1LowId = 64;--量程1文本id
-Range1HighId = 65;--量程1文本id
-Range2LowId = 77;--量程2文本id
-Range2HighId = 78;--量程2文本id
-Range3LowId = 115;--量程3文本id
-Range3HighId = 116;--量程3文本id
 
-UniteSetMenuId = 17;--单位选择
-UniteSetTextId = 15--单位设置成功后,用于显示单位文本的id
+UniteSetMenuId = 26;--单位选择
+UniteSetTextId = 25--单位设置成功后,用于显示单位文本的id
 
 RangeTab = {
-    [1] = {LowId = 64, HighId = 65, densityCalLowId = 81, densityCalHighId = 84, aId = 48, bId = 49, cId = 50, dId = 51},
-    [2] = {LowId = 77, HighId = 78, densityCalLowId = 67, densityCalHighId = 70, aId = 52, bId = 53, cId = 54, dId = 55 },
-    [3] = {LowId = 115,HighId= 116, densityCalLowId = 105,densityCalHighId = 108,aId = 92, bId = 93, cId = 94, dId = 95},
+    [1] = {LowId = 1, HighId = 2,  densityCalLowId = 3,  densityCalHighId = 4,  aId = 5,  bId = 6,  cId = 7,  dId = 8},
+    [2] = {LowId = 9, HighId = 10, densityCalLowId = 11, densityCalHighId = 12, aId = 13, bId = 14, cId = 15, dId = 16},
+    [3] = {LowId = 17,HighId= 18,  densityCalLowId = 19, densityCalHighId = 20, aId = 21, bId = 22, cId = 23, dId = 24},
 };
 
 --设置单位
 function set_unit()
     local Unite = get_text(RANGE_SET_SCREEN, UniteSetTextId);
-    --量程设置界面中,控件Id = 200 ~ 208为单位显示文本
-    for i = 200,208,1 do 
+    --量程设置界面中,控件Id = 300 ~ 308为单位显示文本
+    for i = 300,308,1 do 
         set_text(RANGE_SET_SCREEN, i, Unite);
     end
     --首页中,空间Id= 19 为单位显示
@@ -2429,12 +2423,12 @@ end
 
 --当画面切换时，执行此回调函数，screen为目标画面。
 function goto_range_select ()
-    set_text(RANGE_SELECT_SCREEN, Range1LowId,  get_text(RANGE_SET_SCREEN,64));
-    set_text(RANGE_SELECT_SCREEN, Range1HighId, get_text(RANGE_SET_SCREEN,65));
-    set_text(RANGE_SELECT_SCREEN, Range2LowId,  get_text(RANGE_SET_SCREEN,77));
-    set_text(RANGE_SELECT_SCREEN, Range2HighId, get_text(RANGE_SET_SCREEN,78));
-    set_text(RANGE_SELECT_SCREEN, Range3LowId,  get_text(RANGE_SET_SCREEN,115));
-    set_text(RANGE_SELECT_SCREEN, Range3HighId, get_text(RANGE_SET_SCREEN,116));
+    set_text(RANGE_SELECT_SCREEN, 4,  get_text(RANGE_SET_SCREEN,RangeTab[1].LowId));
+    set_text(RANGE_SELECT_SCREEN, 5, get_text(RANGE_SET_SCREEN,RangeTab[1].HighId));
+    set_text(RANGE_SELECT_SCREEN, 6,  get_text(RANGE_SET_SCREEN,RangeTab[2].LowId));
+    set_text(RANGE_SELECT_SCREEN, 7, get_text(RANGE_SET_SCREEN,RangeTab[2].HighId));
+    set_text(RANGE_SELECT_SCREEN, 8,  get_text(RANGE_SET_SCREEN,RangeTab[3].LowId));
+    set_text(RANGE_SELECT_SCREEN, 9, get_text(RANGE_SET_SCREEN,RangeTab[3].HighId));
 end
 
 

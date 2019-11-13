@@ -187,16 +187,14 @@ Sys = {
     dispelTime,--消解时间
     dispelEmptyTemp,--消解排空温度
 
-    signalE1,--用于保存信号E1的值
-    signalE2,--用于保存信号E2的值
-    signalDrift,--信号漂移
-    rSignalMinTime,--读取信号最小时间
-    rSignalMaxTime,--读取信号最大时间
+    signalTab = {},--用于保存多个连续的电位信号
+    signalTotal = 0,--用于统计当前信号个数
+    signalE1 = 0,--用于保存信号E1的值
+    signalE2 = 0,--用于保存信号E2的值
+    signalDrift = 0,--信号漂移
+    signalMinTime,--读取信号最小时间
+    signalMaxTime,--读取信号最大时间
 }
-
-
-
-
 
 
 
@@ -238,6 +236,12 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
+
+    temp = {};
+    for i=0,9,1 do
+        temp[i] = i;
+    end
+    print(math.min(temp[1],temp[2]));
 
 end
 
@@ -1890,17 +1894,18 @@ function excute_read_signal_process(paraTab)
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
         Sys.signalDrift = tonumber(paraTab[2]);
-        Sys.rSignalMinTime = tonumber(paraTab[3]);
-        Sys.rSignalMaxTime = tonumber(paraTab[4]);
+        Sys.signalMinTime = tonumber(paraTab[3]);
+        Sys.signalMaxTime = tonumber(paraTab[4]);
 
-        start_timer(2, Sys.rSignalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
+        start_timer(2, Sys.signalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
         getValidSignalData = RESET;
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
         if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
-            start_timer(2, (Sys.rSignalMaxTime - Sys.rSignalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
+            start_timer(2, (Sys.signalMaxTime - Sys.signalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
             Sys.actionSubStep = Sys.actionSubStep + 1;
+            Sys.signalTotal = 0;
         end
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
@@ -1912,6 +1917,12 @@ function excute_read_signal_process(paraTab)
     elseif Sys.actionSubStep == 4 then
         if UartArg.reply_flag == REPLY_OK then--解析串口数据, 并判断是否满足信号漂移要求
             local signalE = 0;
+            
+            Sys.signalTab[Sys.signalTotal] = signalE;--将电压信号保存到数组中
+            Sys.signalTotal = Sys.signalTotal + 1;
+            if Sys.signalTotal >= 10 then
+            end
+
             if paraTab[1] == "E1" then
                 Sys.signalE1 = signalE;
             elseif paraTab[1] == "E2" then

@@ -78,8 +78,6 @@ OK = 0;
 OPEN = 1;
 CLOSE = 0;
 
-E1 = "E1"
-E2 = "E2"
 
 Dir = {
     FWD = "正转",
@@ -187,16 +185,14 @@ Sys = {
     dispelTime,--消解时间
     dispelEmptyTemp,--消解排空温度
 
-    signalE1,--用于保存信号E1的值
-    signalE2,--用于保存信号E2的值
-    signalDrift,--信号漂移
-    rSignalMinTime,--读取信号最小时间
-    rSignalMaxTime,--读取信号最大时间
+    signalTab = {},--用于保存多个连续的电位信号
+    signalTotal = 0,--用于统计当前信号个数
+    signalE1 = 0,--用于保存信号E1的值
+    signalE2 = 0,--用于保存信号E2的值
+    signalDrift = 0,--信号漂移
+    signalMinTime,--读取信号最小时间
+    signalMaxTime,--读取信号最大时间
 }
-
-
-
-
 
 
 
@@ -1475,8 +1471,7 @@ function excute_init_process(paraTab)
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀复位
             Sys.valcoChannel = tonumber(paraTab[23]);--id为23的控件为通道号
             Sys.waitTime = 0;
-            -- driver[Sys.step]();
-            driver[Sys.step]();
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1501,7 +1496,6 @@ function excute_init_process(paraTab)
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
         if paraTab[4] == ENABLE_STRING then--判断是否需要对注射泵2进行复位
-            -- Sys.step1Func = ;
             Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -1509,8 +1503,6 @@ function excute_init_process(paraTab)
     --------------------------------------------------------------
     elseif Sys.actionSubStep == 5 then
         if paraTab[4] == ENABLE_STRING then--判断是否需要对消解进行复位
-            -- Sys.step1Func = ;
-            -- driver[Sys.step]();
             Sys.actionSubStep = Sys.actionSubStep + 1;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -1559,7 +1551,7 @@ function excute_inject_process(paraTab)
             Sys.injectDir = paraTab[5];
             Sys.waitTime = tonumber(paraTab[6]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1570,7 +1562,7 @@ function excute_inject_process(paraTab)
             Sys.injectDir = paraTab[9];
             Sys.waitTime = tonumber(paraTab[10]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1612,7 +1604,7 @@ function excute_inject_add_process(paraTab)
             Sys.valcoChannel = tonumber(paraTab[40]);--通道号
             Sys.waitTime = tonumber(paraTab[41]);--等待时间
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1625,7 +1617,7 @@ function excute_inject_add_process(paraTab)
             Sys.valveOperate = ValveStatus.open;
             Sys.waitTime = tonumber(paraTab[42]);--等待时间
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1637,7 +1629,7 @@ function excute_inject_add_process(paraTab)
             Sys.injectDir = paraTab[46];
             Sys.waitTime = tonumber(paraTab[47]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[4] == ENABLE_STRING then
             Sys.injectSpeed = tonumber(paraTab[48]);
             Sys.injectVolume = tonumber(paraTab[49]);
@@ -1656,7 +1648,7 @@ function excute_inject_add_process(paraTab)
             Sys.valveOperate = ValveStatus.close;
             Sys.waitTime = 0
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1669,7 +1661,7 @@ function excute_inject_add_process(paraTab)
             Sys.valveOperate = ValveStatus.open;
             Sys.waitTime = tonumber(paraTab[52]);
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1682,7 +1674,7 @@ function excute_inject_add_process(paraTab)
             Sys.injectDir = paraTab[56];
             Sys.waitTime = tonumber(paraTab[57]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[7] == ENABLE_STRING then
             Sys.injectId = 2;
             Sys.injectSpeed = tonumber(paraTab[58]);
@@ -1690,7 +1682,7 @@ function excute_inject_add_process(paraTab)
             Sys.injectDir = paraTab[60];
             Sys.waitTime = tonumber(paraTab[61]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1703,7 +1695,7 @@ function excute_inject_add_process(paraTab)
             Sys.valveOperate = ValveStatus.close;
             Sys.waitTime = 0;
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1751,7 +1743,7 @@ function excute_peristaltic_process(paraTab)
             Sys.valcoChannel = tonumber(paraTab[22]);--通道号
             Sys.waitTime = tonumber(paraTab[23]);--等待时间
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1764,7 +1756,7 @@ function excute_peristaltic_process(paraTab)
             Sys.valveOperate = ValveStatus.open;
             Sys.waitTime = tonumber(paraTab[24]);
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1777,7 +1769,7 @@ function excute_peristaltic_process(paraTab)
             Sys.periodicDir = paraTab[27];
             Sys.waitTime = tonumber(paraTab[28]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[4] == ENABLE_STRING then
             Sys.periodicIndex = 2;
             Sys.periodicSpeed = tonumber(paraTab[29]);
@@ -1785,7 +1777,7 @@ function excute_peristaltic_process(paraTab)
             Sys.periodicDir = paraTab[31];
             Sys.waitTime = tonumber(paraTab[32]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[5] == ENABLE_STRING then
             Sys.periodicIndex = 3;
             Sys.periodicSpeed = tonumber(paraTab[33]);
@@ -1793,7 +1785,7 @@ function excute_peristaltic_process(paraTab)
             Sys.periodicDir = paraTab[35];
             Sys.waitTime = tonumber(paraTab[36]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1806,7 +1798,7 @@ function excute_peristaltic_process(paraTab)
             Sys.valveOperate = ValveStatus.close;
             Sys.waitTime = 0;
         -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1851,7 +1843,7 @@ function excute_dispel_process(paraTab)
             Sys.dispelEmptyTemp = tonumber(paraTab[26]);
             Sys.waitTime = tonumber(paraTab[27]);
             -- Sys.step1Func = ;
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
@@ -1890,17 +1882,18 @@ function excute_read_signal_process(paraTab)
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
         Sys.signalDrift = tonumber(paraTab[2]);
-        Sys.rSignalMinTime = tonumber(paraTab[3]);
-        Sys.rSignalMaxTime = tonumber(paraTab[4]);
+        Sys.signalMinTime = tonumber(paraTab[3]);
+        Sys.signalMaxTime = tonumber(paraTab[4]);
 
-        start_timer(2, Sys.rSignalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
+        start_timer(2, Sys.signalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
         getValidSignalData = RESET;
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
         if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
-            start_timer(2, (Sys.rSignalMaxTime - Sys.rSignalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
+            start_timer(2, (Sys.signalMaxTime - Sys.signalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
             Sys.actionSubStep = Sys.actionSubStep + 1;
+            Sys.signalTotal = 0;
         end
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
@@ -1912,16 +1905,38 @@ function excute_read_signal_process(paraTab)
     elseif Sys.actionSubStep == 4 then
         if UartArg.reply_flag == REPLY_OK then--解析串口数据, 并判断是否满足信号漂移要求
             local signalE = 0;
-            if paraTab[1] == "E1" then
-                Sys.signalE1 = signalE;
-            elseif paraTab[1] == "E2" then
-                Sys.signalE2 = signalE;
-            end
-
-            if Sys.waitTimeFlag == RESET and getValidSignalData == SET then--最大定时时间到
-                Sys.actionSubStep = Sys.actionSubStep + 1;
+            local maxSignal = 0;
+            local minSignal = 0;
+            
+            Sys.signalTab[math.fmod(Sys.signalTotal, 10)] = signalE;--将电压信号保存到数组中
+            Sys.signalTotal = Sys.signalTotal + 1;
+            if Sys.signalTotal >= 10 then--已经获取到足够的信号(10个)
+                maxSignal = math.max(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
+                                     Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
+                minSignal = math.min(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
+                                     Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
+                if (maxSignal - minSignal <= Sys.signalDriftthen) or --满足信号漂移条件
+                   (Sys.waitTimeFlag == RESET and getValidSignalData == SET) then--最大定时时间到
+                    local signalSum = 0;
+                    for i = 0, 9, 1 do
+                        signalSum = signalSum + Sys.signalTab[i];
+                    end
+                    signalE = (signalSum - maxSignal - minSignal) / 8;--减去Sys.signalTab中的最大值与最小值后取平均值
+                    
+                    if paraTab[1] == "E1" then
+                        Sys.signalE1 = signalE;
+                    else
+                        Sys.signalE2 = signalE;
+                    end
+                    Sys.actionSubStep = Sys.actionSubStep + 1;
+                else
+                    Sys.actionSubStep = Sys.actionSubStep - 1;--执行上一步,继续通过串口读取电压信号
+                end
             end
         end
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then
+        Sys.actionSubStep = 0;--结束
     end
     return Sys.actionSubStep;
 end
@@ -1934,7 +1949,7 @@ end
 CALCULATE_BtStartId = 1;
 CALCULATE_BtEndId = 3;
 CALCULATE_TextStartId = 4;
-CALCULATE_TextEndId = 9;
+CALCULATE_TextEndId = 10;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -1983,15 +1998,28 @@ end
 --***********************************************************************************************
 function excute_valve_ctrl_process(paraTab)
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
-            
-            driver[Sys.step]();
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            Sys.valcoChannel = tonumber(paraTab[19]);--通道号
+            Sys.waitTime = tonumber(paraTab[20]);--等待时间
+            -- Sys.step1Func = ;
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 2 then
-
-    elseif Sys.actionSubStep == 3 then
+    elseif Sys.actionSubStep == 2 then--判断是否需要对输出进行操作
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+            for i=1,16,1 do
+                Sys.valveIdTab[i] = paraTab[i+2];
+            end
+            Sys.valveOperate = paraTab[22];
+            Sys.waitTime = tonumber(paraTab[21]);--等待时间
+        -- Sys.step1Func = ;
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 3 then--结束
+        Sys.actionSubStep = 0;
     end
     return Sys.actionSubStep;
 end
@@ -2022,7 +2050,7 @@ function excute_wait_time_process(paraTab)
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要对输出1进行操作
             
-            driver[Sys.step]();
+            driver[Sys.step]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end

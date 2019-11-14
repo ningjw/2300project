@@ -68,6 +68,9 @@ ELEC_METHOD = 1;--电极法
 ENABLE_STRING = "1.0"
 DISABLE_STRING = "0.0"
 
+CHN = 1;--中文
+ENG = 2;--英文
+
 ENABLE = 1.0
 DISABLE = 0.0
 
@@ -83,63 +86,80 @@ OPEN = 1;
 CLOSE = 0;
 
 
-Dir = {
-    FWD = "正转",
-    REV = "反转"
+Direction = {
+    [CHN] = {FWD = "正转",REV = "反转"},
 }
 
 TipsTab = {
-    insertSdUsb = "请插入SD卡或者U盘",
-    insertSd    = "插入SD卡",
-    insertUsb   = "插入U盘",
-    pullOutSd   = "拔出SD卡",
-    pullOutUSB  = "拔出U盘",
-    importing   = "正在导入配置文件...",
-    imported    = "配置文件导入成功",
-    exporting   = "正在导出配置文件...",
-    exported    = "配置文件导出成功",
-    exportTips  = "请在SD卡或U盘创建config文件夹后重试",
-    selectProcess = "请选择流程",
+    [CHN] = {
+        insertSdUsb = "请插入SD卡或者U盘",
+        insertSd    = "插入SD卡",
+        insertUsb   = "插入U盘",
+        pullOutSd   = "拔出SD卡",
+        pullOutUSB  = "拔出U盘",
+        importing   = "正在导入配置文件...",
+        imported    = "配置文件导入成功",
+        exporting   = "正在导出配置文件...",
+        exported    = "配置文件导出成功",
+        exportTips  = "请在SD卡或U盘创建config文件夹后重试",
+        selectProcess = "请选择流程",
+    },
 };
 
 WorkStatus = {
-    run = "运行",--此时系统正在运行流程
-    stop = "停止",
-    readyRun = "待机", --此时为自动运行方式, 且在等待时间到后自动进行下一次流程的状态.
+    [CHN] = {
+        run = "运行",--此时系统正在运行流程
+        stop = "停止",
+        readyRun = "待机", --此时为自动运行方式, 且在等待时间到后自动进行下一次流程的状态.
+    }
 };
 
 WorkType = {
-    hand = "手动",--按启动按钮后,执行一次
-    auto = "自动",--按启动按钮后,可以根据时间判断是否进行周期流程与定时流程
-    controlled = "反控",--通过上位机发送指令运行流程.
+    [CHN] = {
+        hand = "手动",--按启动按钮后,执行一次
+        auto = "自动",--按启动按钮后,可以根据时间判断是否进行周期流程与定时流程
+        controlled = "反控",--通过上位机发送指令运行流程.
+    },
 }
 
 SysUser = {
-    operator = {"操作员"},
-    maintainer = "运维员",
-    administrator = "管理员",
+    [CHN] = {
+        operator = {"操作员"},
+        maintainer = "运维员",
+        administrator = "管理员",
+    },
 }
 
 
 ValveStatus = {
-    open = "打开",
-    close = "关闭"
+    [CHN] = {
+        open = "打开",
+        close = "关闭"
+    },
 }
 
 
 CalcType = {
-    log = "取对数",
-    diff = "取差值",
+    [CHN] = {
+        log = "取对数",
+        diff = "取差值",
+    },
 }
 
-ProcessItem = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE};
+ProcessItem = {
+    [CHN] = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE},
+    };
+ActionItem = {
+    [CHN] = {"初始化","注射泵","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE},
+};
 
 Sys = {
-    userName = SysUser.operator,--用于保存当前用户
+    language = CHN,--系统语言
+    userName = "",--用于保存当前用户
     status = 0,--系统状态:对应WorkStatus中的值
     runType = 0,--运行方式: 对应WorkType中的值
     analysisType = COLOR_METHOD,--分析方法
-    rangeSelectId = 1,--用于记录量程选择
+    rangetypeId = 1,--用于记录量程选择
 
     handRunTimes = 0;--记录了手动运行次数
 
@@ -181,8 +201,8 @@ Sys = {
     waitTimeFlag = 0,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
     waitTime = 0,--用于保存需要等待的时间
 
-    valcoChannel = 0,                 --用于保存在运行流程时的十通阀通道号
-    valveOperate = ValveStatus.close, --用于指示关阀还是开阀
+    valcoChannel = 0,--用于保存在运行流程时的十通阀通道号
+    valveOperate , --用于指示关阀还是开阀
                                       --valveIdTab 保存16个阀是否选中
     valveIdTab = {[1] = 0,[2] = 0,[3] = 0,[4] = 0,[5] = 0,[6] = 0,[7] = 0,[8] = 0, [9] = 0, [10] = 0,[11] = 0,[12] = 0,[13]= 0,[14]= 0,[15]= 0,[16]= 0},
 
@@ -194,7 +214,7 @@ Sys = {
     peristalticId = 1,--取值1/2/3
     peristalticSpeed = 0,
     peristalticVolume = 0,
-    peristalticDir = Dir.FWD;--默认为正转
+    peristalticDir = "";
     peristalticCurrentSpd = 0,
     peristalticCurrentDir = 0,
 
@@ -211,8 +231,7 @@ Sys = {
     signalMaxTime = 0,--读取信号最大时间
 
     calculateType = "",--计算类型: 取对数 或者 取差值 方式
-    analysisResult = 0,--分析结果
-    calibrateResult = 0,--校正结果
+    result = 0,--进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
 }
 
 
@@ -226,12 +245,14 @@ Sys = {
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
+    set_text(PROCESS_SET2_SCREEN, ProcesstypeId, BLANK_SPACE);
+    set_text(PROCESS_SET3_SCREEN, ProcesstypeId, BLANK_SPACE);
     for i = 1,12,1 do
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId,BLANK_SPACE);
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,  BLANK_SPACE);
-        set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId,BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId,BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId,BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,BLANK_SPACE);
-        set_text(PROCESS_SET3_SCREEN, TabAction[i+12].selectId,BLANK_SPACE);
+        set_text(PROCESS_SET3_SCREEN, TabAction[i+12].typeId,BLANK_SPACE);
         set_text(PROCESS_SET3_SCREEN, TabAction[i+12].nameId,BLANK_SPACE);
     end
     for i = 1,24,1 do
@@ -241,14 +262,13 @@ function on_init()
         set_text(RUN_CONTROL_SCREEN,PeriodicTab[i].textId,BLANK_SPACE);
     end
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
+    
 
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
-    SetSysUser(SysUser.maintainer);   --开机之后默认为运维员
-    ReadProcessFile(1);--加载流程设置1界面中的参数配置
-    ReadProcessFile(2);--加载运行控制界面中的参数配置
-
+    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+    ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
     if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
@@ -260,7 +280,7 @@ end
 --***********************************************************************************************
 function on_timer(timer_id)
     if  timer_id == 0 then --定时器0,定时时间到
-        if Sys.status == WorkStatus.run then
+        if Sys.status == WorkStatus[Sys.language].run then
             excute_process();
         end
     elseif timer_id == 1 then--串口超时
@@ -279,7 +299,7 @@ function on_systick()
     Sys.dateTime.year,Sys.dateTime.mon,Sys.dateTime.day,
     Sys.dateTime.hour,Sys.dateTime.min,Sys.dateTime.sec = get_date_time();--获取当前时间
     
-    if Sys.status == WorkStatus.readyRun then           --当系统处于待机状态时,
+    if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
         process_ready_run();
     end
 end
@@ -363,7 +383,7 @@ end
 --插入 U 盘后，执行此回调函数
 --***********************************************************************************************
 function on_usb_inserted(dir)
-    ShowSysTips(TipsTab.insertUsb);
+    ShowSysTips(TipsTab[Sys.language].insertUsb);
     UsbPath = dir;
 end
 
@@ -371,14 +391,14 @@ end
 --拔出 U 盘后，执行此回调函数
 --***********************************************************************************************
 function on_usb_removed()
-    ShowSysTips(TipsTab.pullOutUSB);
+    ShowSysTips(TipsTab[Sys.language].pullOutUSB);
 end
 
 --***********************************************************************************************
 --插入 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_inserted(dir)
-    ShowSysTips(TipsTab.insertSd);
+    ShowSysTips(TipsTab[Sys.language].insertSd);
     SdPath = dir;
 end
 
@@ -386,7 +406,7 @@ end
 --拔出 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_removed()
-    ShowSysTips(TipsTab.pullOutUSB);
+    ShowSysTips(TipsTab[Sys.language].pullOutUSB);
 end
 
 
@@ -547,7 +567,7 @@ function uart_time_out()
     else  --重发三次都没有回复,不再重发
         UartArg.repeat_times = 0;
         --此时如果系统在运行流程,则锁住串口,不再继续往下执行,在按停止后会解锁串口; 如果是手动操作发送串口指令,则解锁串口
-        if Sys.status == WorkStatus.run then
+        if Sys.status == WorkStatus[Sys.language].run then
             UartArg.lock = LOCKED;
         else
             UartArg.lock = UNLOCKED;
@@ -608,7 +628,7 @@ function SetSysWorkStatus(status)
     --在底部的状态栏显示工作状态:停止/运行/待机
     for i = 1,16,1 do
         set_text(PublicTab[i], SysWorkStatusId, status);
-        if status == WorkStatus.stop or status == WorkStatus.readyRun then
+        if status == WorkStatus[Sys.language].stop or status == WorkStatus[Sys.language].readyRun then
             set_text(PublicTab[i], SysCurrentActionId, "无");
         end
     end
@@ -666,7 +686,7 @@ function control_multi_valve()
     for i = 1, 16, 1 do
         if Sys.valveIdTab[i] == ENABLE_STRING then--需要进行操作
             Sys.valveIdTab[i] = DISABLE_STRING;
-            if Sys.valveOperate == ValveStatus.open then
+            if Sys.valveOperate == ValveStatus[Sys.language].open then
                 open_single_valve(i);--开阀并退出程序
             else
                 close_single_valve(i);--关阀并退出程序
@@ -871,7 +891,7 @@ function run_control_notify(screen,control,value)
     --得到流程序号后, 就可以读取已该序号命名的配置文件,该配置文件保存了该流程的所有动作.
     elseif control == RunStopButtonId then
         if get_value(RUN_CONTROL_SCREEN,control) == ENABLE then      --按钮按下,此时系统状态变为运行
-            SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态
+            SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             process_ready_run();--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
             SystemStop();
@@ -1088,15 +1108,15 @@ end
 --***********************************************************************************************
 function get_current_process_id()
     local processId = 0;
-    if Sys.status == WorkStatus.run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
+    if Sys.status == WorkStatus[Sys.language].run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
         return Sys.currentProcessId;
     end
 
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
-    if Sys.runType == WorkType.hand then 
+    if Sys.runType == WorkType[Sys.language].hand then 
         processId = HandProcessTab[1].processId;
     ----------------------自动模式  自动模式中的定时时间错过了会直接跳过该流程--------------------------
-    elseif Sys.runType == WorkType.auto then 
+    elseif Sys.runType == WorkType[Sys.language].auto then 
 
         local currentDateTime =  string.format("%d%02d%02d%02d%02d",
                                           Sys.dateTime.year, Sys.dateTime.mon,Sys.dateTime.day,
@@ -1137,7 +1157,7 @@ function get_current_process_id()
         end
 
     -------------------------------------------------反控-----------------------------------------------
-    elseif Sys.runType == WorkType.controlled then 
+    elseif Sys.runType == WorkType[Sys.language].controlled then 
 
     end
     return processId;
@@ -1151,15 +1171,15 @@ end
 function set_process_edit_state(state)
     --------------------------------流程设置1/2/3界面的参数------------------------------
     for i = 1,12,1 do
-        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].selectId ,state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].typeId ,state);
         set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].nameId   ,state);
         set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId  ,state);
         set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].deleteId ,state);
 
-        set_enable(PROCESS_SET2_SCREEN, TabAction[i].selectId, state);
+        set_enable(PROCESS_SET2_SCREEN, TabAction[i].typeId, state);
         set_enable(PROCESS_SET2_SCREEN, TabAction[i].nameId,   state);
 
-        set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].selectId, state);
+        set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].typeId, state);
         set_enable(PROCESS_SET3_SCREEN, TabAction[i+12].nameId,   state);
     end
 
@@ -1184,10 +1204,9 @@ function process_ready_run()
     Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
-        SetSysWorkStatus(WorkStatus.run);                 --设置工作状态为运行
+        SetSysWorkStatus(WorkStatus[Sys.language].run);                 --设置工作状态为运行
         set_process_edit_state(DISABLE);                  --禁止流程设置相关的操作
-        ReadProcessFile(1);                               --读取流程设置界面界面中的参数
-        ReadProcessFile(2);                               --读取运行控制界面界面中的参数
+        ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/注射泵/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
@@ -1222,23 +1241,23 @@ function excute_process()
         --Sys.startTime.year,Sys.startTime.mon,Sys.startTime.day,Sys.startTime.hour,Sys.startTime.min--获取当前时间
         Sys.startTime = Sys.dateTime;
         ShowSysCurrentAction( Sys.processName..":"..Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
-        if Sys.actionType == ActionItem[1] then 
+        if Sys.actionType == ActionItem[Sys.language][1] then 
             Sys.actionFunction = excute_init_process;--执行 初始化流程
-        elseif Sys.actionType == ActionItem[2] then 
+        elseif Sys.actionType == ActionItem[Sys.language][2] then 
             Sys.actionFunction = excute_inject_process;--执行 注射泵流程
-        elseif Sys.actionType == ActionItem[3] then
+        elseif Sys.actionType == ActionItem[Sys.language][3] then
             Sys.actionFunction = excute_inject_add_process;--执行 注射泵加液流程
-        elseif Sys.actionType == ActionItem[4] then 
+        elseif Sys.actionType == ActionItem[Sys.language][4] then 
             Sys.actionFunction = excute_read_signal_process;--执行-读取信号流程
-        elseif Sys.actionType == ActionItem[5] then 
+        elseif Sys.actionType == ActionItem[Sys.language][5] then 
             Sys.actionFunction = excute_peristaltic_process--执行-蠕动泵加液流程
-        elseif Sys.actionType == ActionItem[6] then 
+        elseif Sys.actionType == ActionItem[Sys.language][6] then 
             Sys.actionFunction = excute_calculate_process;--执行-计算流程
-        elseif Sys.actionType == ActionItem[7] then 
+        elseif Sys.actionType == ActionItem[Sys.language][7] then 
             Sys.actionFunction = excute_wait_time_process;--执行-等待时间流程
-        elseif Sys.actionType == ActionItem[8] then 
+        elseif Sys.actionType == ActionItem[Sys.language][8] then 
             Sys.actionFunction = excute_dispel_process;--执行-消解流程
-        elseif Sys.actionType == ActionItem[9] then 
+        elseif Sys.actionType == ActionItem[Sys.language][9] then 
             Sys.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
         end
         Sys.driverStep = 1;--孙流程从第一步开始
@@ -1258,13 +1277,13 @@ function excute_process()
             Sys.actionStep = 1;                       --指向第一个动作
             Sys.processStep = 1;                      --返回第一步执行动作
             ----------------手动模式--------------------
-            if Sys.runType == WorkType.hand then                    
+            if Sys.runType == WorkType[Sys.language].hand then                    
                 Sys.handRunTimes = Sys.handRunTimes + 1;  --分析次数+1
                 if  Sys.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
                     SystemStop();
                 end
             ----------------自动模式--------------------
-            elseif Sys.runType == WorkType.auto then
+            elseif Sys.runType == WorkType[Sys.language].auto then
                 if Sys.isPeriodOrTimed == PERIOD_PROCESS then--如果当前流程为周期流程, 则需要设置下次周期流程的时间.
                     Sys.periodicIndex = Sys.periodicIndex + 1;--指向下一个流程
                     if Sys.periodicIndex > 4 then
@@ -1273,9 +1292,9 @@ function excute_process()
                     set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
                 end
                 WriteProcessFile(2);
-                SetSysWorkStatus(WorkStatus.readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
+                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
             ----------------反控模式--------------------
-            elseif Sys.runType == WorkType.controlled then
+            elseif Sys.runType == WorkType[Sys.language].controlled then
                 SystemStop();
             end
         ----------------动作未执行完,继续下一个动作-------------------------------------------
@@ -1290,10 +1309,10 @@ end
 --  在底部的状态栏显示提示信息
 --***********************************************************************************************
 function SystemStop()
-    SetSysWorkStatus(WorkStatus.stop);--将状态栏显示为停止
+    SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     ShowSysCurrentAction("无");--将当前动作显示为"无"
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
-    if Sys.userName == SysUser.maintainer or  Sys.userName == SysUser.administrator then--运维员/管理员
+    if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管理员
         set_process_edit_state(ENABLE);--允许编辑流程
     end
     UartArg.lock = UNLOCKED;--解锁串口
@@ -1304,19 +1323,19 @@ end
     流程设置1
 --------------------------------------------------------------------------------------------------------------------]]
 
---流程设置表中各控件Id,注意selecId与nameId的数学关系:selectId = nameId + 100, selectId = deleteId + 220 等等
-ProcessTab = {[1] = {selectId = 300, nameId = 200, rangeId = 312, deleteId = 80},
-              [2] = {selectId = 301, nameId = 201, rangeId = 313, deleteId = 81},
-              [3] = {selectId = 302, nameId = 202, rangeId = 314, deleteId = 82},
-              [4] = {selectId = 303, nameId = 203, rangeId = 315, deleteId = 83},
-              [5] = {selectId = 304, nameId = 204, rangeId = 316, deleteId = 84},
-              [6] = {selectId = 305, nameId = 205, rangeId = 317, deleteId = 85},
-              [7] = {selectId = 306, nameId = 206, rangeId = 318, deleteId = 85},
-              [8] = {selectId = 307, nameId = 207, rangeId = 319, deleteId = 87},
-              [9] = {selectId = 308, nameId = 208, rangeId = 320, deleteId = 88},
-              [10]= {selectId = 309, nameId = 209, rangeId = 321, deleteId = 89},
-              [11]= {selectId = 310, nameId = 210, rangeId = 322, deleteId = 90},
-              [12]= {selectId = 311, nameId = 211, rangeId = 323, deleteId = 91},
+--流程设置表中各控件Id,注意selecId与nameId的数学关系:typeId = nameId + 100, typeId = deleteId + 220 等等
+ProcessTab = {[1] = {typeId = 300, nameId = 200, rangeId = 312, deleteId = 80},
+              [2] = {typeId = 301, nameId = 201, rangeId = 313, deleteId = 81},
+              [3] = {typeId = 302, nameId = 202, rangeId = 314, deleteId = 82},
+              [4] = {typeId = 303, nameId = 203, rangeId = 315, deleteId = 83},
+              [5] = {typeId = 304, nameId = 204, rangeId = 316, deleteId = 84},
+              [6] = {typeId = 305, nameId = 205, rangeId = 317, deleteId = 85},
+              [7] = {typeId = 306, nameId = 206, rangeId = 318, deleteId = 85},
+              [8] = {typeId = 307, nameId = 207, rangeId = 319, deleteId = 87},
+              [9] = {typeId = 308, nameId = 208, rangeId = 320, deleteId = 88},
+              [10]= {typeId = 309, nameId = 209, rangeId = 321, deleteId = 89},
+              [11]= {typeId = 310, nameId = 210, rangeId = 322, deleteId = 90},
+              [12]= {typeId = 311, nameId = 211, rangeId = 323, deleteId = 91},
        };
 
 
@@ -1325,6 +1344,7 @@ CodeSetId = 107;--代码
 ProcessSaveBtId = 19;--保存按钮,流程设置1/2/3的保存按钮都是这个id
 ExportBtId = 41;--导出按钮
 InportBtId = 42;--导入按钮
+NextSetScreen = 128;--下一个流程设置界面
 
 --***********************************************************************************************
 --用户通过触摸修改控件后，执行此回调函数。
@@ -1334,53 +1354,66 @@ function process_set1_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
         WriteProcessFile(1);
+    ------------------------------------------------------------------------
     elseif control == InportBtId then --导入按钮
         if SdPath  ~= nil then
-            ShowSysTips(TipsTab.importing);
+            ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( SdPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
-            ShowSysTips(TipsTab.imported);
-            ReadProcessFile(1);--加载流程设置1界面中的参数配置
-            ReadProcessFile(2);--加载运行控制界面中的参数配置
+            ShowSysTips(TipsTab[Sys.language].imported);
+            ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab.importing);
+            ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( UsbPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
-            ShowSysTips(TipsTab.imported);
-            ReadProcessFile(1);--加载流程设置1界面中的参数配置
-            ReadProcessFile(2);--加载运行控制界面中的参数配置
+            ShowSysTips(TipsTab[Sys.language].imported);
+            ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         else
-            ShowSysTips(TipsTab.insertSdUsb);
+            ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
+    ------------------------------------------------------------------------
     elseif control == ExportBtId then --导出按钮(将流程配置导出到SD卡中)
         if SdPath  ~= nil then
-            ShowSysTips(TipsTab.exporting);
+            ShowSysTips(TipsTab[Sys.language].exporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy(i, SdPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
-            ShowSysTips(TipsTab.exported);
+            ShowSysTips(TipsTab[Sys.language].exported);
         elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab.exporting);
+            ShowSysTips(TipsTab[Sys.language].exporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy(i, UsbPath.."config/"..i);--将文件导出到config文件中,配置文件名为0~12
             end
-            ShowSysTips(TipsTab.exported);
+            ShowSysTips(TipsTab[Sys.language].exported);
         else
-            ShowSysTips(TipsTab.insertSdUsb);
+            ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
-    elseif control == AnalyteSetId then
+    ------------------------------------------------------------------------
+    elseif control == NextSetScreen then--跳转到流程设置2界面按钮
+        if get_text(PROCESS_SET2_SCREEN, ProcesstypeId) == BLANK_SPACE then
+            process_select2_set(PROCESS_SET2_SCREEN, ProcesstypeId);
+            change_screen(PROCESS_SELECT2_SCREEN);
+        end
+    ------------------------------------------------------------------------
+    elseif control == AnalyteSetId then--
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
-    elseif (control-100) >= ProcessTab[1].selectId and (control-100) <= ProcessTab[12].selectId then --这里是流程选择下的各个按钮
+    ------------------------------------------------------------------------
+    elseif (control-100) >= ProcessTab[1].typeId and (control-100) <= ProcessTab[12].typeId then --这里是流程类型下的各个按钮
         process_select_set(screen, control-100);
+    ------------------------------------------------------------------------
     elseif (control-100) >= ProcessTab[1].rangeId and (control-100) <= ProcessTab[12].rangeId  then --这里是量程选择下的各个按钮
         range_select_set(screen, control-100);
+    ------------------------------------------------------------------------
     elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[12].deleteId then--删除按钮
         if get_text(PROCESS_SET1_SCREEN, control+120) ~= BLANK_SPACE then --名称不为空格
+            local file = control - 79;--control取值80-91,减去79后,对应了1-12,此为序号.
             set_text(PROCESS_SET1_SCREEN, control+220,BLANK_SPACE);
 			set_text(PROCESS_SET1_SCREEN, control+120,BLANK_SPACE);
-			set_text(PROCESS_SET1_SCREEN, control+232,BLANK_SPACE);
+            set_text(PROCESS_SET1_SCREEN, control+232,BLANK_SPACE);
+            WriteProcessFile(1);--保存流程设置1界面中的参数
+            os.remove(file);--删除配置文件
         end
     end
 end
@@ -1399,36 +1432,36 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 ProcessSelectButtonId = 35;--位于流程设置2
-ProcessSelectId = 38;      --位于流程设置2/3都是这个id
+ProcesstypeId = 38;      --位于流程设置2/3都是这个id
 ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程设置2/3界面中都是这个id
 
---这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:selectId = nameId + 100; nameId = editId + 100
+--这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:typeId = nameId + 100; nameId = editId + 100
 --其中[1]-[12]中包含的id控件在流程设置2界面中,[13]-[24]中包含的id控件在流程设置3界面中
 TabAction = {
-    [1]  = {selectId = 300, nameId = 200, editId = 100},
-    [2]  = {selectId = 301, nameId = 201, editId = 101},
-    [3]  = {selectId = 302, nameId = 202, editId = 102},
-    [4]  = {selectId = 303, nameId = 203, editId = 103},
-    [5]  = {selectId = 304, nameId = 204, editId = 104},
-    [6]  = {selectId = 305, nameId = 205, editId = 105},
-    [7]  = {selectId = 306, nameId = 206, editId = 106},
-    [8]  = {selectId = 307, nameId = 207, editId = 107},
-    [9]  = {selectId = 308, nameId = 208, editId = 108},
-    [10] = {selectId = 309, nameId = 209, editId = 109},
-    [11] = {selectId = 310, nameId = 210, editId = 110},
-    [12] = {selectId = 311, nameId = 211, editId = 111},
-    [13] = {selectId = 300, nameId = 200, editId = 100},
-    [14] = {selectId = 301, nameId = 201, editId = 101},
-    [15] = {selectId = 302, nameId = 202, editId = 102},
-    [16] = {selectId = 303, nameId = 203, editId = 103},
-    [17] = {selectId = 304, nameId = 204, editId = 104},
-    [18] = {selectId = 305, nameId = 205, editId = 105},
-    [19] = {selectId = 306, nameId = 206, editId = 106},
-    [20] = {selectId = 307, nameId = 207, editId = 107},
-    [21] = {selectId = 308, nameId = 208, editId = 108},
-    [22] = {selectId = 309, nameId = 209, editId = 109},
-    [23] = {selectId = 310, nameId = 210, editId = 110},
-    [24] = {selectId = 311, nameId = 211, editId = 111},
+    [1 ] = {typeId = 301, nameId = 201, insertId = 501 , editId = 101},
+    [2 ] = {typeId = 302, nameId = 202, insertId = 502 , editId = 102},
+    [3 ] = {typeId = 303, nameId = 203, insertId = 503 , editId = 103},
+    [4 ] = {typeId = 304, nameId = 204, insertId = 504 , editId = 104},
+    [5 ] = {typeId = 305, nameId = 205, insertId = 505 , editId = 105},
+    [6 ] = {typeId = 306, nameId = 206, insertId = 506 , editId = 106},
+    [7 ] = {typeId = 307, nameId = 207, insertId = 507 , editId = 107},
+    [8 ] = {typeId = 308, nameId = 208, insertId = 508 , editId = 108},
+    [9 ] = {typeId = 309, nameId = 209, insertId = 509 , editId = 109},
+    [10] = {typeId = 310, nameId = 210, insertId = 510 , editId = 110},
+    [11] = {typeId = 311, nameId = 211, insertId = 511 , editId = 111},
+    [12] = {typeId = 312, nameId = 212, insertId = 512 , editId = 112},
+    [13] = {typeId = 313, nameId = 213, insertId = 513 , editId = 113},
+    [14] = {typeId = 314, nameId = 214, insertId = 514 , editId = 114},
+    [15] = {typeId = 315, nameId = 215, insertId = 515 , editId = 115},
+    [16] = {typeId = 316, nameId = 216, insertId = 516 , editId = 116},
+    [17] = {typeId = 317, nameId = 217, insertId = 517 , editId = 117},
+    [18] = {typeId = 318, nameId = 218, insertId = 518 , editId = 118},
+    [19] = {typeId = 319, nameId = 219, insertId = 519 , editId = 119},
+    [20] = {typeId = 320, nameId = 220, insertId = 520 , editId = 120},
+    [21] = {typeId = 321, nameId = 221, insertId = 521 , editId = 121},
+    [22] = {typeId = 322, nameId = 222, insertId = 522 , editId = 122},
+    [23] = {typeId = 323, nameId = 223, insertId = 523 , editId = 123},
+    [24] = {typeId = 324, nameId = 224, insertId = 524 , editId = 124},
 };
 
 --设置编辑按钮对应的跳转界面
@@ -1437,30 +1470,30 @@ TabAction = {
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
     if screen == PROCESS_SET2_SCREEN then
-        ReadActionTag(control-99);--在流程设置2界面, 当编辑按钮id号为100时, 当前动作序号为1, 依次类推
-        set_screen_actionNumber(screen, control-99);
+        ReadActionTag(control-100);--在流程设置2界面, 当编辑按钮id号为101时, 当前动作序号为1, 依次类推
+        set_screen_actionNumber(screen, control-100);
     elseif screen == PROCESS_SET3_SCREEN then
-        ReadActionTag(control-99+12);
-        set_screen_actionNumber(screen, control-99+12);
+        ReadActionTag(control-100);
+        set_screen_actionNumber(screen, control-100+12);
     end
 
-    if para == ActionItem[1] then --开始界面
+    if para == ActionItem[Sys.language][1] then --开始界面
         change_screen(PROCESS_INIT_SCREEN);
-    elseif para == ActionItem[2] then --取样界面
+    elseif para == ActionItem[Sys.language][2] then --取样界面
         change_screen(PROCESS_INJECT_SCREEN);
-    elseif para == ActionItem[3] then --注射泵加液体
+    elseif para == ActionItem[Sys.language][3] then --注射泵加液体
         change_screen(PROCESS_INJECT_ADD_SCREEN);
-    elseif para == ActionItem[4] then --读取信号
+    elseif para == ActionItem[Sys.language][4] then --读取信号
         change_screen(PROCESS_READ_SIGNAL_SCREEN);
-    elseif para == ActionItem[5] then --蠕动泵加液
+    elseif para == ActionItem[Sys.language][5] then --蠕动泵加液
         change_screen(PROCESS_PERISTALTIC_SCREEN);
-    elseif para == ActionItem[6] then --计算
+    elseif para == ActionItem[Sys.language][6] then --计算
         change_screen(PROCESS_CALCULATE_SCREEN);
-    elseif para == ActionItem[7] then --等待时间
+    elseif para == ActionItem[Sys.language][7] then --等待时间
         change_screen(PROCESS_WAIT_TIME_SCREEN);
-    elseif para == ActionItem[8] then --消解
+    elseif para == ActionItem[Sys.language][8] then --消解
         change_screen(PROCESS_DISPEL_SCREEN);
-    elseif para == ActionItem[9] then --阀操作
+    elseif para == ActionItem[Sys.language][9] then --阀操作
         change_screen(PROCESS_VALVE_CTRL_SCREEN);
     end
 end
@@ -1471,7 +1504,7 @@ end
 function process_set2_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
-        if string.len(get_text(PROCESS_SET2_SCREEN, ProcessSelectId)) == 0  then
+        if string.len(get_text(PROCESS_SET2_SCREEN, ProcesstypeId)) == 0  then
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
@@ -1479,14 +1512,23 @@ function process_set2_control_notify(screen,control,value)
             WriteActionFile(0);
         end
     elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
-        process_select2_set(PROCESS_SET2_SCREEN, ProcessSelectId);--设置流程选择2界面中按确认/返回按钮后,返回流程设置2界面
-    elseif control == ProcessSelectId then
+        if get_text(PROCESS_SET2_SCREEN, ProcesstypeId) ~= BLANK_SPACE then
+            process_select2_set(PROCESS_SET2_SCREEN, ProcesstypeId);--设置流程选择2界面中按确认/返回按钮后,返回流程设置2界面
+        else
 
-    elseif (control-100) >= TabAction[1].selectId and (control-100) <= TabAction[12].selectId then--当点击"动作选择"下面的按钮时
-        action_select_set(PROCESS_SET2_SCREEN, control-100, control-399);
+        end
+    elseif control == ProcesstypeId then
+
+    elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--当点击"动作类型"下面的按钮时
+        action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_SET2_SCREEN, control+100) ~= BLANK_SPACE then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
-            set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作选择"id
+        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动作类型(编辑按钮的id+200等于动作名称id)
+            set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作类型"id
+        end
+    elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--当点击插入按钮时
+        local insertActionId = control - 500;
+        if get_text(PROCESS_SET2_SCREEN,control-200) ~= BLANK_SPACE then--control-200对应了插入按钮前面的动作类型
+            InsertAction(insertActionId);
         end
     end
 end
@@ -1497,18 +1539,23 @@ end
 function process_set3_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
-        if string.len(get_text(PROCESS_SET3_SCREEN, ProcessSelectId)) == 0 then
+        if string.len(get_text(PROCESS_SET3_SCREEN, ProcesstypeId)) == 0 then
             set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
             set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
             --手动保存当前正在编辑的流程
             WriteActionFile(0);
         end
-    elseif (control-100) >= TabAction[13].selectId and (control-100) <= TabAction[24].selectId then--当点击"动作选择"下面的按钮时
-        action_select_set(PROCESS_SET3_SCREEN, control-100, control-399);
+    elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--当点击"动作类型"下面的按钮时
+        action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
         if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
-            set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作选择"id
+            set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作类型"id
+        end
+    elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--当点击插入按钮时
+        local insertActionId = control - 500;
+        if get_text(PROCESS_SET3_SCREEN,control-200) ~= BLANK_SPACE then--control-200对应了插入按钮前面的动作类型
+            InsertAction(insertActionId);
         end
     end
 end
@@ -1521,10 +1568,46 @@ end
 --当画面切换到流程设置3时，执行此回调函数
 function goto_ProcessSet3()
     set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
-    set_text(PROCESS_SET3_SCREEN, ProcessSelectId, get_text(PROCESS_SET2_SCREEN,ProcessSelectId));
+    set_text(PROCESS_SET3_SCREEN, ProcesstypeId, get_text(PROCESS_SET2_SCREEN,ProcesstypeId));
 end
 
+--***********************************************************************************************
+--当在流程设置2/3界面上点击"插入"按钮时, 且此时当前行的"动作类型"不为空时,会调用该函数
+--该函数实现表格的"插入"功能, 实际上就是修改配置文件,然后再读取
+--***********************************************************************************************
+function InsertAction(actionNumber)
+    --将当前行插入的行设置为空格显示
+    if actionNumber >= 1 and actionNumber <= 12 then
+        for i = 12, actionNumber, -1 do--
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].typeId));
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].nameId));
+        end
+        set_text(PROCESS_SET3_SCREEN, TabAction[13].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[12].typeId));
+        for i = 24, 14, -1 do--
+            set_text(PROCESS_SET3_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].typeId));
+            set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].nameId));
+        end
+        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+    else
+        for i = 24, actionNumber+1, -1 do--
+            set_text(PROCESS_SET3_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].typeId));
+            set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].nameId));
+        end
+        set_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--当前行显示为空格
+        set_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+    end
 
+    ChangeActionFileTag(actionNumber, 1);
+end
+
+--***********************************************************************************************
+--当在流程设置2/3界面上点击"删除"按钮时, 且此时当前行的"动作类型"不为空时,会调用该函数
+--该函数实现表格的"删除"功能, 实际上就是修改配置文件,然后再读取
+--***********************************************************************************************
+function DeleteAction(actionNumber)
+    -- ChangeActionFileTag(actionNumber, 2);
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -1714,7 +1797,7 @@ function excute_inject_add_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+7];
             end
-            Sys.valveOperate = ValveStatus.open;
+            Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[42]);--等待时间
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1743,7 +1826,7 @@ function excute_inject_add_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+7];
             end
-            Sys.valveOperate = ValveStatus.close;
+            Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1756,7 +1839,7 @@ function excute_inject_add_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+23];
             end
-            Sys.valveOperate = ValveStatus.open;
+            Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[52]);
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1788,7 +1871,7 @@ function excute_inject_add_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+23];
             end
-            Sys.valveOperate = ValveStatus.close;
+            Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1849,7 +1932,7 @@ function excute_peristaltic_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+5];
             end
-            Sys.valveOperate = ValveStatus.open;
+            Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[24]);
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1891,7 +1974,7 @@ function excute_peristaltic_process(paraTab)
             for i=1,16,1 do
                 Sys.valveIdTab[i] = paraTab[i+5];
             end
-            Sys.valveOperate = ValveStatus.close;
+            Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
         -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -2062,22 +2145,32 @@ end
 --  计算校正结果
 --***********************************************************************************************
 function calc_calibrate_result(type)
-    if type == CalcType.log then
-
+    local x,a,b,c,d = 0;
+    if type == CalcType[Sys.language].log then
+        x = Sys.signalE1 - Sys.signalE2;
     else
-
+        x = math.log10(Sys.signalE1/Sys.signalE2);
     end
+
 end
 
 --***********************************************************************************************
 --  计算分析结果
 --***********************************************************************************************
 function calc_analysis_result(type)
-    if type == CalcType.log then
-        if 
+    local x,a,b,c,d = 0;
+    if type == CalcType[Sys.language].log then
+        x = Sys.signalE1 - Sys.signalE2;
     else
-
+        x = math.log10(Sys.signalE1/Sys.signalE2);
     end
+
+    a = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId));
+    b = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId));
+    c = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId));
+    d = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
+
+    Sys.result = a*(x^3) + b*(x^2) + c*x + d;
 end
 
 --***********************************************************************************************
@@ -2085,19 +2178,15 @@ end
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
     Sys.calculateType = paraTab[10];
-    if Sys.processType == ProcessItem[2] then--当前流程类型为校正
+    if Sys.processType == ProcessItem[Sys.language][2] then--当前流程类型为校正
         calc_calibrate_result(Sys.calculateType);
     else
         calc_analysis_result(Sys.calculateType);
-        if paraTab[1] == ENABLE_STRING then--结果校正
-            Sys.analysisResult = tonumber(paraTab[4]) * Sys.analysisResult + tonumber(paraTab[5]);
+        if paraTab[1] == ENABLE_STRING then--结果调整
+            Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
         end
     end
 
-    if 1  then
-    end
-
-    
     Sys.resultTime = Sys.dateTime;--获取当前时间
 
     return FINISHED;
@@ -2215,9 +2304,9 @@ function process_select_control_notify(screen, control, value)
 	elseif control == SureButtonId then --确认按钮
 		change_screen(DestScreen);
 		if ProcessSelectItem ~= nil then
-			set_text(DestScreen, DestControl, ProcessItem[ProcessSelectItem]);--DestControl对应流程选择
+			set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl对应流程选择
 			if DestScreen == PROCESS_SET1_SCREEN  then
-                set_text(DestScreen, DestControl-100, ProcessItem[ProcessSelectItem]);--DestControl-100对应流程名称
+                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl-100对应流程名称
             end
         end
         WriteProcessFile(1);--保存流程设置1界面中的参数
@@ -2325,7 +2414,6 @@ end
 
 ActionStartButtonId = 1;
 ActionEndButtonId = 10;
-ActionItem = {"初始化","注射泵","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE};
 ActionSelectItem = nil;
 
 
@@ -2344,8 +2432,8 @@ function action_select_control_notify(screen,control,value)
     elseif control == SureButtonId then --确认按钮
         change_screen(DestScreen);
         if ActionSelectItem ~= nil then
-            set_text(DestScreen, DestControl, ActionItem[ActionSelectItem]);--动作选择
-            set_text(DestScreen, DestControl-100, ActionItem[ActionSelectItem]);--DestControl-100对应动作名称
+            set_text(DestScreen, DestControl, ActionItem[Sys.language][ActionSelectItem]);--动作选择
+            set_text(DestScreen, DestControl-100, ActionItem[Sys.language][ActionSelectItem]);--DestControl-100对应动作名称
         end
         WriteDefaultActionTag(DestActionNum);
     elseif control == CancelButtonId then --取消按钮
@@ -2359,8 +2447,11 @@ end
 
 --在量程设置/量程选择界面中,量程1/2/3文本的id都是一样的
 
-UniteSetMenuId = 26;--单位选择
+RANGESET_TextStartId = 1;
+RANGESET_TextEndId = 25;
+
 UniteSetTextId = 25--单位设置成功后,用于显示单位文本的id
+UniteSetMenuId = 26;--单位选择
 
 RangeTab = {
     [1] = {LowId = 1, HighId = 2,  densityCalLowId = 3,  densityCalHighId = 4,  aId = 5,  bId = 6,  cId = 7,  dId = 8},
@@ -2388,6 +2479,8 @@ end
 function range_set_control_notify(screen,control,value)
     if(control == UniteSetMenuId) then --设置单位
         set_unit();
+    elseif control == 50 then --保存按钮
+        WriteProcessFile(3);
     end
 end
 
@@ -2549,16 +2642,16 @@ function system_info_control_notify(screen,control,value)
     if control == EquipmentTypeSetId then--设置仪器型号
         set_equipment_type();
     elseif control == maintainerPwdSetId then--运维员密码设置
-        set_user_name(SysUser.maintainer);
+        set_user_name(SysUser[Sys.language].maintainer);
     elseif control == administratorPwdSetId then--管理员密码设置
-        set_user_name(SysUser.administrator);
+        set_user_name(SysUser[Sys.language].administrator);
     elseif control == OperatorLoginId then --操作员登录
-        set_user_name(SysUser.operator);
+        set_user_name(SysUser[Sys.language].operator);
     elseif control == maintainerLoginId then--运维员登录
-        set_user_name(SysUser.maintainer);
+        set_user_name(SysUser[Sys.language].maintainer);
         change_screen(LOGIN_SYSTEM_SCREEN);
     elseif control == administratorLoginId then--管理员登录
-        set_user_name(SysUser.administrator);
+        set_user_name(SysUser[Sys.language].administrator);
         change_screen(LOGIN_SYSTEM_SCREEN);
     elseif control == ftpStartBtId then--ftp远程升级
     end
@@ -2576,17 +2669,17 @@ function SetSysUser(user)
         set_text(PublicTab[i], SysUserNameId, Sys.userName);
     end
 
-    if Sys.userName == SysUser.operator then -- 操作员
+    if Sys.userName == SysUser[Sys.language].operator then -- 操作员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
         set_process_edit_state(DISABLE);--禁止流程设置
-    elseif Sys.userName == SysUser.maintainer then--运维员
+    elseif Sys.userName == SysUser[Sys.language].maintainer then--运维员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
         set_process_edit_state(ENABLE);--允许编辑流程
-    elseif Sys.userName == SysUser.administrator then--管理员
+    elseif Sys.userName == SysUser[Sys.language].administrator then--管理员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, ENABLE);
@@ -2673,9 +2766,9 @@ function goto_PasswordSet()
     set_text(PASSWORD_SET_SCREEN, OldPwdId, "");
     set_text(PASSWORD_SET_SCREEN, NewPwdId, "");
     set_text(PASSWORD_SET_SCREEN, NewPwdConfirmId, "");
-    if userNameSet == SysUser.maintainer then
+    if userNameSet == SysUser[Sys.language].maintainer then
         PwdRecordPosition = 0;
-    elseif userNameSet == SysUser.administrator then
+    elseif userNameSet == SysUser[Sys.language].administrator then
         PwdRecordPosition = 1;
     end
 end
@@ -2715,9 +2808,9 @@ function goto_LoginSystem()
     set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 0);--隐藏密码错误提示信息
     set_text(LOGIN_SYSTEM_SCREEN, PwdId, "");
 
-    if userNameSet == SysUser.maintainer then
+    if userNameSet == SysUser[Sys.language].maintainer then
         PwdRecordPosition = 0;
-    elseif userNameSet == SysUser.administrator then
+    elseif userNameSet == SysUser[Sys.language].administrator then
         PwdRecordPosition = 1;
     end
 end
@@ -2731,30 +2824,29 @@ end
 cfgFileTab = {
     [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--流程设置1界面中的参数保存在这个tag中
     [2] = {sTag = "<RunControl>",eTag = "</RunControl>"};--运行控制界面中的参数保存在这个tag中
+    [3] = {sTag = "<RangeSet>",eTag = "</RangeSet>"};--量程设置界面中的参数保存在这个tag中
 };
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
 --tagNum = 1 : 修改流程设置1界面中的参数 
 --tagNum = 2 : 修改运行控制界面中的参数
+--tagNum = 2 : 运行控制界面中的参数
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
-    if tagNum ~= 1 and tagNum ~= 2 then
-        return;
-    end
 
     local configFile = io.open("0", "a+");        --以覆盖写入的方式打开文本
     configFile:seek("set");                       --把文件位置定位到开头
     local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
     configFile:close();                           --关闭文件
 
-    configFile = io.open("0", "w+");         --打开并清空该文件
+    configFile = io.open("0", "w+");              --打开并清空该文件
     fileString = DeleteSubString(fileString, cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--删除指定的标签内容
     configFile:write(fileString);                 --将处理过的原文件内容重新写入文件
     configFile:write(cfgFileTab[tagNum].sTag);
 
     if tagNum == 1 then--流程设置1界面中的参数
         for i=1,12,1 do
-            configFile:write(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId)..",".. --流程类型选择
+            configFile:write(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)..",".. --流程类型选择
                              get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)..","..   --流程名称
                              get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)..",");  --流程量程
         end
@@ -2762,23 +2854,37 @@ function WriteProcessFile(tagNum)
         for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
             configFile:write(get_text(RUN_CONTROL_SCREEN,i)..",");
         end
+    elseif tagNum == 3 then--量程设置界面中的参数
+        for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
+            configFile:write(get_text(RANGE_SET_SCREEN, i)..",");
+        end
     end
     configFile:write(cfgFileTab[tagNum].eTag);
     configFile:close(); --关闭文本
 end
 
+--***********************************************************************************************
+--读取配置文件中的所有数据
+--***********************************************************************************************
+function ReadProcessFile()
+    ReadProcessTag(1);
+    ReadProcessTag(2);
+    ReadProcessTag(3);
+end
 
 --***********************************************************************************************
 --读取配置文件中的数据
---tagNum = 1 : 修改流程设置1界面中的参数 
---tagNum = 2 : 修改运行控制界面中的参数
+--tagNum = 1 : 读取流程设置1界面中的参数 
+--tagNum = 2 : 读取运行控制界面中的参数
+--tagNum = 3 : 读取量程设置界面中的参数
 --***********************************************************************************************
-function ReadProcessFile(tagNum)
+function ReadProcessTag(tagNum)
 	local configFile = io.open("0", "r")      --打开文本
     if configFile == nil then--如果没有该文件则返回
         --创建一个默认配置文件
         WriteProcessFile(1);
         WriteProcessFile(2);
+        WriteProcessFile(3);
         return;
     end
 	configFile:seek("set")                        --把文件位置定位到开头
@@ -2792,7 +2898,7 @@ function ReadProcessFile(tagNum)
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
     if tagNum == 1 then--流程设置界面中的参数
         for i=1,12,1 do
-            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].selectId, tab[(i-1)*3+1]);  --把数据显示到文本框中
+            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, tab[(i-1)*3+1]);  --把数据显示到文本框中
             set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
             set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
         end
@@ -2818,6 +2924,10 @@ function ReadProcessFile(tagNum)
             TimedProcessTab[i].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startHourId));
             TimedProcessTab[i].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startMinuteId));
         end
+    elseif tagNum == 3 then--量程设置界面中的参数
+        for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
+            set_text(RANGE_SET_SCREEN, i, tab[i]);
+        end
     end
 end
 
@@ -2826,7 +2936,7 @@ end
 --actionNumber:动作标签,范围:action1~action24
 --***********************************************************************************************
 function WriteDefaultActionTag(actionNumber)
-    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
     local fileName = 0;
 
     for i=1,12,1 do
@@ -2857,112 +2967,112 @@ end
 --actionNumber:动作标签,范围:action0~action24
 --***********************************************************************************************
 function WriteActionTag(fileName, actionNumber)
-    local processFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
-    processFile:seek("set");                       --把文件位置定位到开头
-    local fileString = processFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
-    processFile:close();                           --关闭文件
+    local actionFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
+    actionFile:seek("set");                       --把文件位置定位到开头
+    local fileString = actionFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+    actionFile:close();                           --关闭文件
 
-    processFile = io.open(fileName, "w+");         --打开并清空该文件
+    actionFile = io.open(fileName, "w+");         --打开并清空该文件
     fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--将原来的<action?>-</action?>标签之间的字符串删除
-    processFile:write(fileString);                 --将处理过的原文件内容重写写入文件
+    actionFile:write(fileString);                 --将处理过的原文件内容重写写入文件
 
     local actionType, actionName
     if actionNumber == 0 then
-        actionType = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].selectId);--当前流程名称
+        actionType = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].typeId);--当前流程名称
         actionName = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].nameId);--当前流程名称
     elseif actionNumber >= 1 and actionNumber <= 12 then
-        actionType = get_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].selectId);--获取当前动作类型
+        actionType = get_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId);--获取当前动作类型
         actionName = get_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId);--获取当前动作名称
     elseif actionNumber >= 13 and actionNumber <= 24 then 
-        actionType = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].selectId);--获取当前动作类型
+        actionType = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].typeId);--获取当前动作类型
         actionName = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].nameId);--获取当前动作名称
     end
 
-    processFile:write("<action"..actionNumber..">");--写入开始标签
-    processFile:write("<type>"..actionType..","..actionName.."</type>");--写入动作类型与动作名称(或流程类型与名称):初始化/注射泵/消解......
-    processFile:write("<content>");
+    actionFile:write("<action"..actionNumber..">");--写入开始标签
+    actionFile:write("<type>"..actionType..","..actionName.."</type>");--写入动作类型与动作名称(或流程类型与名称):初始化/注射泵/消解......
+    actionFile:write("<content>");
     --------------------------------写<action0>标签内容---------------------------------------------
     --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
     if actionNumber == 0 then
         for i=1,12,1 do
-            processFile:write(get_text(PROCESS_SET2_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
+            actionFile:write(get_text(PROCESS_SET2_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
                               get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  )..","); --动作名称
         end
         for i=13,24,1 do
-            processFile:write(get_text(PROCESS_SET3_SCREEN, TabAction[i].selectId)..",".. --动作类型选择
+            actionFile:write(get_text(PROCESS_SET3_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
                               get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  )..","); --动作名称
         end
     --------------------------------写开始界面参数----------------------------------------------------
-    elseif actionType == ActionItem[1] then 
+    elseif actionType == ActionItem[Sys.language][1] then 
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_INIT_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_INIT_SCREEN, i)..",");--写入按钮值
         end
         for i = INIT_TextStartId, INIT_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_INIT_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_INIT_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写取样界面参数----------------------------------------------------
-    elseif actionType == ActionItem[2] then 
+    elseif actionType == ActionItem[Sys.language][2] then 
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_INJECT_SCREEN, i)..",");--写入输出1按钮值
+            actionFile:write(get_value(PROCESS_INJECT_SCREEN, i)..",");--写入输出1按钮值
         end
         for i = INJECT_TextStartId, INJECT_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_INJECT_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_INJECT_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写注射泵加液参数--------------------------------------------------
-    elseif actionType == ActionItem[3] then
+    elseif actionType == ActionItem[Sys.language][3] then
         for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入按钮值
         end
         for i = INJECT_ADD_TextStartId, INJECT_ADD_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-读取信号参数----------------------------------------------------
-    elseif actionType == ActionItem[4] then 
+    elseif actionType == ActionItem[Sys.language][4] then 
         for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_READ_SIGNAL_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_READ_SIGNAL_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-蠕动泵加液参数--------------------------------------------------
-    elseif actionType == ActionItem[5] then 
+    elseif actionType == ActionItem[Sys.language][5] then 
         for i = PERISTALTIC_BtStartId, PERISTALTIC_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入按钮值
         end
         for i = PERISTALTIC_TextStartId, PERISTALTIC_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-计算参数--------------------------------------------------------
-    elseif actionType == ActionItem[6] then 
+    elseif actionType == ActionItem[Sys.language][6] then 
         for i = CALCULATE_BtStartId, CALCULATE_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_CALCULATE_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_CALCULATE_SCREEN, i)..",");--写入按钮值
         end
         for i = CALCULATE_TextStartId, CALCULATE_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_CALCULATE_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_CALCULATE_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-等待时间参数----------------------------------------------------
-    elseif actionType == ActionItem[7] then 
-        processFile:write(get_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId));
+    elseif actionType == ActionItem[Sys.language][7] then 
+        actionFile:write(get_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId));
     --------------------------------写-消解参数--------------------------------------------------------
-    elseif actionType == ActionItem[8] then 
+    elseif actionType == ActionItem[Sys.language][8] then 
         for i = DISPEL_BtStartId, DISPEL_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_DISPEL_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_DISPEL_SCREEN, i)..",");--写入按钮值
         end
         for i = DISPEL_TextStartId, DISPEL_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_DISPEL_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_DISPEL_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-阀操作参数------------------------------------------------------
-    elseif actionType == ActionItem[9] then 
+    elseif actionType == ActionItem[Sys.language][9] then 
         for i = VALVE_BtStartId, VALVE_BtEndId, 1 do
-            processFile:write(get_value(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入按钮值
+            actionFile:write(get_value(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入按钮值
         end
         for i = VALVE_TextStartId, VALVE_TextEndId, 1 do
-            processFile:write(get_text(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入文本值
+            actionFile:write(get_text(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入文本值
         end
     --------------------------------写-空操作参数------------------------------------------------------
-    elseif actionType == ActionItem[10] then 
-        processFile:write("<content> </content>");
+    elseif actionType == ActionItem[Sys.language][10] then 
+        actionFile:write("<content> </content>");
     end
-    processFile:write("</content>");
-    processFile:write("</action"..actionNumber..">");--写入结束标签
-    processFile:close(); --关闭文本
+    actionFile:write("</content>");
+    actionFile:write("</action"..actionNumber..">");--写入结束标签
+    actionFile:close(); --关闭文本
 end
 
 --***********************************************************************************************
@@ -2970,7 +3080,7 @@ end
 --actionNumber:动作标签,范围:action1~action24
 --***********************************************************************************************
 function WriteActionFile(actionNumber)
-    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
 
     for i=1,12,1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
@@ -2981,11 +3091,46 @@ function WriteActionFile(actionNumber)
 end
 
 --***********************************************************************************************
+--actionNumber: 动作id , 从该动作开始,之后的动作都进行+1或者-1的操作
+--flag 1=加操作, 2=减操作
+--***********************************************************************************************
+function ChangeActionFileTag(actionNumber, flag)
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
+    local fileName;
+    for i=1,12,1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+            WriteActionTag(i, 0);--调整流程设置2/3界面的显示后,再修改<action0>标签中的内容
+            fileName = i;
+        end
+    end
+
+    local actionFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
+    actionFile:seek("set");                       --把文件位置定位到开头
+    local fileString = actionFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+    actionFile:close();                           --关闭文件
+
+    --字符替换
+    if flag == 1 then
+        for i = 23, actionNumber, -1 do
+            fileString = string.gsub(fileString, "action"..i, "action"..(i+1));
+        end
+    else
+        for i = actionNumber+1, 24, 1 do
+            fileString = string.gsub(fileString, "action"..i, "action"..(i+1));
+        end
+    end
+
+    actionFile = io.open(fileName, "w+");         --打开并清空该文件
+    actionFile:write(fileString);                 --将处理过的原文件内容重写写入文件
+    actionFile:close();                           --关闭文件
+end
+
+--***********************************************************************************************
 --读配置文件函数,这里每次只读取一个标签里的值, 例如<action1>标签之间的值
 --actionNumber:当前动作为第几步
 --***********************************************************************************************
 function ReadActionTag(actionNumber)
-    local processName = get_text(PROCESS_SET2_SCREEN, ProcessSelectId);--获取流程名称
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
     local fileName = 0;
     for i=1,12,1 do--循环查找当前流程名称对应的序号.
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
@@ -2993,11 +3138,11 @@ function ReadActionTag(actionNumber)
             break;
         end
     end
-
+    
     local processFile = io.open(fileName, "r");      --打开文本
     if processFile == nil then--还没有该文件,则创建一个新的配置文件,并返回
         --将流程设置2/3界面清空
-        for i = TabAction[1].selectId,TabAction[12].selectId,1 do
+        for i = TabAction[1].typeId,TabAction[12].typeId,1 do
             set_text(PROCESS_SET2_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
             set_text(PROCESS_SET2_SCREEN, i-100,BLANK_SPACE);--将对应动作名称的文本清空
             set_text(PROCESS_SET3_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
@@ -3017,6 +3162,7 @@ function ReadActionTag(actionNumber)
     end
     
     local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型与动作名称
+    actionType = split(actionType, ",");--分割字符串
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
         return;
@@ -3024,15 +3170,15 @@ function ReadActionTag(actionNumber)
     local tab = split(contentTabStr, ",");--分割字符串
     if actionNumber == 0 then --判定为<action0>标签
         for i=1,12,1 do
-            set_text(PROCESS_SET2_SCREEN, TabAction[i].selectId, tab[(i-1)*2+1]);  --把数据显示到文本框中
-            set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);   --把数据显示到文本框中
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, tab[(i-1)*2+1]);  --把数据显示到文本框中
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]); --把数据显示到文本框中
         end
         for i=13,24,1 do
-           set_text(PROCESS_SET3_SCREEN, TabAction[i].selectId, tab[(i-1)*2+1]);  --把数据显示到文本框中
-           set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]);  --把数据显示到文本框中
+           set_text(PROCESS_SET3_SCREEN, TabAction[i].typeId, tab[(i-1)*2+1]);  --把数据显示到文本框中
+           set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId,   tab[(i-1)*2+2]); --把数据显示到文本框中
         end
     --------------------------------读-初始化界面参数--------------------------------------------------
-    elseif actionType[1] == ActionItem[1] then
+    elseif actionType[1] == ActionItem[Sys.language][1] then
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
             set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3040,7 +3186,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-折射泵界面参数--------------------------------------------------
-    elseif actionType[1] == ActionItem[2] then 
+    elseif actionType[1] == ActionItem[Sys.language][2] then 
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do 
             set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
@@ -3048,7 +3194,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
         end
     --------------------------------读-注射泵加液参数-------------------------------------------------
-    elseif actionType[1] == ActionItem[3] then
+    elseif actionType[1] == ActionItem[Sys.language][3] then
         for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
             set_value(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3056,12 +3202,12 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-读取信号参数--------------------------------------------------
-    elseif actionType[1] == ActionItem[4] then
+    elseif actionType[1] == ActionItem[Sys.language][4] then
         for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
             set_text(PROCESS_READ_SIGNAL_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-蠕动泵加液参数------------------------------------------------
-    elseif actionType[1] == ActionItem[5] then 
+    elseif actionType[1] == ActionItem[Sys.language][5] then 
         for i = PERISTALTIC_BtStartId, PERISTALTIC_BtEndId, 1 do
             set_value(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3069,7 +3215,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-计算参数------------------------------------------------------
-    elseif actionType[1] == ActionItem[6] then 
+    elseif actionType[1] == ActionItem[Sys.language][6] then 
         for i = CALCULATE_BtStartId, CALCULATE_BtEndId, 1 do
             set_value(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3077,10 +3223,10 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-等待时间参数--------------------------------------------------
-    elseif actionType[1] == ActionItem[7] then 
+    elseif actionType[1] == ActionItem[Sys.language][7] then 
         set_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId, tab[1]);
     --------------------------------读-消解参数------------------------------------------------------
-    elseif actionType[1] == ActionItem[8] then 
+    elseif actionType[1] == ActionItem[Sys.language][8] then 
         for i = DISPEL_BtStartId, DISPEL_BtEndId, 1 do
             set_value(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3088,7 +3234,7 @@ function ReadActionTag(actionNumber)
             set_text(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入文本值
         end
     --------------------------------读-阀操作参数------------------------------------------------------
-    elseif actionType[1] == ActionItem[9] then 
+    elseif actionType[1] == ActionItem[Sys.language][9] then 
         for i = VALVE_BtStartId, VALVE_BtEndId, 1 do
             set_value(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入按钮值
         end
@@ -3117,7 +3263,7 @@ function ReadActionFile(fileName)
     local tab = GetSubString(actionString, "<type>","</type>");--获取流程类型与流程名称
     Sys.processType = tab[1];
     Sys.processName = tab[2];
-    Sys.rangeSelectId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].rangeId));
+    Sys.rangetypeId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].rangeId));
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     local tab = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
     Sys.actionTotal = 0; 

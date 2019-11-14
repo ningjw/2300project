@@ -1578,14 +1578,15 @@ end
 function InsertAction(actionNumber)
     --将当前行插入的行设置为空格显示
     if actionNumber >= 1 and actionNumber <= 12 then
-        for i = 12, actionNumber, -1 do--
-            set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].typeId));
-            set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].nameId));
-        end
-        set_text(PROCESS_SET3_SCREEN, TabAction[13].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[12].typeId));
         for i = 24, 14, -1 do--
             set_text(PROCESS_SET3_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].typeId));
             set_text(PROCESS_SET3_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET3_SCREEN, TabAction[i-1].nameId));
+        end
+        set_text(PROCESS_SET3_SCREEN, TabAction[13].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[12].typeId));
+        set_text(PROCESS_SET3_SCREEN, TabAction[13].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[12].nameId));
+        for i = 12, actionNumber, -1 do--
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].typeId));
+            set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].nameId));
         end
         set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);

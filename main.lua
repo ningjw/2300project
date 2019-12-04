@@ -1,6 +1,7 @@
 --下面列出了常用的回调函数
 --更多功能请阅读<<物联型LUA脚本API.pdf>>
---建议使用visual code studio 并安装Bookmarks与luaide-lite(LuaCoderAssist)插件,通过打开同目录下的2300project.code-workspace工作空间查看该文件.
+--建议使用visual code studio 并安装Bookmarks与luaide-lite(或者LuaCoderAssist)插件,
+--通过打开同目录下的2300project.code-workspace工作空间查看main.lua文件,该文件使用Bookmarks插件插入了很多标签,方便跳转
 
 
 --[[-----------------------------------------------------------------------------------------------------------------

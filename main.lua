@@ -112,6 +112,8 @@ WorkStatus = {
         run = "运行",--此时系统正在运行流程
         stop = "停止",
         readyRun = "待机", --此时为自动运行方式, 且在等待时间到后自动进行下一次流程的状态.
+        init = "初始化",
+        ctrlInject1 = "移动注射泵1",
     }
 };
 
@@ -199,7 +201,7 @@ Sys = {
     driverSubStep = 1,--用于driverSubStep用于控制driverStep1Func指向的函数,例如在运行流程时,运行到了注射泵加液,
                                --此时:第一步需要设置注射泵速度, 第二步需要设置注射泵方向
 
-    waitTimeFlag = 0,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
+    waitTimeFlag = RESET,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
     waitTime = 0,--用于保存需要等待的时间
 
     valcoChannel = 0,--用于保存在运行流程时的十通阀通道号
@@ -264,25 +266,34 @@ function on_init()
     end
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
     
-
-    start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
-    uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
-    -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
-    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
     ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
     if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
+
+    SetSysWorkStatus(WorkStatus[Sys.language].init)--开机首先进行初始化操作
+    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+    -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
+    uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
+    start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
+    
 end
 
 --***********************************************************************************************
---定时器超时，执行此回调函数,定时器编号 0~31
+--定时器超时，执行此回调函数,定时器编号 0~3
+--定时器0: 1ms超时中断, 流程相关函数主要运行在该定时器当中
+--定时器1: 3ms超时中断, 主要用于判断串口数据回复是否超时
+--定时器2: 用于读取E1/E2信号时的超时判断; 用于流程控制中的超时判断
 --***********************************************************************************************
 function on_timer(timer_id)
     if  timer_id == 0 then --定时器0,定时时间到
-        if Sys.status == WorkStatus[Sys.language].run then
+        if Sys.status == WorkStatus[Sys.language].run then--运行
             excute_process();
+        elseif Sys.status == WorkStatus[Sys.language].init then--初始化
+            sys_init();
+        elseif Sys.status == WorkStatus[Sys.language].ctrlInject1 then--手动控制注射泵1
+            hand_control_inject1(1);
         end
     elseif timer_id == 1 then--串口超时
         uart_time_out();
@@ -412,17 +423,55 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
+    流程控制函数
+--------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--系统初始化, 一般在开机或者急停时调用该函数
+--***********************************************************************************************
+function sys_init()
+    if UartArg.lock == LOCKED then
+        return;
+    end
+
+    if Sys.processStep == 1 then--第一步: 关闭阀11
+        close_single_valve(11);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 2 then --第二步:关闭阀12
+        close_single_valve(12);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 3 then --第三步:使能注射泵1
+        enable_inject1();
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 4 then --第四步:注射泵移动到位置0
+        Sys.waitTimeFlag = SET;
+        Sys.waitTime = 8;
+        start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间8s,1->表示只执行一次
+        move_inject1_to(0);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 5 then --第五步:初始化结束
+        Sys.processStep = 1;
+        SetSysWorkStatus(WorkStatus[Sys.language].stop);
+    end
+end
+
+
+--[[-----------------------------------------------------------------------------------------------------------------
     串口收发
 --------------------------------------------------------------------------------------------------------------------]]
 
 --设置全局变量uart_free_protocol，使用自由串口协议
 uart_free_protocol = 1;
 
+
 uartSendTab = {
-    openValco = {[0] = 0xE0 ,len = 6, note = "十通阀"},--开十通阀
-    openV1  = {[0] = 0xE0 ,len = 6, note = "开阀1"},--开十通阀
-    openV11 = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},--len = 6
-    openV12 = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},--len = 6
+    openValco  = {[0] = 0xE0, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "十通阀"},--开十通阀
+    openV11    = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},
+    closeV11   = {[0] = 0xE0, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀11"},
+    openV12    = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},
+    closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
+    enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
+    mvInject1To= {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
+    setInject1Spd={[0] = 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
 }
 
 UNLOCKED = 0;
@@ -438,6 +487,89 @@ UartArg = {
     reply_data = {[0] = 0, [1] = 0},--用于保存需要接受到的回复数据
     lock = UNLOCKED,--用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
 };
+
+
+--***********************************************************************************************
+--串口接受函数 
+--串口波特率为38400, 传送1bit需要 1000000/38400 = 26us, 传送一个字节的数据需要10bit,则传送1Byte数据需要260us
+--***********************************************************************************************
+function on_uart_recv_data(packet)
+
+    local rev_len = 0;
+
+    --获取数据长度
+    for i=0,50,1 do
+        rev_len = i;
+        if packet[i] == nil then
+            break;
+        end
+    end
+
+    --将接受到的数据保存到全局变量
+    UartArg.recv_data = packet;
+
+    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
+        UartArg.lock = UNLOCKED;
+        stop_timer(1)--停止超时定时器
+        local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
+        local UartData = "";--将需要发送的数据保存到该字符串中
+        for i=0, rev_len-1, 1 do
+            UartData = UartData..string.format("%02x ", packet[i]);
+        end
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";".."回复");--添加通信记录
+    end
+end
+
+--***********************************************************************************************
+--发送串口数据
+--packet : 取值为uartSendTab中的参数, 例如uartSendTab.openV11
+--reply : 表示是否是要等待回复,取值 NEED_REPLY  与 NO_NEED_REPLY
+--***********************************************************************************************
+function on_uart_send_data(packet, reply)
+    if UartArg.lock == LOCKED then
+        return;
+    end
+
+    if reply == NEED_REPLY then --表示需要等待回复
+        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,0->表示无限重复
+        UartArg.lock = LOCKED;      --给串口上锁, 收到回复后自动解锁
+        UartArg.repeat_data = packet;--设置重发数据
+        UartArg.reply_data[0] = packet[0];--设置回复数据,用于判断是否成功接受到回复
+        UartArg.reply_data[1] = packet[1];
+    end
+    
+    packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--计算crc16
+    uart_send_data(packet) --将数据通过串口发送出去
+
+    --以下代码功能: 每发送一次数据,就将该数据保存在手动操作4的串口收发记录当中,方便从触摸屏查看.
+    local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
+    local UartData = "";--将需要发送的数据保存到该字符串中
+    for i=0, packet.len+1, 1 do
+        UartData = UartData..string.format("%02x ", packet[i]);
+    end
+    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
+end
+
+
+--***********************************************************************************************
+--进入到该函数表示串口一定回复超时, 因为如果回复成功, 在on_uart_recv_data函数中就会停止定时器1,就不会进入到该函数
+--***********************************************************************************************
+function uart_time_out()
+    UartArg.repeat_times = UartArg.repeat_times + 1;
+    if UartArg.repeat_times <= 3 then
+        UartArg.lock = UNLOCKED;
+        on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
+    else  --重发三次都没有回复,不再重发
+        UartArg.repeat_times = 0;
+        --此时如果系统在运行流程,则锁住串口,不再继续往下执行,在按停止后会解锁串口; 如果是手动操作发送串口指令,则解锁串口
+        if Sys.status == WorkStatus[Sys.language].run then
+            UartArg.lock = LOCKED;
+        else
+            UartArg.lock = UNLOCKED;
+        end
+        stop_timer(1)--停止超时定时器
+    end
+end
 
 --***********************************************************************************************
 --右移一位的操作,在计算校验码中使用
@@ -494,88 +626,6 @@ function CalculateCRC16(data, len)
     local crc2 = math.modf(crc16/256);
     return crc1, crc2;
 end 
-
-
---***********************************************************************************************
---串口接受函数 
---串口波特率为38400, 传送1bit需要 1000000/38400 = 26us, 传送一个字节的数据需要10bit,则传送1Byte数据需要260us
---***********************************************************************************************
-function on_uart_recv_data(packet)
-
-    local rev_len = 0;
-
-    --获取数据长度
-    for i=0,50,1 do
-        rev_len = i;
-        if packet[i] == nil then
-            break;
-        end
-    end
-
-    --将接受到的数据保存到全局变量
-    UartArg.recv_data = packet;
-
-    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
-        UartArg.lock = UNLOCKED;
-        stop_timer(1)--停止超时定时器
-        local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
-        local UartData = "";--将需要发送的数据保存到该字符串中
-        for i=0, rev_len-1, 1 do
-            UartData = UartData..string.format("%02x ", packet[i]);
-        end
-        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";".."回复");--添加通信记录
-    end
-end
-
---***********************************************************************************************
---发送串口数据
---packet : 取值为uartSendTab中的参数, 例如uartSendTab.openV11
---reply : 表示是否是要等待回复,取值 NEED_REPLY  与 NO_NEED_REPLY
---***********************************************************************************************
-function on_uart_send_data(packet, reply)
-    if UartArg.lock == LOCKED then
-        return;
-    end
-
-    if reply == NEED_REPLY then --表示需要等待回复
-        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,0->表示无限重复
-        UartArg.lock = LOCKED;
-        UartArg.repeat_data = packet;
-        UartArg.reply_data[0] = packet[0];
-        UartArg.reply_data[1] = packet[1];
-    end
-    
-    packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);
-    uart_send_data(packet) --发送指令
-
-    local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
-    local UartData = "";--将需要发送的数据保存到该字符串中
-    for i=0, packet.len+1, 1 do
-        UartData = UartData..string.format("%02x ", packet[i]);
-    end
-    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
-end
-
-
---***********************************************************************************************
---进入到该函数表示串口一定回复超时, 因为如果回复成功, 在on_uart_recv_data函数中就会停止定时器1,就不会进入到该函数
---***********************************************************************************************
-function uart_time_out()
-    UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times <= 3 then
-        UartArg.lock = UNLOCKED;
-        on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
-    else  --重发三次都没有回复,不再重发
-        UartArg.repeat_times = 0;
-        --此时如果系统在运行流程,则锁住串口,不再继续往下执行,在按停止后会解锁串口; 如果是手动操作发送串口指令,则解锁串口
-        if Sys.status == WorkStatus[Sys.language].run then
-            UartArg.lock = LOCKED;
-        else
-            UartArg.lock = UNLOCKED;
-        end
-        stop_timer(1)--停止超时定时器
-    end
-end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -663,14 +713,22 @@ end
 --valveId 阀id
 --***********************************************************************************************
 function close_single_valve(valveId)
-
+    if valveId == 11 then
+        on_uart_send_data(uartSendTab.closeV11, NEED_REPLY);
+    elseif valveId == 12 then
+        on_uart_send_data(uartSendTab.closeV12, NEED_REPLY);
+    end
 end
 
 --***********************************************************************************************
 --控制单个阀打开
 --***********************************************************************************************
 function open_single_valve(valveId)
-
+    if valveId == 11 then
+        on_uart_send_data(uartSendTab.openV11, NEED_REPLY);
+    elseif valveId == 12 then
+        on_uart_send_data(uartSendTab.openV12, NEED_REPLY);
+    end
 end
 
 
@@ -699,6 +757,42 @@ function control_multi_valve()
             break;
         end
     end
+end
+
+--***********************************************************************************************
+--控制十通阀
+--channel:通道号，取值0-9
+--***********************************************************************************************
+function control_valco(channel)
+    uartSendTab.openValco[2] = channel;
+    uartSendTab.openValco.note = "开十通阀"..channel;
+    on_uart_send_data(uartSendTab.openValco, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--使能注射泵
+--***********************************************************************************************
+function enable_inject1(void)
+    on_uart_send_data(uartSendTab.enInject1, NEED_REPLY);
+end
+
+
+--***********************************************************************************************
+--设置注射泵速度
+--speed:注射泵速度,取值0-27
+--***********************************************************************************************
+function set_inject1_speed(speed)
+    uartSendTab.setInject1Spd[2] = speed;
+    on_uart_send_data(uartSendTab.setInject1Spd, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--移动注射泵到指定位置
+--scale：注射泵移动到的刻度，最大值45
+--***********************************************************************************************
+function move_inject1_to(scale)
+    uartSendTab.mvInject1To[4] = scale;
+    on_uart_send_data(uartSendTab.mvInject1To, NEED_REPLY);
 end
 
 --***********************************************************************************************
@@ -732,6 +826,7 @@ function control_inject()
         end
     end
 end
+
 
 --***********************************************************************************************
 --控制蠕动泵(目前硬件暂未有蠕动泵)   ##待完善##
@@ -796,7 +891,7 @@ driver = {
     [3] = function()                     --启动定时器
         if Sys.waitTime ~= 0 then
             Sys.waitTimeFlag = SET;
-            start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器1，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
+            start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
             Sys.driverStep = Sys.driverStep + 1;
         else
             Sys.driverStep = 5;--完成 (无需等待)
@@ -2551,27 +2646,70 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作1
 --------------------------------------------------------------------------------------------------------------------]]
-Valve1BtId = 35
-Valve2BtId = 2
-Valve11BtId = 43;
-
+HandValve11BtId = 43;
+HandValve12BtId = 44;
+HandCloseAllValveId = 47;
+HandValcoChnlId = 130;
+HandValcoCtrlId = 131;
+HandInject1ScaleId = 99;
+HandInject1SpdId = 103;
+HandInject1SendId = 101;
+HandInject1WaitTimeId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate1_control_notify(screen, control, value)
-    if control == Valve11BtId then
-        if get_value(HAND_OPERATE1_SCREEN, Valve11BtId) == ENABLE then
-            on_uart_send_data(uartSendTab.openV11, NEED_REPLY);
+    if control == HandValve11BtId then--控制阀11
+        if get_value(HAND_OPERATE1_SCREEN, control) == ENABLE then
+            open_single_valve(11);
         else
-            
+            close_single_valve(11);
         end
-    elseif control == Valve1BtId then
+    elseif control == HandValve12BtId then--控制阀12
+        if get_value(HAND_OPERATE1_SCREEN, control) == ENABLE then
+            open_single_valve(12);
+        else
+            close_single_valve(12);
+        end
+    elseif control == HandCloseAllValveId then--关闭所有阀
 
-    elseif control == Valve2BtId then
-
+    elseif control == HandValcoCtrlId then--控制十通阀
+        control_valco( tonumber( get_text(screen, HandValcoChnlId) ) );
+    elseif control == HandInject1SendId then--控制注射泵
+        SetSysWorkStatus(WorkStatus[Sys.language].ctrlInject1);
     end
 end
 
+--***********************************************************************************************
+--手动操作-控制注射泵1
+--sta: 0-复位; 1-移动到指定位置
+--***********************************************************************************************
+function hand_control_inject1(sta)
+    if UartArg.lock == LOCKED then
+        return;
+    end
+    
+    if Sys.processStep == 1 then--第一步: 使能注射泵
+        enable_inject1();
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 2 then --第二步:设置注射泵速度
+        set_inject1_speed( tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1SpdId)) );
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 3 then --第三步:移动注射泵到指定位置
+        Sys.waitTimeFlag = SET;
+        Sys.waitTime = tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1WaitTimeId));
+        start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间8s,1->表示只执行一次
+        if sta == 0 then
+            move_inject1_to( 0 );
+        else
+            move_inject1_to( tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1ScaleId)) * 10 );
+        end
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 4 and Sys.waitTimeFlag == RESET then --第四步:初始化结束
+        Sys.processStep = 1;
+        SetSysWorkStatus(WorkStatus[Sys.language].stop);
+    end
 
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -2857,7 +2995,7 @@ cfgFileTab = {
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
 
-    local configFile = io.open("0", "a+");        --以覆盖写入的方式打开文本
+    local configFile = io.open("0", "a+");        --以可读可写方式打开文本,如文件不存在则创建文件.
     configFile:seek("set");                       --把文件位置定位到开头
     local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
     configFile:close();                           --关闭文件

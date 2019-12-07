@@ -897,6 +897,9 @@ end
 --time_s
 --***********************************************************************************************
 function start_wait_time(time_s)
+    if time_s == 0 then
+        return;
+    end
     Sys.waitTimeFlag = SET;
     start_timer(2, time_s * 1000, 1, 1); --开启定时器2，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
 end
@@ -922,8 +925,7 @@ driver = {
     end,
     [3] = function()                     --启动定时器
         if Sys.waitTime ~= 0 then
-            Sys.waitTimeFlag = SET;
-            start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
+            start_wait_time(Sys.waitTime);
             Sys.driverStep = Sys.driverStep + 1;
         else
             Sys.driverStep = 5;--完成 (无需等待)
@@ -940,11 +942,6 @@ driver = {
     end,
 }
 
---***********************************************************************************************
---该table实现了
---***********************************************************************************************
-function start_wait_time()
-end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     运行控制
@@ -2257,39 +2254,45 @@ function excute_read_signal_process(paraTab)
         Sys.signalDrift = tonumber(paraTab[2]);
         Sys.signalMinTime = tonumber(paraTab[3]);
         Sys.signalMaxTime = tonumber(paraTab[4]);
-
-        start_timer(2, Sys.signalMinTime * 1000, 1, 1); --开启定时器2，超时时间(最小时间), 1->使用倒计时方式,1->表示只执行一次
-        getValidSignalData = RESET;
+        start_wait_time(Sys.signalMinTime);
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
         if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
-            start_timer(2, (Sys.signalMaxTime - Sys.signalMinTime) * 1000, 1, 1); --开启定时器2，超时时间(最大时间-最小时间)
-            Sys.actionSubStep = Sys.actionSubStep + 1;
+            if Sys.signalMaxTime < Sys.signalMinTime then
+                Sys.signalMaxTime = Sys.signalMinTime;
+            end
+            start_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
             Sys.signalTotal = 0;
+            Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
         if UartArg.lock == UNLOCKED then--通过串口读取信号
-            --发送串口指令
+            on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
         if UartArg.lock == UNLOCKED then--解析串口数据, 并判断是否满足信号漂移要求
-            local signalE = 0;
-            local maxSignal = 0;
-            local minSignal = 0;
+            print("获取到电压信号");
+            local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;
+            --将获取的电压实时显示在首页当中
+            if paraTab[1] == "E1" then
+                set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
+            else
+                set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+            end
             
-            Sys.signalTab[math.fmod(Sys.signalTotal, 10)] = signalE;--将电压信号保存到数组中
+            Sys.signalTab[math.fmod(Sys.signalTotal, 20)] = signalE;--将电压信号保存到数组中(下标对10取模)
             Sys.signalTotal = Sys.signalTotal + 1;
-            if Sys.signalTotal >= 10 then--已经获取到足够的信号(10个)
-                maxSignal = math.max(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
+            if Sys.signalTotal >= 20 then--已经获取到足够的信号(20个)
+                local maxSignal = math.max(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
                                      Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
-                minSignal = math.min(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
+                local minSignal = math.min(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
                                      Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
-                if (maxSignal - minSignal <= Sys.signalDriftthen) or --满足信号漂移条件
-                   (Sys.waitTimeFlag == RESET and getValidSignalData == SET) then--最大定时时间到
+                --满足信号漂移条件 或者 最大定时时间到
+                if (maxSignal - minSignal <= Sys.signalDrift) or Sys.waitTimeFlag == RESET  then
                     local signalSum = 0;
                     for i = 0, 9, 1 do
                         signalSum = signalSum + Sys.signalTab[i];
@@ -2298,12 +2301,15 @@ function excute_read_signal_process(paraTab)
                     
                     if paraTab[1] == "E1" then
                         Sys.signalE1 = signalE;
+                        set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
                     else
                         Sys.signalE2 = signalE;
+                        set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
                     end
-                    Sys.actionSubStep = Sys.actionSubStep + 1;
+                    Sys.actionSubStep = Sys.actionSubStep + 1;--满足条件,跳转下一步结束采集
+                    print("E1="..Sys.signalE1..";E2="..Sys.signalE2);
                 else
-                    Sys.actionSubStep = Sys.actionSubStep - 1;--执行上一步,继续通过串口读取电压信号
+                    Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
                 end
             end
         end
@@ -2412,15 +2418,18 @@ end
 --  执行阀操作流程
 --***********************************************************************************************
 function excute_valve_ctrl_process(paraTab)
+
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+    -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
-            Sys.valcoChannel = tonumber(paraTab[19]);--通道号
-            Sys.waitTime = tonumber(paraTab[20]);--等待时间
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
+            control_valco( tonumber(paraTab[19]) );--id为23的控件为通道号
+            start_wait_time( tonumber(paraTab[20]) );
         end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then--判断是否需要对输出进行操作
         if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
             for i=1,16,1 do
@@ -2428,12 +2437,18 @@ function excute_valve_ctrl_process(paraTab)
             end
             Sys.valveOperate = paraTab[22];
             Sys.waitTime = tonumber(paraTab[21]);--等待时间
-        -- Sys.driverStep1Func = ;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then--判断是否需要对输出进行操作
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 3 then--结束
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then--结束
         Sys.actionSubStep = FINISHED;
     end
     return Sys.actionSubStep;
@@ -2463,8 +2478,8 @@ end
 --***********************************************************************************************
 function excute_wait_time_process(paraTab)
     if Sys.actionSubStep == 1 then
-        Sys.waitTimeFlag = SET;
-        start_timer(2, tonumber(paraTab[1]) * 1000, 1, 1); --开启定时器1，超时时间, 1->使用倒计时方式,1->表示只执行一次
+        start_wait_time(tonumber(paraTab[1]));
+        Sys.actionSubStep = Sys.actionSubStep + 1;
     elseif Sys.actionSubStep == 2 then
         if Sys.waitTimeFlag == RESET then
             Sys.actionSubStep = FINISHED

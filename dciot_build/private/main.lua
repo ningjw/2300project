@@ -451,11 +451,11 @@ function sys_init()
     elseif Sys.processStep == 3 then --第三步:使能注射泵1
         enable_inject1();
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 4 then --第四步:注射泵移动到位置0
+    elseif Sys.processStep == 4 then --第四步:复位注射泵
         Sys.waitTimeFlag = SET;
         Sys.waitTime = 8;
         start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间8s,1->表示只执行一次
-        move_inject1_to(0);
+        reset_inject1();
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 5 then --第五步:初始化结束
         ShowSysCurrentAction(TipsTab[Sys.language].null);
@@ -561,6 +561,7 @@ function on_uart_send_data(packet, reply)
     for i=0, packet.len+1, 1 do
         UartData = UartData..string.format("%02x ", packet[i]);
     end
+    print(packet.note);--调试输出
     record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
 end
 
@@ -1906,7 +1907,7 @@ function excute_inject_process(paraTab)
     elseif Sys.actionSubStep == 2 then
         if paraTab[2] == ENABLE_STRING then--判断是否需要对注射泵2进行操作
             Sys.injectSpeed = tonumber(paraTab[7]);
-            Sys.injectScale = tonumber(paraTab[8]);
+            Sys.injectScale = tonumber(paraTab[8]) * 10;
             Sys.waitTime = tonumber(paraTab[10]);
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -1925,9 +1926,9 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 INJECT_ADD_BtStartId = 1;
-INJECT_ADD_BtEndId = 39;
-INJECT_ADD_TextStartId = 40;
-INJECT_ADD_TextEndId = 61;
+INJECT_ADD_BtEndId = 40;
+INJECT_ADD_TextStartId = 41;
+INJECT_ADD_TextEndId = 64;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_add_control_notify(screen,control,value)
@@ -1945,84 +1946,108 @@ end
 --          由于这些编号只在这个函数中使用,所以就不再额外定义宏了
 --***********************************************************************************************
 function excute_inject_add_process(paraTab)
+
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+
     -----------------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
-            Sys.valcoChannel = tonumber(paraTab[40]);--通道号
-            Sys.waitTime = tonumber(paraTab[41]);--等待时间
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
+            control_valco( tonumber(paraTab[62]) );--id为23的控件为通道号
+            start_wait_time( tonumber(paraTab[41]) );
         end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then--
         if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+7];
+                Sys.valveIdTab[i] = paraTab[i+8];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[42]);--等待时间
-        -- Sys.driverStep1Func = ;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 3 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+    elseif Sys.actionSubStep == 4 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
         if paraTab[3] == ENABLE_STRING then
             Sys.injectSpeed = tonumber(paraTab[44]);
-            Sys.injectScale = tonumber(paraTab[45]);
+            Sys.injectScale = tonumber(paraTab[45]) * 10;
             Sys.waitTime = tonumber(paraTab[47]);
-            -- Sys.driverStep1Func = ;
+            Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[4] == ENABLE_STRING then
             Sys.injectSpeed = tonumber(paraTab[48]);
-            Sys.injectScale = tonumber(paraTab[49]);
+            Sys.injectScale = tonumber(paraTab[49]) * 10;
             Sys.waitTime = tonumber(paraTab[51]);
             -- Sys.driverStep1Func = ;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 4 then
+    elseif Sys.actionSubStep == 5 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对十通阀操作
+            control_valco( tonumber(paraTab[63]) );--id为63的控件为通道号
+            start_wait_time( tonumber(paraTab[64]) );
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 6 then
         if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+7];
+                Sys.valveIdTab[i] = paraTab[i+8];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0
-        -- Sys.driverStep1Func = ;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 7 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 5 then
-        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作
+    elseif Sys.actionSubStep == 8 then
+        if paraTab[6] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+23];
+                Sys.valveIdTab[i] = paraTab[i+24];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[52]);
-        -- Sys.driverStep1Func = ;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 9 then
+        if paraTab[6] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 6 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
-        if paraTab[6] == ENABLE_STRING then
+    elseif Sys.actionSubStep == 10 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[7] == ENABLE_STRING then
             Sys.injectId = 1;
             Sys.injectSpeed = tonumber(paraTab[54]);
-            Sys.injectScale = tonumber(paraTab[55]);
+            Sys.injectScale = tonumber(paraTab[55]) * 10;
             Sys.waitTime = tonumber(paraTab[57]);
-            -- Sys.driverStep1Func = ;
+            Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[7] == ENABLE_STRING then
             Sys.injectId = 2;
             Sys.injectSpeed = tonumber(paraTab[58]);
-            Sys.injectScale = tonumber(paraTab[59]);
+            Sys.injectScale = tonumber(paraTab[59]) * 10;
             Sys.waitTime = tonumber(paraTab[61]);
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
@@ -2030,20 +2055,25 @@ function excute_inject_add_process(paraTab)
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 7 then
-        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+    elseif Sys.actionSubStep == 11 then
+        if paraTab[6] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+23];
+                Sys.valveIdTab[i] = paraTab[i+24];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
-        -- Sys.driverStep1Func = ;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 12 then
+        if paraTab[6] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 8 then--结束
+    elseif Sys.actionSubStep == 13 then--结束
         Sys.actionSubStep = FINISHED;
     end
     

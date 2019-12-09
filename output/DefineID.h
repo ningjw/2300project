@@ -94,6 +94,9 @@
 //创建画面联系我们的命令索引ID
 #define  _SCREEN_联系我们                                                         31
 
+//创建画面对话框的命令索引ID
+#define  _SCREEN_对话框                                                          32
+
 #define  _RTC_首页_RTC1                                                        111
 
 #define  _RTC_首页_RTC2                                                        112
@@ -2811,32 +2814,32 @@
 
 #define  _BTN_流程设置-计算_BUTTON1                                                 98
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                       4
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                       5
 
 //画面流程设置-计算中图片Image8使用的图片
 #define  _IMG_流程设置-计算_IMAGE8                                                  41
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       5
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       6
 
 //画面流程设置-计算中图片Image10使用的图片
 #define  _IMG_流程设置-计算_IMAGE10                                                 41
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      8
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      9
 
 //画面流程设置-计算中图片Image11使用的图片
 #define  _IMG_流程设置-计算_IMAGE11                                                 41
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                      9
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                     10
 
 //画面流程设置-计算中图片Image13使用的图片
 #define  _IMG_流程设置-计算_IMAGE13                                                 41
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY16                                      6
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY16                                      7
 
 //画面流程设置-计算中图片Image14使用的图片
 #define  _IMG_流程设置-计算_IMAGE14                                                 41
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      7
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      8
 
 //画面流程设置-计算中按钮Button4弹起时的图片
 #define  _IMG_流程设置-计算_BUTTON4_UP                                              30
@@ -2860,7 +2863,7 @@
 //画面流程设置-计算中按钮Button2按下时的图片
 #define  _IMG_流程设置-计算_BUTTON2_DOWN                                            31
 
-#define  _BTN_流程设置-计算_BUTTON2                                                  3
+#define  _BTN_流程设置-计算_BUTTON2                                                  4
 
 //画面流程设置-计算中图片Image1使用的图片
 #define  _IMG_流程设置-计算_IMAGE1                                                  35
@@ -2870,14 +2873,39 @@
 
 #define  _BTN_流程设置-计算_BUTTON6                                                121
 
-#define  _MENU_流程设置-计算_MENU2                                                 122
-
 //画面流程设置-计算中按钮Button7按下时的图片
 #define  _IMG_流程设置-计算_BUTTON7_DOWN                                            43
 
 #define  _BTN_流程设置-计算_BUTTON7                                                120
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY1                                      10
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY1                                      11
+
+//画面流程设置-计算中按钮Button8弹起时的图片
+#define  _IMG_流程设置-计算_BUTTON8_UP                                              43
+
+//画面流程设置-计算中按钮Button8按下时的图片
+#define  _IMG_流程设置-计算_BUTTON8_DOWN                                            43
+
+#define  _BTN_流程设置-计算_BUTTON8                                                129
+
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY3                                      12
+
+#define  _MENU_流程设置-计算_MENU2                                                 122
+
+//画面流程设置-计算中按钮Button9弹起时的图片
+#define  _IMG_流程设置-计算_BUTTON9_UP                                              30
+
+//画面流程设置-计算中按钮Button9按下时的图片
+#define  _IMG_流程设置-计算_BUTTON9_DOWN                                            31
+
+#define  _BTN_流程设置-计算_BUTTON9                                                  3
+
+//画面流程设置-计算中图片Image2使用的图片
+#define  _IMG_流程设置-计算_IMAGE2                                                  36
+
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY15                                     13
+
+#define  _MENU_流程设置-计算_MENU1                                                 128
 
 //画面流程设置-阀操作中图片Image14使用的图片
 #define  _IMG_流程设置-阀操作_IMAGE14                                                34
@@ -5725,4 +5753,20 @@
 #define  _TXT_DIS__登录系统_TEXT_DISPLAY30                                         3
 
 #define  _BTN_联系我们_BUTTON1                                                     2
+
+//画面对话框中按钮Button3弹起时的图片
+#define  _IMG_对话框_BUTTON3_UP                                                  27
+
+//画面对话框中按钮Button3按下时的图片
+#define  _IMG_对话框_BUTTON3_DOWN                                                28
+
+#define  _BTN_对话框_BUTTON3                                                     99
+
+//画面对话框中按钮Button1弹起时的图片
+#define  _IMG_对话框_BUTTON1_UP                                                  27
+
+//画面对话框中按钮Button1按下时的图片
+#define  _IMG_对话框_BUTTON1_DOWN                                                28
+
+#define  _BTN_对话框_BUTTON1                                                     98
 

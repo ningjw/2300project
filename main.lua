@@ -146,22 +146,29 @@ ValveStatus = {
         open = "打开",
         close = "关闭"
     },
-}
+};
 
 
-CalcType = {
+CalcWay = {
     [CHN] = {
         log = "取对数",
         diff = "取差值",
     },
-}
+};
+
+CalcType = {
+    [CHN] = {"分析","校正一","校正二","校正三","校正四"},
+};
 
 ProcessItem = {
     [CHN] = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE},
-    };
+};
+
 ActionItem = {
     [CHN] = {"初始化","注射泵","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE},
 };
+
+
 
 Sys = {
     language = CHN,--系统语言
@@ -240,7 +247,12 @@ Sys = {
     signalMinTime = 0,--读取信号最小时间
     signalMaxTime = 0,--读取信号最大时间
 
-    calculateType = "",--计算类型: 取对数 或者 取差值 方式
+    calculateWay = "",--计算方式: 取对数 或者 取差值 方式
+    calculateType = "",--计算类型：有分析，校正一，校正二，校正三，校正四。
+    calibrationValue = 0,--校正值
+    caliE1 = {},--用于保存校正时的E1
+    caliE2 = {},--用于保存校正时的E2
+    caliValue = {},--用于保存校正浓度值
     result = 0,--进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
 
     hand_control_func = nil;
@@ -2324,9 +2336,9 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 CALCULATE_BtStartId = 1;
-CALCULATE_BtEndId = 3;
-CALCULATE_TextStartId = 4;
-CALCULATE_TextEndId = 10;
+CALCULATE_BtEndId = 4;
+CALCULATE_TextStartId = 5;
+CALCULATE_TextEndId = 13;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -2340,27 +2352,40 @@ function process_calculate_control_notify(screen,control,value)
 end
 
 --***********************************************************************************************
---  计算校正结果
+--  通过对数方式计算校正结果
 --***********************************************************************************************
-function calc_calibrate_result(type)
-    local x,a,b,c,d = 0;
-    if type == CalcType[Sys.language].log then
-        x = Sys.signalE1 - Sys.signalE2;
-    else
-        x = math.log10(Sys.signalE1/Sys.signalE2);
-    end
+function calc_calibrate_result_by_log(void)
+    local a,b,c,d;
+    a = 0;
+    b = 0;
+    c = Sys.caliValue[2] / (math.log10(Sys.signalE1[1]/Sys.signalE2[1]) - math.log10(Sys.signalE1[2]/Sys.signalE2[2]));
+    d = Sys.caliValue[2] - c * math.log10(Sys.signalE1[1]/Sys.signalE2[1]);
+    return a,b,c,d;
+end
 
+--***********************************************************************************************
+--  通过差值方式计算校正结果
+--***********************************************************************************************
+function calc_calibrate_result_by_diff(void)
+    local a,b,c,d;
+    x1 = Sys.caliE1[1] - Sys.caliE2[1];
+    x2 = Sys.caliE1[2] - Sys.caliE2[2];
+    x3 = Sys.caliE1[3] - Sys.caliE2[3];
+    x4 = Sys.caliE1[4] - Sys.caliE2[4];
+    
+    return a,b,c,d;
 end
 
 --***********************************************************************************************
 --  计算分析结果
+--type：对数方式或者差值方式
 --***********************************************************************************************
 function calc_analysis_result(type)
     local x,a,b,c,d = 0;
-    if type == CalcType[Sys.language].log then
-        x = Sys.signalE1 - Sys.signalE2;
-    else
+    if type == CalcWay[Sys.language].log then--取对数方式
         x = math.log10(Sys.signalE1/Sys.signalE2);
+    else
+        x = Sys.signalE1 - Sys.signalE2;
     end
 
     a = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId));
@@ -2375,14 +2400,34 @@ end
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
-    Sys.calculateType = paraTab[10];
-    if Sys.processType == ProcessItem[Sys.language][2] then--当前流程类型为校正
-        calc_calibrate_result(Sys.calculateType);
-    else
-        calc_analysis_result(Sys.calculateType);
+    Sys.calculateWay = paraTab[11];
+    Sys.calculateType = paraTab[12];
+    Sys.calibrationValue = tonumber(paraTab[13]);
+    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+        calc_analysis_result(Sys.calculateWay);
         if paraTab[1] == ENABLE_STRING then--结果调整
             Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
         end
+    elseif Sys.calculateType == CalcType[Sys.language][2] then--当前计算为校正1
+        Sys.caliE1[1] = Sys.signalE1;
+        Sys.caliE2[1] = Sys.signalE2;
+        sys.caliValue[1] = Sys.calibrationValue;
+    elseif Sys.calculateType == CalcType[Sys.language][3] then--当前计算为校正2
+        Sys.caliE1[2] = Sys.signalE1;
+        Sys.caliE2[2] = Sys.signalE2;
+        sys.caliValue[2] = Sys.calibrationValue;
+        if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
+            calc_calibrate_result_by_log();
+        end
+    elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
+        Sys.caliE1[3] = Sys.signalE1;
+        Sys.caliE2[3] = Sys.signalE2;
+        sys.caliValue[3] = Sys.calibrationValue;
+    elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
+        Sys.caliE1[4] = Sys.signalE1;
+        Sys.caliE2[4] = Sys.signalE2;
+        Sys.caliValue[4] = Sys.calibrationValue;
+        calc_calibrate_result_by_diff();
     end
 
     Sys.resultTime = Sys.dateTime;--获取当前时间

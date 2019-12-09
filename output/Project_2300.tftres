@@ -32,6 +32,7 @@
         <page name="密码设置" id="29" />
         <page name="登录系统" id="30" />
         <page name="联系我们" id="31" />
+        <page name="对话框" id="32" />
     </pages>
     <images>
         <image id="0" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\公司LOGeti - 副本.png" effect_width="98" effect_height="80" />

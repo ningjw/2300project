@@ -2,6 +2,14 @@
 --更多功能请阅读<<物联型LUA脚本API.pdf>>
 --建议使用visual code studio 并安装Bookmarks与luaide-lite(或者LuaCoderAssist)插件,
 --通过打开同目录下的2300project.code-workspace工作空间查看main.lua文件,该文件使用Bookmarks插件插入了很多标签,方便跳转
+--内存地址分配：
+--0-35：保存的是操作员与管理员的密码，通过“系统信息”界面的Id为13的历史记录控件进行配置。
+--36-199：预留空间
+--200-4724：保存的是校正历史记录
+--4724-7498：保存的是报警记录
+--7498-13022：保存的是运行日志
+--13022开始保存的是历史记录。
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -98,6 +106,7 @@ Direction = {
 
 
 
+--提示信息
 TipsTab = {
     [CHN] = {
         insertSdUsb = "请插入SD卡或者U盘",
@@ -116,6 +125,16 @@ TipsTab = {
     },
 };
 
+--系统日志信息
+ SysLog = {
+    [CHN] = {
+        uartTimeOut = "回复超时",
+        start = "开始",
+        stop = "结束",
+    },
+};
+
+--工作状态
 WorkStatus = {
     [CHN] = {
         run = "运行",--此时系统正在运行流程
@@ -124,6 +143,7 @@ WorkStatus = {
     }
 };
 
+--工作类型
 WorkType = {
     [CHN] = {
         hand = "手动",--按启动按钮后,执行一次
@@ -132,6 +152,7 @@ WorkType = {
     },
 }
 
+--系统用户
 SysUser = {
     [CHN] = {
         operator = {"操作员"},
@@ -141,6 +162,8 @@ SysUser = {
 }
 
 
+
+--阀状态
 ValveStatus = {
     [CHN] = {
         open = "打开",
@@ -148,7 +171,15 @@ ValveStatus = {
     },
 };
 
+--LED状态
+LedStatus = {
+    [CHN] = {
+        open = "打开",
+        close = "关闭"
+    },
+};
 
+--计算方式
 CalcWay = {
     [CHN] = {
         log = "取对数",
@@ -240,12 +271,13 @@ Sys = {
     dispelEmptyTemp,--消解排空温度
 
     signalTab = {},--用于保存多个连续的电位信号
-    signalTotal = 0,--用于统计当前信号个数
+    signalCount = 0,--用于统计当前信号个数
     signalE1 = 0,--用于保存信号E1的值
     signalE2 = 0,--用于保存信号E2的值
     signalDrift = 0,--信号漂移
     signalMinTime = 0,--读取信号最小时间
     signalMaxTime = 0,--读取信号最大时间
+    signalNumber = 0,--取样数，默认为10
 
     calculateWay = "",--计算方式: 取对数 或者 取差值 方式
     calculateType = "",--计算类型：有分析，校正一，校正二，校正三，校正四。
@@ -256,6 +288,9 @@ Sys = {
     result = 0,--进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
 
     hand_control_func = nil;
+
+    alarmContent = "",--用于保存当前报警信息
+    logContent = "",--用于保存当前日志信息
 }
 
 
@@ -269,6 +304,11 @@ Sys = {
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
+    print(_VERSION);
+
+    set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
+    set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
+
     set_text(PROCESS_SET2_SCREEN, ProcesstypeId, BLANK_SPACE);
     set_text(PROCESS_SET3_SCREEN, ProcesstypeId, BLANK_SPACE);
     for i = 1,12,1 do
@@ -449,11 +489,14 @@ end
 --系统初始化, 一般在开机或者急停时调用该函数
 --***********************************************************************************************
 function sys_init()
-    if UartArg.lock == LOCKED then
+    local softVer1,softVer2,hardVer1,hardVer2;
+
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then
         return;
     end
 
     if Sys.processStep == 1 then--第一步: 关闭阀11
+        set_enable(RUN_CONTROL_SCREEN, RunStopButtonId, DISABLE)--系统初始化时，禁止按开始按钮
         close_single_valve(11);
         Sys.processStep = Sys.processStep + 1;
         ShowSysCurrentAction(TipsTab[Sys.language].sysInit);
@@ -464,12 +507,42 @@ function sys_init()
         enable_inject1();
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 4 then --第四步:复位注射泵
-        Sys.waitTimeFlag = SET;
-        Sys.waitTime = 8;
-        start_timer(2, Sys.waitTime * 1000, 1, 1); --开启定时器2，超时时间8s,1->表示只执行一次
+        start_wait_time(5);
         reset_inject1();
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 5 then --第五步:初始化结束
+    elseif Sys.processStep == 5 then--第五步：获取驱动板版本号
+        on_uart_send_data(uartSendTab.getDrvVer ,NEED_REPLY);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 6 then--第六步：显示驱动版本版本号 并 获取传感版与计算卡硬件版本号
+        if UartArg.recv_data[10] ~= nil then
+            softVer1 = bcd_to_string(UartArg.recv_data[10]).."."..bcd_to_string(UartArg.recv_data[11]); 
+            hardVer1 = bcd_to_string(UartArg.recv_data[12]).."."..bcd_to_string(UartArg.recv_data[13]);
+            set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId,softVer1);--显示软件版本号
+            set_text(SYSTEM_INFO_SCREEN, DriverBoardHardVerId,hardVer1);--显示硬件版本号
+        end
+        on_uart_send_data(uartSendTab.getSCHardVer, NEED_REPLY);--获取传感版与计算卡硬件版本号
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 7 then--第七步：显示传感版与计算卡硬件版本号 并 获取传感版与计算卡软件版本号
+        if UartArg.recv_data[3] ~= nil then
+            hardVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]);
+            set_text(SYSTEM_INFO_SCREEN, SensorBoardHardVerId, hardVer1);
+            hardVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
+            hardVer2 = bcd_to_string(UartArg.recv_data[7])..bcd_to_string(UartArg.recv_data[8]);
+            set_text(SYSTEM_INFO_SCREEN, CalcBoardHardVerId, hardVer1..hardVer2);
+        end
+        on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--获取传感版与计算卡软件版本号
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 8 then--第八步：显示感版与计算卡软件版本号
+        if UartArg.recv_data[3] ~= nil then
+            softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]); 
+            set_text(SYSTEM_INFO_SCREEN, SensorBoardSoftVerId, softVer1);
+            softVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
+            softVer2 = bcd_to_string(UartArg.recv_data[7])..bcd_to_string(UartArg.recv_data[8]);
+            set_text(SYSTEM_INFO_SCREEN, CalcBoardSoftVerId, softVer1..softVer2);
+        end
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 9 then --第九步:初始化结束
+        set_enable(RUN_CONTROL_SCREEN, RunStopButtonId, ENABLE)--初始化完成，使能开始按钮
         ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
@@ -484,23 +557,23 @@ end
 --设置全局变量uart_free_protocol，使用自由串口协议
 uart_free_protocol = 1;
 
-
 uartSendTab = {
-    getSoftVer = {[0] = 0xEE, 0x03, 0x10, 0x03, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取软件版本" },
-    getHardVer = {[0] = 0xEE, 0x03, 0x10, 0x02, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取硬件版本" },
+  getSCSoftVer = {[0] = 0xEE, 0x03, 0x10, 0x03, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取软件版本" },
+  getSCHardVer = {[0] = 0xEE, 0x03, 0x10, 0x02, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取硬件版本" },
     getTemp    = {[0] = 0xEE, 0x03, 0x10, 0x0A, 0x00, 0x01, 0x00, 0x00, len = 6, note = "测量池温度" },
     getVoltage = {[0] = 0xEE, 0x03, 0x10, 0x14, 0x00, 0x01, 0x00, 0x00, len = 6, note = "光电管电压"},
     openLed    = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x01, 0x00, 0x00, len = 6, note = "开LED灯" },
     closeLed   = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关LED灯" },
-    getDrvVer  = {[0] = 0xE0, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "版本号"},
+updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6, note = "更新计算板"},
+    getDrvVer  = {[0] = 0xE0, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "驱动版本号"},
     openValco  = {[0] = 0xE0, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "十通阀"},--开十通阀
     openV11    = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},
     closeV11   = {[0] = 0xE0, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀11"},
     openV12    = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},
     closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
     enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
-    mvInject1To= {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
-    setInject1Spd={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
+   mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
+ setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
     rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
 }
 
@@ -509,6 +582,7 @@ uartSendTab = {
 UartArg = {
     repeat_times = 0,--用于记录重发次数
     repeat_data ,--用于保存本次重发数据
+    note = "",--用于保存串口指令说明
     recv_data,--用于保存接收到的数据
     reply_data = {[0] = 0, [1] = 0},--用于保存需要接受到的回复数据
     lock = UNLOCKED,--用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
@@ -567,6 +641,8 @@ function on_uart_send_data(packet, reply)
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--计算crc16
     uart_send_data(packet) --将数据通过串口发送出去
 
+    UartArg.note = packet.note;--在保存串口回复超时的日志时，需要用到UartArg.note
+
     --以下代码功能: 每发送一次数据,就将该数据保存在手动操作4的串口收发记录当中,方便从触摸屏查看.
     local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
     local UartData = "";--将需要发送的数据保存到该字符串中
@@ -595,6 +671,10 @@ function uart_time_out()
             UartArg.lock = UNLOCKED;
         end
         stop_timer(1)--停止超时定时器
+        beep(1000);--串口回复超时，蜂鸣器响1秒钟。
+        Sys.alarmContent = UartArg.note..SysLog[Sys.language].uartTimeOut;--初始化报警内容（串口回复超时）
+        add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
+        ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
     end
 end
 
@@ -667,6 +747,8 @@ LastAnalysisE1Id = 25;     --E1
 LastAnalysisE2Id = 26;     --E2
 NextProcessTimeTextId = 2  --下次启动时间
 
+ProgressBarId = 14--进度条，范围0-100
+
 SysWorkStatusId = 901;   --工作状态
 SysCurrentActionId = 902;--当前动作
 SysUserNameId = 903      --显示用户
@@ -720,6 +802,7 @@ function ShowSysCurrentAction(action)
         set_text(PublicTab[i], SysCurrentActionId, action);
     end
 end
+
 
 --***********************************************************************************************
 --  在底部的状态栏显示告警信息
@@ -1031,7 +1114,7 @@ function run_control_notify(screen,control,value)
     --当按下开始时, 首先设置系统状态为待机状态,因为只有在该状态调用get_current_process_id返回值才是需要执行的流程序号
     --得到流程序号后, 就可以读取已该序号命名的配置文件,该配置文件保存了该流程的所有动作.
     elseif control == RunStopButtonId then
-        if get_value(RUN_CONTROL_SCREEN,control) == ENABLE then      --按钮按下,此时系统状态变为运行
+        if get_value(RUN_CONTROL_SCREEN,control) == ENABLE then --按钮按下,此时系统状态变为待机运行
             SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             process_ready_run();--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
@@ -1357,7 +1440,10 @@ function process_ready_run()
         Sys.driverStep = 1;
         Sys.driverSubStep = 1;
         Sys.handRunTimes = 0;
-        SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行
+        set_value(MAIN_SCREEN, ProgressBarId, 0);--设置进度条的值为0
+        Sys.logContent = WorkStatus[Sys.language].run.."\""..Sys.processName.."\"";--“运行”+流程名称
+        add_history_record(HISTORY_LOG_SCREEN);--添加一条日志信息
+        SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,跳转到excute_process函数执行流程
     end
 end
 
@@ -1381,7 +1467,6 @@ function excute_process()
         Sys.actionType    = tab[1];--获取动作类型
         Sys.contentTabStr = GetSubString(Sys.actionString,"<content>","</content>");--再截取<content>标签中的内容
         Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-        --Sys.startTime.year,Sys.startTime.mon,Sys.startTime.day,Sys.startTime.hour,Sys.startTime.min--获取当前时间
         Sys.startTime = Sys.dateTime;
         ShowSysCurrentAction( Sys.processName..":"..Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
         if Sys.actionType == ActionItem[Sys.language][1] then 
@@ -1415,6 +1500,7 @@ function excute_process()
     ---------------------------------------------------------------------------------------------------
     --第三步:判断动作是否执行完毕
     elseif Sys.processStep == 3 then
+        set_value(MAIN_SCREEN, ProgressBarId, math.floor(Sys.actionStep/Sys.actionTotal*100));--更新进度条
         ----------------所有动作执行完毕-------------------------------------------
         if Sys.actionStep >= Sys.actionTotal then
             Sys.actionStep = 1;                       --指向第一个动作
@@ -1459,6 +1545,9 @@ function SystemStop()
         set_process_edit_state(ENABLE);--允许编辑流程
     end
     UartArg.lock = UNLOCKED;--解锁串口
+    Sys.waitTimeFlag = RESET;
+    Sys.logContent = WorkStatus[Sys.language].stop.."\""..Sys.processName.."\"";--“停止”+流程名称
+    add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
 end
 
 
@@ -2242,7 +2331,7 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 ReadSignal_TextStartId = 1;
-ReadSignal_TextEndId = 4;
+ReadSignal_TextEndId = 5;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -2261,11 +2350,15 @@ end
 --  执行读取信号流程
 --***********************************************************************************************
 function excute_read_signal_process(paraTab)
+    if UartArg.lock == LOCKED then--串口锁定，直接返回
+        return;
+    end
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        Sys.signalDrift = tonumber(paraTab[2]);
-        Sys.signalMinTime = tonumber(paraTab[3]);
-        Sys.signalMaxTime = tonumber(paraTab[4]);
+        Sys.signalDrift = tonumber(paraTab[2]);--信号漂移
+        Sys.signalMinTime = tonumber(paraTab[3]);--最小时间
+        Sys.signalMaxTime = tonumber(paraTab[4]);--最大时间
+        Sys.signalNumber = tonumber(paraTab[5]);--取样个数
         start_wait_time(Sys.signalMinTime);
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
@@ -2275,52 +2368,57 @@ function excute_read_signal_process(paraTab)
                 Sys.signalMaxTime = Sys.signalMinTime;
             end
             start_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
-            Sys.signalTotal = 0;
+            Sys.signalCount = 0;
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 3 then
-        if UartArg.lock == UNLOCKED then--通过串口读取信号
-            on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
+    elseif Sys.actionSubStep == 3 then--通过串口读取信号
+        on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
+        Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 4 then
-        if UartArg.lock == UNLOCKED then--解析串口数据, 并判断是否满足信号漂移要求
-            local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;
-            --将获取的电压实时显示在首页当中
-            if paraTab[1] == "E1" then
-                set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
-            else
-                set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+    elseif Sys.actionSubStep == 4 then--解析串口数据, 并判断是否满足信号漂移要求
+        local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--获取的信号值需要除以10才是实际值
+        --将获取的电压实时显示在首页当中
+        if paraTab[1] == "E1" then
+            set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
+        else
+            set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+        end
+        
+        Sys.signalTab[ math.fmod(Sys.signalCount, Sys.signalNumber) ] = signalE;--将电压信号保存到数组中
+        Sys.signalCount = Sys.signalCount + 1;
+        
+        if Sys.signalCount >= Sys.signalNumber then--已经获取到足够的信号（取样数）
+            local tempMax,tempMin,maxSignal,minSignal;
+            tempMax = Sys.signalTab[0];
+            tempMin = Sys.signalTab[0];
+            for i = 1, (Sys.signalNumber-1) ,1 do
+                tempMax = math.max(tempMax, Sys.signalTab[i]);
+                tempMin = math.min(tempMin, Sys.signalTab[i]);
             end
+            maxSignal = tempMax;--获取最大值
+            minSignal = tempMin;--获取最小值
             
-            Sys.signalTab[math.fmod(Sys.signalTotal, 20)] = signalE;--将电压信号保存到数组中(下标对10取模)
-            Sys.signalTotal = Sys.signalTotal + 1;
-            if Sys.signalTotal >= 20 then--已经获取到足够的信号(20个)
-                local maxSignal = math.max(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
-                                     Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
-                local minSignal = math.min(Sys.signalTab[0],Sys.signalTab[1],Sys.signalTab[2],Sys.signalTab[3],Sys.signalTab[4],
-                                     Sys.signalTab[5],Sys.signalTab[6],Sys.signalTab[7],Sys.signalTab[8],Sys.signalTab[9]);
-                --满足信号漂移条件 或者 最大定时时间到
-                if (maxSignal - minSignal <= Sys.signalDrift) or Sys.waitTimeFlag == RESET  then
-                    local signalSum = 0;
-                    for i = 0, 9, 1 do
-                        signalSum = signalSum + Sys.signalTab[i];
-                    end
-                    signalE = (signalSum - maxSignal - minSignal) / 8;--减去Sys.signalTab中的最大值与最小值后取平均值
-                    
-                    if paraTab[1] == "E1" then
-                        Sys.signalE1 = signalE;
-                        set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
-                    else
-                        Sys.signalE2 = signalE;
-                        set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
-                    end
-                    Sys.actionSubStep = Sys.actionSubStep + 1;--满足条件,跳转下一步结束采集
-                else
-                    Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
+            --满足信号漂移条件 或者 最大定时时间到
+            if (maxSignal - minSignal <= Sys.signalDrift) or Sys.waitTimeFlag == RESET  then
+                local signalSum = 0;
+                for i = 0, Sys.signalNumber-1, 1 do
+                    signalSum = signalSum + Sys.signalTab[i];
                 end
+                signalE = (signalSum - maxSignal - minSignal) / (Sys.signalNumber - 2);--减去Sys.signalTab中的最大值与最小值后取平均值
+                
+                if paraTab[1] == "E1" then
+                    Sys.signalE1 = signalE;
+                    set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
+                    print("E1=",signalE);
+                else
+                    Sys.signalE2 = signalE;
+                    set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+                    print("E2=",signalE);
+                end
+                Sys.actionSubStep = Sys.actionSubStep + 1;--满足条件,跳转下一步结束采集
+            else
+                Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
             end
         end
     -----------------------------------------------------------
@@ -2356,24 +2454,43 @@ end
 --***********************************************************************************************
 function calc_calibrate_result_by_log(void)
     local a,b,c,d;
+
+    --以下模拟数据 c = 2706.5566，d = -81.1261； 
+    -- Sys.caliE1[1] = 4351.5;
+    -- Sys.caliE2[1] = 4061.3;
+    -- Sys.caliValue[1] = 0;
+
+    -- Sys.caliE1[2] = 4345.7;
+    -- Sys.caliE2[2] = 3421.3;
+    -- Sys.caliValue[2] = 200;
+
     a = 0;
     b = 0;
-    c = Sys.caliValue[2] / (math.log10(Sys.signalE1[1]/Sys.signalE2[1]) - math.log10(Sys.signalE1[2]/Sys.signalE2[2]));
-    d = Sys.caliValue[2] - c * math.log10(Sys.signalE1[1]/Sys.signalE2[1]);
-    return a,b,c,d;
+    print( math.log(Sys.caliE1[1]/Sys.caliE2[1],10) );
+    print( math.log(Sys.caliE1[2]/Sys.caliE2[2],10) )
+    c = (Sys.caliValue[2] - Sys.caliValue[1]) / ( math.log(Sys.caliE1[2]/Sys.caliE2[2],10) - math.log(Sys.caliE1[1]/Sys.caliE2[1],10) );
+    d = Sys.caliValue[2] - c * math.log(Sys.caliE1[2]/Sys.caliE2[2],10);
+    print("c=",c,",d=",d)
+    --设置计算出的a,b,c,d结果
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
+    WriteProcessFile(3);--保存量程设置界面的参数
 end
 
 --***********************************************************************************************
 --  通过差值方式计算校正结果
 --***********************************************************************************************
 function calc_calibrate_result_by_diff(void)
-    local a,b,c,d;
-    x1 = Sys.caliE1[1] - Sys.caliE2[1];
-    x2 = Sys.caliE1[2] - Sys.caliE2[2];
-    x3 = Sys.caliE1[3] - Sys.caliE2[3];
-    x4 = Sys.caliE1[4] - Sys.caliE2[4];
+
     
-    return a,b,c,d;
+    --设置计算出的a,b,c,d结果
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
+    set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
+    WriteProcessFile(3);--保存量程设置界面的参数
 end
 
 --***********************************************************************************************
@@ -2382,8 +2499,14 @@ end
 --***********************************************************************************************
 function calc_analysis_result(type)
     local x,a,b,c,d = 0;
+
+    --以下模拟数据采用对数方式，结果为73.272
+    -- Sys.signalE1 = 4278.91;
+    -- Sys.signalE2 = 3752.21;
+
     if type == CalcWay[Sys.language].log then--取对数方式
-        x = math.log10(Sys.signalE1/Sys.signalE2);
+        x = math.log(Sys.signalE1/Sys.signalE2,10);
+        print("对数方式，x=",x);
     else
         x = Sys.signalE1 - Sys.signalE2;
     end
@@ -2394,6 +2517,7 @@ function calc_analysis_result(type)
     d = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
 
     Sys.result = a*(x^3) + b*(x^2) + c*x + d;
+    set_text(MAIN_SCREEN, LastAnalysisResultId, Sys.result);--在主界面显示结果
 end
 
 --***********************************************************************************************
@@ -2403,34 +2527,47 @@ function excute_calculate_process(paraTab)
     Sys.calculateWay = paraTab[11];
     Sys.calculateType = paraTab[12];
     Sys.calibrationValue = tonumber(paraTab[13]);
+    Sys.resultTime = Sys.dateTime;--获取当前时间
     if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
         calc_analysis_result(Sys.calculateWay);
         if paraTab[1] == ENABLE_STRING then--结果调整
             Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
         end
+        print("分析结果 =",Sys.result);
     elseif Sys.calculateType == CalcType[Sys.language][2] then--当前计算为校正1
         Sys.caliE1[1] = Sys.signalE1;
         Sys.caliE2[1] = Sys.signalE2;
-        sys.caliValue[1] = Sys.calibrationValue;
+        Sys.caliValue[1] = Sys.calibrationValue;
+        print("校正1：E1=",Sys.caliE1[1],",E2=",Sys.caliE2[1]);
     elseif Sys.calculateType == CalcType[Sys.language][3] then--当前计算为校正2
         Sys.caliE1[2] = Sys.signalE1;
         Sys.caliE2[2] = Sys.signalE2;
-        sys.caliValue[2] = Sys.calibrationValue;
+        Sys.caliValue[2] = Sys.calibrationValue;
+        print("校正2：E1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
         if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
             calc_calibrate_result_by_log();
         end
     elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
         Sys.caliE1[3] = Sys.signalE1;
         Sys.caliE2[3] = Sys.signalE2;
-        sys.caliValue[3] = Sys.calibrationValue;
+        Sys.caliValue[3] = Sys.calibrationValue;
+        print("校正3：E1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
     elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
         Sys.caliE1[4] = Sys.signalE1;
         Sys.caliE2[4] = Sys.signalE2;
         Sys.caliValue[4] = Sys.calibrationValue;
-        calc_calibrate_result_by_diff();
+        print("校正4：E1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
+ --       calc_calibrate_result_by_diff();--通过行列式与克莱姆法则自动算出a,b,c,d的值
     end
 
-    Sys.resultTime = Sys.dateTime;--获取当前时间
+
+    if paraTab[4] == ENABLE_STRING then--是否需要保存历史记录
+        if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+            add_history_record(HISTORY_ANALYSIS_SCREEN);
+        else
+            add_history_record(HISTORY_CALIBRATION_SCREEN);--当前计算为校准
+        end
+    end
 
     return FINISHED;
 end
@@ -2851,11 +2988,19 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 HandGetVoltageId = 73;
 HandShowVoltageId = 35;
+HandLedStatusId = 6;
+HandLedCtrlBtId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate2_control_notify(screen,control,value)
-    if control == HandGetVoltageId then
+    if control == HandGetVoltageId then--获取电压
         Sys.hand_control_func = hand_get_voltage;
+    elseif control == HandLedCtrlBtId then--控制led灯开关按钮
+        if get_text(HAND_OPERATE2_SCREEN, HandLedStatusId) == LedStatus[ Sys.language ].open then--打开
+            on_uart_send_data(uartSendTab.openLed, NO_NEED_REPLY);
+        else
+            on_uart_send_data(uartSendTab.closeLed, NO_NEED_REPLY);
+        end
     end
 end
 
@@ -2907,30 +3052,48 @@ UartRecordId = 1--串口通讯记录空间id
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    分析记录
+    分析、校准、报警、日志记录
 --------------------------------------------------------------------------------------------------------------------]]
+HistoryRecordId = 32;--历史记录控件Id号，分析、校准、报警、日志都是这个。
+
+--***********************************************************************************************
+--  添加一条历史记录
+-- screen:在哪一个界面的历史记录控件添加内容
+--***********************************************************************************************
+function add_history_record(screen)
+    local record_count;
+    if screen == HISTORY_ANALYSIS_SCREEN then--添加分析记录
+        record_count =  record_get_count(screen, HistoryRecordId);
+        record_count = record_count + 1;
+        record_add(screen, HistoryRecordId, record_count..";"..--序号
+            Sys.resultTime.year..Sys.resultTime.mon..Sys.resultTime.day..";"..--日期
+            Sys.resultTime.hour..Sys.resultTime.min..";"..--时间
+            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
+    elseif screen == HISTORY_CALIBRATION_SCREEN then--添加校准记录
+        record_count =  record_get_count(screen, HistoryRecordId);
+        record_count = record_count + 1;
+        record_add(screen, HistoryRecordId, record_count..";"..
+            Sys.resultTime.year..Sys.resultTime.mon..Sys.resultTime.day..";"..--日期
+            Sys.resultTime.hour..Sys.resultTime.min..";"..--时间
+            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
+    elseif screen == HISTORY_ALARM_SCREEN then--添加报警记录
+        record_count =  record_get_count(screen, HistoryRecordId);
+        record_count = record_count + 1;
+        record_add(screen, HistoryRecordId, record_count..";"..
+            Sys.dateTime.year..Sys.dateTime.mon..Sys.dateTime.day..";"..--日期
+            Sys.dateTime.hour..Sys.dateTime.min..";"..--时间
+            Sys.alarmContent.."; ");
+    elseif screen == HISTORY_LOG_SCREEN then --添加日志记录
+        record_count =  record_get_count(screen, HistoryRecordId);
+        record_count = record_count + 1;
+        record_add(screen, HistoryRecordId, record_count..";"..
+            Sys.dateTime.year..Sys.dateTime.mon..Sys.dateTime.day..";"..--日期
+            Sys.dateTime.hour..Sys.dateTime.min..";"..--时间
+            Sys.logContent..";"..Sys.userName);
+    end
+end
 
 
-
-
-
---[[-----------------------------------------------------------------------------------------------------------------
-    校准记录
---------------------------------------------------------------------------------------------------------------------]]
-
-
-
-
---[[-----------------------------------------------------------------------------------------------------------------
-    报警记录
---------------------------------------------------------------------------------------------------------------------]]
-
-
-
-
---[[-----------------------------------------------------------------------------------------------------------------
-    运行日志
---------------------------------------------------------------------------------------------------------------------]]
 
 
 
@@ -2947,11 +3110,19 @@ maintainerLoginId = 17;
 administratorLoginId = 18;
 pwdRecordId = 13;--用于保存密码的记录控件
 
-ftpAddr1Id = 22;
-ftpAddr2Id = 23;
-ftpAddr3Id = 24;
-ftpAddr4Id = 25;
-ftpStartBtId = 26;
+
+TouchScreenHardVerId = 3;
+TouchScreenSoftVerId = 27;
+CtrlBoardHardVerId = 4;
+CtrlBoardSoftVerId = 5;
+DriverBoardHardVerId = 6;
+DriverBoardSoftVerId = 7;
+SensorBoardHardVerId = 8;
+SensorBoardSoftVerId = 9;
+CalcBoardHardVerId = 10;
+CalcBoardSoftVerId = 11;
+
+
 --设置仪器型号
 function set_equipment_type()
     for i = 1,16,1 do
@@ -2976,7 +3147,6 @@ function system_info_control_notify(screen,control,value)
     elseif control == administratorLoginId then--管理员登录
         set_user_name(SysUser[Sys.language].administrator);
         change_screen(LOGIN_SYSTEM_SCREEN);
-    elseif control == ftpStartBtId then--ftp远程升级
     end
 end
 
@@ -3709,5 +3879,15 @@ function get_process_Id(name)
     end
     return processId;
 end 
+
+
+--***********************************************************************************************
+--将BCD转换为字符串，在获取版本信息的时候会使用到。
+--***********************************************************************************************
+function bcd_to_string(bcd)
+    --取模获得低四位,取整获得高四位
+    local str = tostring(math.modf(bcd/16))..tostring(math.fmod(bcd, 16));
+   return str;
+end
 
 

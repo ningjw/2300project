@@ -111,9 +111,8 @@
         <image id="73" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\长输入框.png" effect_width="312" effect_height="35" />
         <image id="74" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\长输入框.png" effect_width="160" effect_height="35" />
         <image id="75" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\文字底色.jpg" effect_width="140" effect_height="35" />
-        <image id="76" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\长输入框.png" effect_width="248" effect_height="35" />
-        <image id="77" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\input.png" effect_width="120" effect_height="30" />
-        <image id="78" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\联系我们.png" effect_width="493" effect_height="276" />
+        <image id="76" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\input.png" effect_width="120" effect_height="30" />
+        <image id="77" url="c:\users\ningjianwem\desktop\ningjw\2300project-master\Images\联系我们.png" effect_width="493" effect_height="276" />
     </images>
     <waves />
 </Resource>

@@ -102,6 +102,7 @@ NEED_REPLY = 1;--串口数据需要回复
 
 Direction = {
     [CHN] = {FWD = "正转",REV = "反转"},
+    [ENG] = {FWD = "CW",REV="CCW"},
 }
 
 
@@ -123,6 +124,21 @@ TipsTab = {
         sysInit = "系统初始化",
         null    = "无",
     },
+    [ENG] = {
+        insertSdUsb = "Please Insert SD Card Or U Disk",
+        insertSd    = "Please Insert SD Card",
+        insertUsb   = "Please Insert U Disk",
+        pullOutSd   = "Pull Out The SD card",
+        pullOutUSB  = "Pull Out The U Disk",
+        importing   = "Importing Configuration File...",
+        imported    = "Configuration File Imported Successfully",
+        exporting   = "Exporting Configuration File...",
+        exported    = "Configuration File Exported Successfully",
+        exportTips  = "Create The \"config\" Folder On The U Disk First",
+        selectProcess = "Select Process",
+        sysInit = "System Initial",
+        null    = "NULL",
+    },
 };
 
 --系统日志信息
@@ -132,6 +148,11 @@ TipsTab = {
         start = "开始",
         stop = "结束",
     },
+    [ENG] = {
+        uartTimeOut = "Timeout",
+        start = "Start",
+        stop = "Stop",
+    },
 };
 
 --工作状态
@@ -140,6 +161,11 @@ WorkStatus = {
         run = "运行",--此时系统正在运行流程
         stop = "停止",
         readyRun = "待机", --此时为自动运行方式, 且在等待时间到后自动进行下一次流程的状态.
+    },
+    [ENG] = {
+        run = "RUN",--此时系统正在运行流程
+        stop = "STOP",
+        readyRun = "READY", --此时为自动运行方式, 且在等待时间到后自动进行下一次流程的状态.
     }
 };
 
@@ -150,14 +176,24 @@ WorkType = {
         auto = "自动",--按启动按钮后,可以根据时间判断是否进行周期流程与定时流程
         controlled = "反控",--通过上位机发送指令运行流程.
     },
+    [ENG] = {
+        hand = "Manual",--按启动按钮后,执行一次
+        auto = "Auto",--按启动按钮后,可以根据时间判断是否进行周期流程与定时流程
+        controlled = "Controlled",--通过上位机发送指令运行流程.
+    },
 }
 
 --系统用户
 SysUser = {
     [CHN] = {
-        operator = {"操作员"},
+        operator = "操作员",
         maintainer = "运维员",
         administrator = "管理员",
+    },
+    [ENG] = {
+        operator = "Operator",
+        maintainer = "Maintainer",
+        administrator = "Admin",
     },
 }
 
@@ -169,6 +205,10 @@ ValveStatus = {
         open = "打开",
         close = "关闭"
     },
+    [ENG] = {
+        open = "Open",
+        close = "Close"
+    },
 };
 
 --LED状态
@@ -176,6 +216,10 @@ LedStatus = {
     [CHN] = {
         open = "打开",
         close = "关闭"
+    },
+    [ENG] = {
+        open = "ON",
+        close = "OFF"
     },
 };
 
@@ -185,20 +229,26 @@ CalcWay = {
         log = "取对数",
         diff = "取差值",
     },
+    [ENG] = {
+        log = "Logarithm",
+        diff = "Difference",
+    },
 };
 
 CalcType = {
     [CHN] = {"分析","校正一","校正二","校正三","校正四"},
+    [ENG] = {"Analysis","Calibrate 1","Calibrate 2","Calibrate 3","Calibrate 4"},
 };
 
 ProcessItem = {
     [CHN] = {"分析","校正","清洗","管路填充","零点核查","标样核查","跨度核查",BLANK_SPACE},
+    [ENG] = {"Analysis","Calibrate","Washing","Fill","Zero Check","Sample Check","Span Check",BLANK_SPACE},
 };
 
 ActionItem = {
     [CHN] = {"初始化","注射泵","注射泵加液体","读取信号","蠕动泵加液","计算","等待时间","消解","阀操作",BLANK_SPACE},
+    [ENG] = {"Init","Inject","Inject Add","Read Signal","Pump Add","Calc","Wait Time","Dispel","Valve",BLANK_SPACE},
 };
-
 
 
 Sys = {
@@ -334,8 +384,8 @@ function on_init()
     end
 
     Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
-    -- SetSysUser(SysUser.operator);   --开机之后默认为操作员
+ --   SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+    SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
 end
@@ -3122,6 +3172,8 @@ SensorBoardSoftVerId = 9;
 CalcBoardHardVerId = 10;
 CalcBoardSoftVerId = 11;
 
+SetChineseId = 19;
+SetEnglishId = 20;
 
 --设置仪器型号
 function set_equipment_type()
@@ -3136,17 +3188,25 @@ function system_info_control_notify(screen,control,value)
     if control == EquipmentTypeSetId then--设置仪器型号
         set_equipment_type();
     elseif control == maintainerPwdSetId then--运维员密码设置
-        set_user_name(SysUser[Sys.language].maintainer);
+        set_user_name(SysUser[Sys.language].maintainer);--设置密码修改界面的用户名
     elseif control == administratorPwdSetId then--管理员密码设置
-        set_user_name(SysUser[Sys.language].administrator);
+        set_user_name(SysUser[Sys.language].administrator);--设置密码修改界面的用户名
     elseif control == OperatorLoginId then --操作员登录
-        set_user_name(SysUser[Sys.language].operator);
+        SetSysUser(SysUser[Sys.language].operator);
     elseif control == maintainerLoginId then--运维员登录
-        set_user_name(SysUser[Sys.language].maintainer);
+        set_user_name(SysUser[Sys.language].maintainer);--设置登录界面的用户名
         change_screen(LOGIN_SYSTEM_SCREEN);
     elseif control == administratorLoginId then--管理员登录
-        set_user_name(SysUser[Sys.language].administrator);
+        set_user_name(SysUser[Sys.language].administrator);--设置登录界面的用户名
         change_screen(LOGIN_SYSTEM_SCREEN);
+    elseif control == SetChineseId then--设置为中文
+        Sys.language = CHN;
+        set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);
+        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);
+    elseif control == SetEnglishId then--设置为英文
+        Sys.language = ENG;
+        set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);
+        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE );
     end
 end
 
@@ -3156,10 +3216,10 @@ end
 function SetSysUser(user)
     
     Sys.userName = user;
-
+    
     --在底部的状态用户名
     for i = 1,16,1 do
-        set_text(PublicTab[i], SysUserNameId, Sys.userName);
+        set_text(PublicTab[i], SysUserNameId, user);
     end
 
     if Sys.userName == SysUser[Sys.language].operator then -- 操作员

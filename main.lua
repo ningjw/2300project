@@ -105,7 +105,10 @@ Direction = {
     [ENG] = {FWD = "CW",REV="CCW"},
 }
 
-
+CalcOrder = {
+    [CHN] = {first = "一阶", second = "二阶", Third = "三阶"},
+    [ENG] = {first = "First",second="Second", Third = "Third"},
+}
 
 --提示信息
 TipsTab = {
@@ -355,7 +358,6 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
-
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
 
@@ -382,7 +384,7 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
-
+    uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
     Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
     SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -391,7 +393,7 @@ function on_init()
 end
 
 --***********************************************************************************************
---定时器超时，执行此回调函数,定时器编号 0~3
+--定时器超时，执行此回调函数,定时器编号 0~2
 --定时器0: 1ms超时中断, 流程相关函数主要运行在该定时器当中
 --定时器1: 3ms超时中断, 主要用于判断串口数据回复是否超时
 --定时器2: 用于读取E1/E2信号时的超时判断; 用于流程控制中的超时判断
@@ -471,6 +473,8 @@ function on_control_notify(screen,control,value)
         hand_operate1_control_notify(screen,control,value);	
     elseif screen == HAND_OPERATE2_SCREEN then --手动操作2
         hand_operate2_control_notify(screen,control,value);	
+    elseif screen == IN_OUT_SCREEN then--输入输出界面
+        in_out_control_notify(screen,control,value);
 	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
 		system_info_control_notify(screen,control,value);	
     elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
@@ -2486,7 +2490,7 @@ end
 CALCULATE_BtStartId = 1;
 CALCULATE_BtEndId = 4;
 CALCULATE_TextStartId = 5;
-CALCULATE_TextEndId = 13;
+CALCULATE_TextEndId = 14;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -2498,6 +2502,62 @@ function process_calculate_control_notify(screen,control,value)
         change_screen(DestScreen);
     end
 end
+
+--***********************************************************************************************
+--  克莱姆法则计算a,b,c,d的值时,会用到该函数
+--  n表示为四元一次方程(求a,b,c,d),还是三元一次方程(求b,c,d,a等于0)
+--***********************************************************************************************
+function term (n, k, x)
+    local p,q,t = 1,1,1;
+
+    for p = 1, n-1, 1 do
+        for q = 0, p-1, 1 do
+            if k[q] > k[p] then
+                t = -t;
+            end
+        end
+    end
+    for p = 0, n-1, 1 do
+        t = t * x[p][k[p]];
+    end
+    return (t);
+end
+
+--***********************************************************************************************
+--  克莱姆法则计算a,b,c,d的值时,会用到该函数
+--  n表示为四元一次方程(求a,b,c,d),还是三元一次方程(求b,c,d,a等于0)
+--***********************************************************************************************
+function det(n, x)
+    local j0, j1, j2, j3, j4, j5, j6, d;
+    local k = {};
+    d = 0;
+    for j0 = 0, n-1, 1 do
+        if(x[0][j0] == 0)  then goto for0_ctn end;
+        k[0] = j0;
+        for j1 = 0, n-1, 1 do
+            if(j1 == j0 or x[1][j1] == 0) then goto for1_ctn end;
+
+            k[1] = j1;
+            if(n == 2) then d = d + term(n, k, x); end
+            for j2 = 0, n-1, 1 do
+                if(j2 == j0 or j2 == j1 or x[2][j2] == 0) then goto for2_ctn end;
+                k[2] = j2;
+                if(n == 3) then d = d + term(n, k, x); end
+                for j3 = 0, n-1, 1 do
+                    if(j3 == j0 or j3 == j1 or j3 == j2 or x[3][j3] == 0) then goto for3_ctn; end
+                    k[3] = j3;
+                    d = d + term(n, k, x);
+                    ::for3_ctn:: ;
+                end
+                ::for2_ctn:: ;
+            end
+            ::for1_ctn:: ;
+        end
+        ::for0_ctn:: ;
+    end
+    return (d);
+end
+
 
 --***********************************************************************************************
 --  通过对数方式计算校正结果
@@ -2532,14 +2592,81 @@ end
 --***********************************************************************************************
 --  通过差值方式计算校正结果
 --***********************************************************************************************
-function calc_calibrate_result_by_diff(void)
+function calc_calibrate_result_by_diff(n)
+    local diff0,diff1,diff2,diff3,detV;-- = Sys.caliE1[1] - Sys.caliE2[1];
+    local x,y,detVs = {},{},{};
+    for i = 0,3,1 do
+        x[i] = {};
+        y[i] = {};
+    end
+    diff0 = Sys.caliE1[1] - Sys.caliE2[1];
+    diff1 = Sys.caliE1[2] - Sys.caliE2[2];
+    diff2 = Sys.caliE1[3] - Sys.caliE2[3];
+    diff3 = Sys.caliE1[4] - Sys.caliE2[4];
 
+    --以下注释为模拟数据,得出的结果应该为a = 0.8333 b=0 c=-0.83333 d = 10.0
+    -- n = 4;
+    -- local diff0 = 1;
+    -- local diff1 = 2;
+    -- local diff2 = 3;
+    -- local diff3 = 4;
+    -- Sys.caliValue[1] = 10;
+    -- Sys.caliValue[2] = 15;
+    -- Sys.caliValue[3] = 30;
+    -- Sys.caliValue[4] = 60;
+
+    if n == 4 then 
+        x[0][0] = diff0*diff0*diff0; x[0][1] = diff0*diff0; x[0][2] = diff0; x[0][3] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1*diff1*diff1; x[1][1] = diff1*diff1; x[1][2] = diff1; x[1][3] = 1; y[1] = Sys.caliValue[2];
+        x[2][0] = diff2*diff2*diff2; x[2][1] = diff2*diff2; x[2][2] = diff2; x[2][3] = 1; y[2] = Sys.caliValue[3];
+        x[3][0] = diff3*diff3*diff3; x[3][1] = diff3*diff3; x[3][2] = diff3; x[3][3] = 1; y[3] = Sys.caliValue[4];
+    elseif n == 3 then
+        x[0][0] = diff0*diff0; x[0][1] = diff0; x[0][2] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1*diff1; x[1][1] = diff1; x[1][2] = 1; y[1] = Sys.caliValue[2];
+        x[2][0] = diff2*diff2; x[2][1] = diff2; x[2][2] = 1; y[2] = Sys.caliValue[3];
+    elseif n == 2 then
+        x[0][0] = diff0; x[0][1] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1; x[1][1] = 1; y[1] = Sys.caliValue[2];
+    end
+    local detV = det(n,x);
+--   print("D = "..detV);
+
+    for j = 0, n-1, 1 do
+        for i = 0, n-1, 1 do
+            temp[i] = x[i][j];
+            x[i][j] = y[i];
+        end
+        detVs[j] = det(n,x);
+--        print("D"..j.."="..detVs[j]);
+        for i = 0, n-1, 1 do
+            x[i][j] = temp[i];
+        end
+    end
+
+    local a,b,c,d
+    if n == 2 then
+        a = 0;
+        b = 0;
+        c = detVs[0] / detV;
+        d = detVs[1] / detV;
+    elseif n == 3 then
+        a = 0;
+        b = detVs[0] / detV;
+        c = detVs[1] / detV;
+        d = detVs[2] / detV;
+    elseif n == 4 then
+        a = detVs[0] / detV;
+        b = detVs[1] / detV;
+        c = detVs[2] / detV;
+        d = detVs[3] / detV;
+    end
     
     --设置计算出的a,b,c,d结果
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
+    print("a="..a..",b="..b..",c="..c..",d="..d);
     WriteProcessFile(3);--保存量程设置界面的参数
 end
 
@@ -2596,20 +2723,24 @@ function excute_calculate_process(paraTab)
         print("校正2：E1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
         if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
             calc_calibrate_result_by_log();
+        elseif Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[14] == CalcOrder[Sys.language].First then
+            calc_calibrate_result_by_diff(2);--通过行列式与克莱姆法则自动算出c,d的值
         end
     elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
         Sys.caliE1[3] = Sys.signalE1;
         Sys.caliE2[3] = Sys.signalE2;
         Sys.caliValue[3] = Sys.calibrationValue;
+        if Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[14] == CalcOrder[Sys.language].Second then
+            calc_calibrate_result_by_diff(3);--通过行列式与克莱姆法则自动算出b,c,d的值
+        end
         print("校正3：E1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
     elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
         Sys.caliE1[4] = Sys.signalE1;
         Sys.caliE2[4] = Sys.signalE2;
         Sys.caliValue[4] = Sys.calibrationValue;
+        calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
         print("校正4：E1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
- --       calc_calibrate_result_by_diff();--通过行列式与克莱姆法则自动算出a,b,c,d的值
     end
-
 
     if paraTab[4] == ENABLE_STRING then--是否需要保存历史记录
         if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
@@ -3096,9 +3227,25 @@ UartRecordId = 1--串口通讯记录空间id
 --[[-----------------------------------------------------------------------------------------------------------------
     输入输出
 --------------------------------------------------------------------------------------------------------------------]]
+IOSET_TextStartId = 1;
+IOSET_TextEndId = 13;
+IOSET_ComputerSetId = 25;
+IOSET_TouchScreenSetId = 26;
+IOSET_Output1SetId = 27;
+IOSET_Output2SetId = 30;
+IOSET_ScreenBaudId = 7;
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function in_out_control_notify(screen,control,value)
+    if control == IOSET_ComputerSetId then
 
+    elseif control == IOSET_TouchScreenSetId then
+        uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );
+    elseif control == IOSET_Output1SetId then
 
-
+    elseif control == IOSET_Output2SetId then
+    end
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -3378,6 +3525,7 @@ cfgFileTab = {
     [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--流程设置1界面中的参数保存在这个tag中
     [2] = {sTag = "<RunControl>",eTag = "</RunControl>"};--运行控制界面中的参数保存在这个tag中
     [3] = {sTag = "<RangeSet>",eTag = "</RangeSet>"};--量程设置界面中的参数保存在这个tag中
+    [4] = {sTag = "<IOSet>",eTag="</IOSet>"};--输出输出中的参数保存在这个tag中
 };
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
@@ -3410,6 +3558,10 @@ function WriteProcessFile(tagNum)
     elseif tagNum == 3 then--量程设置界面中的参数
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
             configFile:write(get_text(RANGE_SET_SCREEN, i)..",");
+        end
+    elseif tagNum == 4 then
+        for i = IOSET_TextStartId,IOSET_TextEndId,1 do
+            configFile:write(get_text(IN_OUT_SCREEN, i)..",");
         end
     end
     configFile:write(cfgFileTab[tagNum].eTag);
@@ -3480,6 +3632,10 @@ function ReadProcessTag(tagNum)
     elseif tagNum == 3 then--量程设置界面中的参数
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
             set_text(RANGE_SET_SCREEN, i, tab[i]);
+        end
+    elseif tagNum == 4 then
+        for i = IOSET_TextStartId, IO_TextEndId, 1 do
+            set_text(IN_OUT_SCREEN, i, tab[i]);
         end
     end
 end

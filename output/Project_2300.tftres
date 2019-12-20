@@ -33,7 +33,6 @@
         <page name="登录系统" id="30" />
         <page name="联系我们" id="31" />
         <page name="对话框" id="32" />
-        <page name="流程设置-注射泵加液 - 副本" id="33" />
     </pages>
     <images>
         <image id="0" url="e:\2300项目\Images\公司LOGeti - 副本.png" effect_width="98" effect_height="80" />
@@ -67,7 +66,7 @@
         <image id="28" url="e:\2300项目\Images\按钮按下.JPG" effect_width="60" effect_height="35" />
         <image id="29" url="e:\2300项目\Images\蓝色图标2.jpg" effect_width="109" effect_height="35" />
         <image id="30" url="e:\2300项目\Images\蓝色图标.jpg" effect_width="109" effect_height="35" />
-        <image id="31" url="e:\2300项目\Images\input.png" effect_width="78" effect_height="30" />
+        <image id="31" url="e:\2300项目\Images\input.png" effect_width="150" effect_height="30" />
         <image id="32" url="e:\2300项目\Images\多选框-否.png" effect_width="30" effect_height="30" />
         <image id="33" url="e:\2300项目\Images\多选框-是.png" effect_width="30" effect_height="30" />
         <image id="34" url="e:\2300项目\Images\按钮.JPG" effect_width="38" effect_height="38" />
@@ -112,10 +111,9 @@
         <image id="73" url="e:\2300项目\Images\input.png" effect_width="94" effect_height="35" />
         <image id="74" url="e:\2300项目\Images\长输入框.png" effect_width="312" effect_height="35" />
         <image id="75" url="e:\2300项目\Images\长输入框.png" effect_width="160" effect_height="35" />
-        <image id="76" url="e:\2300项目\Images\文字底色.jpg" effect_width="140" effect_height="35" />
+        <image id="76" url="e:\2300项目\Images\文字底色.jpg" effect_width="150" effect_height="35" />
         <image id="77" url="e:\2300项目\Images\input.png" effect_width="120" effect_height="30" />
         <image id="78" url="e:\2300项目\Images\联系我们.png" effect_width="493" effect_height="276" />
-        <image id="79" url="e:\2300项目\Images\input.png" effect_width="80" effect_height="31" />
     </images>
     <waves />
 </Resource>

@@ -233,8 +233,8 @@ CalcWay = {
         diff = "取差值",
     },
     [ENG] = {
-        log = "Logarithm",
-        diff = "Difference",
+        log = "Log10",
+        diff = "Diff",
     },
 };
 
@@ -2506,6 +2506,75 @@ function process_calculate_control_notify(screen,control,value)
 end
 
 --***********************************************************************************************
+--  执行计算流程
+--***********************************************************************************************
+function excute_calculate_process(paraTab)
+    Sys.calculateWay = paraTab[10];
+    Sys.calculateType = paraTab[12];
+    Sys.calibrationValue = tonumber(paraTab[13]);
+    Sys.resultTime = Sys.dateTime;--获取当前时间
+    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+        calc_analysis_result(Sys.calculateWay);
+        if paraTab[1] == ENABLE_STRING then--结果线性补偿
+            Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
+        end
+        print("分析结果 =",Sys.result);
+    elseif Sys.calculateType == CalcType[Sys.language][2] then--当前计算为校正1
+        Sys.caliE1[1] = Sys.signalE1;
+        Sys.caliE2[1] = Sys.signalE2;
+        Sys.caliValue[1] = Sys.calibrationValue;
+        print("校正1：E1=",Sys.caliE1[1],",E2=",Sys.caliE2[1]);
+    elseif Sys.calculateType == CalcType[Sys.language][3] then--当前计算为校正2
+        Sys.caliE1[2] = Sys.signalE1;
+        Sys.caliE2[2] = Sys.signalE2;
+        Sys.caliValue[2] = Sys.calibrationValue;
+        print("校正2：E1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
+        if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
+            calc_calibrate_result_by_log();
+        elseif Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].First then
+            calc_calibrate_result_by_diff(2);--通过行列式与克莱姆法则自动算出c,d的值
+        end
+    elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
+        Sys.caliE1[3] = Sys.signalE1;
+        Sys.caliE2[3] = Sys.signalE2;
+        Sys.caliValue[3] = Sys.calibrationValue;
+        if Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].Second then
+            calc_calibrate_result_by_diff(3);--通过行列式与克莱姆法则自动算出b,c,d的值
+        end
+        print("校正3：E1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
+    elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
+        Sys.caliE1[4] = Sys.signalE1;
+        Sys.caliE2[4] = Sys.signalE2;
+        Sys.caliValue[4] = Sys.calibrationValue;
+        calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
+        print("校正4：E1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
+    end
+
+
+    if paraTab[2] == ENABLE_STRING then--是否需要进行报警
+        
+    end
+
+    if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
+        if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+            add_history_record(HISTORY_ANALYSIS_SCREEN);
+        else
+            add_history_record(HISTORY_CALIBRATION_SCREEN);--当前计算为校准
+        end
+    end
+
+    --在主界面进行显示结果与结果时间
+    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+        set_text(MAIN_SCREEN, LastResultId, Sys.result);
+    else
+        set_text(MAIN_SCREEN, LastResultId, Sys.calibrationValue);
+    end
+    set_text(MAIN_SCREEN, LastResultTimeId, Sys.resultTime.year.."-"..Sys.resultTime.mon.."-"..Sys.resultTime.day..
+                                              "  "..Sys.resultTime.hour..":"..Sys.resultTime.min);
+    return FINISHED;
+end
+
+--***********************************************************************************************
 --  克莱姆法则计算a,b,c,d的值时,会用到该函数
 --  n表示为四元一次方程(求a,b,c,d),还是三元一次方程(求b,c,d,a等于0)
 --***********************************************************************************************
@@ -2699,69 +2768,7 @@ function calc_analysis_result(type)
     set_text(MAIN_SCREEN, LastResultId, Sys.result);--在主界面显示结果
 end
 
---***********************************************************************************************
---  执行计算流程
---***********************************************************************************************
-function excute_calculate_process(paraTab)
-    Sys.calculateWay = paraTab[11];
-    Sys.calculateType = paraTab[12];
-    Sys.calibrationValue = tonumber(paraTab[13]);
-    Sys.resultTime = Sys.dateTime;--获取当前时间
-    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
-        calc_analysis_result(Sys.calculateWay);
-        if paraTab[1] == ENABLE_STRING then--结果调整
-            Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
-        end
-        print("分析结果 =",Sys.result);
-    elseif Sys.calculateType == CalcType[Sys.language][2] then--当前计算为校正1
-        Sys.caliE1[1] = Sys.signalE1;
-        Sys.caliE2[1] = Sys.signalE2;
-        Sys.caliValue[1] = Sys.calibrationValue;
-        print("校正1：E1=",Sys.caliE1[1],",E2=",Sys.caliE2[1]);
-    elseif Sys.calculateType == CalcType[Sys.language][3] then--当前计算为校正2
-        Sys.caliE1[2] = Sys.signalE1;
-        Sys.caliE2[2] = Sys.signalE2;
-        Sys.caliValue[2] = Sys.calibrationValue;
-        print("校正2：E1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
-        if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
-            calc_calibrate_result_by_log();
-        elseif Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[14] == CalcOrder[Sys.language].First then
-            calc_calibrate_result_by_diff(2);--通过行列式与克莱姆法则自动算出c,d的值
-        end
-    elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
-        Sys.caliE1[3] = Sys.signalE1;
-        Sys.caliE2[3] = Sys.signalE2;
-        Sys.caliValue[3] = Sys.calibrationValue;
-        if Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[14] == CalcOrder[Sys.language].Second then
-            calc_calibrate_result_by_diff(3);--通过行列式与克莱姆法则自动算出b,c,d的值
-        end
-        print("校正3：E1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
-    elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
-        Sys.caliE1[4] = Sys.signalE1;
-        Sys.caliE2[4] = Sys.signalE2;
-        Sys.caliValue[4] = Sys.calibrationValue;
-        calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
-        print("校正4：E1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
-    end
 
-    if paraTab[4] == ENABLE_STRING then--是否需要保存历史记录
-        if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
-            add_history_record(HISTORY_ANALYSIS_SCREEN);
-        else
-            add_history_record(HISTORY_CALIBRATION_SCREEN);--当前计算为校准
-        end
-    end
-
-    --在主界面进行显示结果与结果时间
-    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
-        set_text(MAIN_SCREEN, LastResultId, Sys.result);
-    else
-        set_text(MAIN_SCREEN, LastResultId, Sys.calibrationValue);
-    end
-    set_text(MAIN_SCREEN, LastResultTimeId, Sys.resultTime.year.."-"..Sys.resultTime.mon.."-"..Sys.resultTime.day..
-                                              "  "..Sys.resultTime.hour..":"..Sys.resultTime.min);
-    return FINISHED;
-end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------

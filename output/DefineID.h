@@ -97,9 +97,6 @@
 //创建画面对话框的命令索引ID
 #define  _SCREEN_对话框                                                          32
 
-//创建画面流程设置-注射泵加液 - 副本的命令索引ID
-#define  _SCREEN_流程设置-注射泵加液 - 副本                                              33
-
 #define  _RTC_首页_RTC1                                                        111
 
 #define  _RTC_首页_RTC2                                                        112
@@ -1775,8 +1772,6 @@
 
 #define  _TXT_DIS__流程设置-初始化_TEXT_DISPLAY15                                    22
 
-#define  _MENU_流程设置-初始化_MENU1                                                108
-
 #define  _BTN_流程设置-初始化_BUTTON4                                                 3
 
 //画面流程设置-初始化中按钮Button5弹起时的图片
@@ -1935,6 +1930,8 @@
 
 #define  _TXT_DIS__流程设置-初始化_TEXT_DISPLAY17                                    23
 
+#define  _MENU_流程设置-初始化_MENU1                                                108
+
 //画面流程设置-注射泵中按钮Button3弹起时的图片
 #define  _IMG_流程设置-注射泵_BUTTON3_UP                                             29
 
@@ -2002,8 +1999,11 @@
 
 #define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY10                                     9
 
+//画面流程设置-注射泵中图片Image5使用的图片
+#define  _IMG_流程设置-注射泵_IMAGE5                                                 38
+
 //画面流程设置-注射泵中图片Image9使用的图片
-#define  _IMG_流程设置-注射泵_IMAGE9                                                 39
+#define  _IMG_流程设置-注射泵_IMAGE9                                                 38
 
 #define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY15                                    10
 
@@ -2354,7 +2354,7 @@
 #define  _BTN_流程设置-注射泵加液_BUTTON42                                             41
 
 //画面流程设置-注射泵加液中图片Image14使用的图片
-#define  _IMG_流程设置-注射泵加液_IMAGE14                                              36
+#define  _IMG_流程设置-注射泵加液_IMAGE14                                              38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY17                                  42
 
@@ -2401,7 +2401,7 @@
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY9                                   51
 
 //画面流程设置-注射泵加液中图片Image5使用的图片
-#define  _IMG_流程设置-注射泵加液_IMAGE5                                               36
+#define  _IMG_流程设置-注射泵加液_IMAGE5                                               38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY21                                  52
 
@@ -2446,10 +2446,10 @@
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY20                                  60
 
 //画面流程设置-注射泵加液中图片Image15使用的图片
-#define  _IMG_流程设置-注射泵加液_IMAGE15                                              39
+#define  _IMG_流程设置-注射泵加液_IMAGE15                                              38
 
 //画面流程设置-注射泵加液中图片Image19使用的图片
-#define  _IMG_流程设置-注射泵加液_IMAGE19                                              39
+#define  _IMG_流程设置-注射泵加液_IMAGE19                                              38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY5                                   61
 
@@ -2647,9 +2647,6 @@
 
 #define  _BTN_流程设置-蠕动泵加液_BUTTON27                                             22
 
-//画面流程设置-蠕动泵加液中图片Image14使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE14                                              36
-
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY17                                  23
 
 //画面流程设置-蠕动泵加液中图片Image2使用的图片
@@ -2668,12 +2665,12 @@
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY3                                   26
 
 //画面流程设置-蠕动泵加液中图片Image4使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE4                                               39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE4                                               38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY4                                   27
 
 //画面流程设置-蠕动泵加液中图片Image6使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE6                                               39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE6                                               38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY6                                   28
 
@@ -2695,12 +2692,12 @@
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY7                                   30
 
 //画面流程设置-蠕动泵加液中图片Image8使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE8                                               39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE8                                               38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY8                                   31
 
 //画面流程设置-蠕动泵加液中图片Image10使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE10                                              39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE10                                              38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY10                                  32
 
@@ -2722,12 +2719,12 @@
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY11                                  34
 
 //画面流程设置-蠕动泵加液中图片Image12使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE12                                              39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE12                                              38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY12                                  35
 
 //画面流程设置-蠕动泵加液中图片Image15使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE15                                              39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE15                                              38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY14                                  36
 
@@ -2744,10 +2741,10 @@
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY13                                  37
 
 //画面流程设置-蠕动泵加液中图片Image5使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE5                                               39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE5                                               38
 
 //画面流程设置-蠕动泵加液中图片Image9使用的图片
-#define  _IMG_流程设置-蠕动泵加液_IMAGE9                                               39
+#define  _IMG_流程设置-蠕动泵加液_IMAGE9                                               38
 
 #define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY15                                  38
 
@@ -2770,7 +2767,7 @@
 #define  _BTN_流程设置-消解_BUTTON1                                                 98
 
 //画面流程设置-消解中按钮Button9弹起时的图片
-#define  _IMG_流程设置-消解_BUTTON9_UP                                              32
+#define  _IMG_流程设置-消解_BUTTON9_UP                                              33
 
 //画面流程设置-消解中按钮Button9按下时的图片
 #define  _IMG_流程设置-消解_BUTTON9_DOWN                                            33
@@ -2861,32 +2858,32 @@
 //画面流程设置-计算中图片Image7使用的图片
 #define  _IMG_流程设置-计算_IMAGE7                                                  39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                       5
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                       4
 
 //画面流程设置-计算中图片Image8使用的图片
 #define  _IMG_流程设置-计算_IMAGE8                                                  39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       6
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       5
 
 //画面流程设置-计算中图片Image10使用的图片
 #define  _IMG_流程设置-计算_IMAGE10                                                 39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      9
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      8
 
 //画面流程设置-计算中图片Image11使用的图片
 #define  _IMG_流程设置-计算_IMAGE11                                                 39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                     10
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                      9
 
 //画面流程设置-计算中图片Image13使用的图片
 #define  _IMG_流程设置-计算_IMAGE13                                                 39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY16                                      7
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY16                                      6
 
 //画面流程设置-计算中图片Image14使用的图片
 #define  _IMG_流程设置-计算_IMAGE14                                                 39
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      8
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      7
 
 //画面流程设置-计算中按钮Button4弹起时的图片
 #define  _IMG_流程设置-计算_BUTTON4_UP                                              32
@@ -2910,7 +2907,7 @@
 //画面流程设置-计算中按钮Button2按下时的图片
 #define  _IMG_流程设置-计算_BUTTON2_DOWN                                            33
 
-#define  _BTN_流程设置-计算_BUTTON2                                                  4
+#define  _BTN_流程设置-计算_BUTTON2                                                  3
 
 //画面流程设置-计算中图片Image1使用的图片
 #define  _IMG_流程设置-计算_IMAGE1                                                  37
@@ -2925,7 +2922,7 @@
 
 #define  _BTN_流程设置-计算_BUTTON7                                                120
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY1                                      11
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY1                                      10
 
 //画面流程设置-计算中按钮Button8弹起时的图片
 #define  _IMG_流程设置-计算_BUTTON8_UP                                              42
@@ -2937,37 +2934,29 @@
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY3                                      12
 
-//画面流程设置-计算中按钮Button9弹起时的图片
-#define  _IMG_流程设置-计算_BUTTON9_UP                                              32
-
-//画面流程设置-计算中按钮Button9按下时的图片
-#define  _IMG_流程设置-计算_BUTTON9_DOWN                                            33
-
-#define  _BTN_流程设置-计算_BUTTON9                                                  3
-
 //画面流程设置-计算中图片Image2使用的图片
-#define  _IMG_流程设置-计算_IMAGE2                                                  38
+#define  _IMG_流程设置-计算_IMAGE2                                                  39
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY15                                     13
 
 #define  _MENU_流程设置-计算_MENU1                                                 128
 
 //画面流程设置-计算中按钮Button10弹起时的图片
-#define  _IMG_流程设置-计算_BUTTON10_UP                                             42
+#define  _IMG_流程设置-计算_BUTTON10_UP                                             39
 
 //画面流程设置-计算中按钮Button10按下时的图片
-#define  _IMG_流程设置-计算_BUTTON10_DOWN                                           42
+#define  _IMG_流程设置-计算_BUTTON10_DOWN                                           39
 
 #define  _BTN_流程设置-计算_BUTTON10                                               140
 
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY4                                      14
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY4                                      11
 
 #define  _MENU_流程设置-计算_MENU3                                                  17
 
 #define  _MENU_流程设置-计算_MENU2                                                 122
 
 //画面流程设置-阀操作中图片Image14使用的图片
-#define  _IMG_流程设置-阀操作_IMAGE14                                                36
+#define  _IMG_流程设置-阀操作_IMAGE14                                                39
 
 #define  _TXT_DIS__流程设置-阀操作_TEXT_DISPLAY17                                    19
 
@@ -3144,10 +3133,10 @@
 #define  _MENU_流程设置-阀操作_MENU2                                                114
 
 //画面流程设置-阀操作中按钮Button5弹起时的图片
-#define  _IMG_流程设置-阀操作_BUTTON5_UP                                             36
+#define  _IMG_流程设置-阀操作_BUTTON5_UP                                             39
 
 //画面流程设置-阀操作中按钮Button5按下时的图片
-#define  _IMG_流程设置-阀操作_BUTTON5_DOWN                                           36
+#define  _IMG_流程设置-阀操作_BUTTON5_DOWN                                           39
 
 #define  _BTN_流程设置-阀操作_BUTTON5                                               112
 
@@ -5695,14 +5684,6 @@
 
 #define  _BTN_系统信息_BUTTON27                                                  118
 
-//画面系统信息中按钮Button28弹起时的图片
-#define  _IMG_系统信息_BUTTON28_UP                                                76
-
-//画面系统信息中按钮Button28按下时的图片
-#define  _IMG_系统信息_BUTTON28_DOWN                                              76
-
-#define  _BTN_系统信息_BUTTON28                                                  139
-
 //画面系统信息中图片Image3使用的图片
 #define  _IMG_系统信息_IMAGE3                                                     75
 
@@ -5798,442 +5779,5 @@
 
 #define  _BTN_对话框_BUTTON1                                                     98
 
-//画面流程设置-注射泵加液 - 副本中图片Image14使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE14                                         36
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY17                             62
-
-//画面流程设置-注射泵加液 - 副本中按钮Button51弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON51_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button51按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON51_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON51                                         1
-
-//画面流程设置-注射泵加液 - 副本中图片Image2使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE2                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY1                              41
-
-//画面流程设置-注射泵加液 - 副本中按钮Button35弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON35_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button35按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON35_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON35                                         2
-
-//画面流程设置-注射泵加液 - 副本中图片Image1使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE1                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY2                              42
-
-//画面流程设置-注射泵加液 - 副本中按钮Button9弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON9_UP                                      32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button9按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON9_DOWN                                    33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON9                                          3
-
-//画面流程设置-注射泵加液 - 副本中图片Image3使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE3                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY3                              44
-
-//画面流程设置-注射泵加液 - 副本中图片Image4使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE4                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY4                              45
-
-//画面流程设置-注射泵加液 - 副本中图片Image6使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE6                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY6                              47
-
-//画面流程设置-注射泵加液 - 副本中按钮Button10弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON10_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button10按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON10_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON10                                         4
-
-//画面流程设置-注射泵加液 - 副本中图片Image7使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE7                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY7                              48
-
-//画面流程设置-注射泵加液 - 副本中图片Image8使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE8                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY8                              49
-
-//画面流程设置-注射泵加液 - 副本中图片Image10使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE10                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY10                             51
-
-//画面流程设置-注射泵加液 - 副本中按钮Button6弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON6_UP                                      32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button6按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON6_DOWN                                    33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON6                                          6
-
-//画面流程设置-注射泵加液 - 副本中图片Image11使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE11                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY11                             52
-
-//画面流程设置-注射泵加液 - 副本中按钮Button39弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON39_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button39按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON39_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON39                                         7
-
-//画面流程设置-注射泵加液 - 副本中图片Image12使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE12                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY12                             54
-
-//画面流程设置-注射泵加液 - 副本中图片Image13使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE13                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY13                             55
-
-//画面流程设置-注射泵加液 - 副本中图片Image16使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE16                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY15                             57
-
-//画面流程设置-注射泵加液 - 副本中按钮Button40弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON40_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button40按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON40_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON40                                         8
-
-//画面流程设置-注射泵加液 - 副本中图片Image17使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE17                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY16                             58
-
-//画面流程设置-注射泵加液 - 副本中图片Image18使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE18                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY18                             59
-
-//画面流程设置-注射泵加液 - 副本中图片Image20使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE20                                         38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY20                             61
-
-//画面流程设置-注射泵加液 - 副本中按钮Button37弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON37_UP                                     29
-
-//画面流程设置-注射泵加液 - 副本中按钮Button37按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON37_DOWN                                   30
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON37                                        99
-
-//画面流程设置-注射泵加液 - 副本中按钮Button38弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON38_UP                                     29
-
-//画面流程设置-注射泵加液 - 副本中按钮Button38按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON38_DOWN                                   30
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON38                                        98
-
-//画面流程设置-注射泵加液 - 副本中按钮Button2弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON2_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button2按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON2_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON2                                          9
-
-//画面流程设置-注射泵加液 - 副本中按钮Button4弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON4_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button4按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON4_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON4                                         10
-
-//画面流程设置-注射泵加液 - 副本中按钮Button11弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON11_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button11按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON11_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON11                                        11
-
-//画面流程设置-注射泵加液 - 副本中按钮Button12弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON12_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button12按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON12_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON12                                        12
-
-//画面流程设置-注射泵加液 - 副本中按钮Button13弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON13_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button13按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON13_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON13                                        13
-
-//画面流程设置-注射泵加液 - 副本中按钮Button14弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON14_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button14按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON14_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON14                                        14
-
-//画面流程设置-注射泵加液 - 副本中按钮Button15弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON15_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button15按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON15_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON15                                        15
-
-//画面流程设置-注射泵加液 - 副本中按钮Button16弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON16_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button16按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON16_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON16                                        16
-
-//画面流程设置-注射泵加液 - 副本中按钮Button17弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON17_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button17按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON17_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON17                                        17
-
-//画面流程设置-注射泵加液 - 副本中按钮Button18弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON18_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button18按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON18_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON18                                        18
-
-//画面流程设置-注射泵加液 - 副本中按钮Button19弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON19_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button19按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON19_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON19                                        19
-
-//画面流程设置-注射泵加液 - 副本中按钮Button20弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON20_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button20按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON20_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON20                                        20
-
-//画面流程设置-注射泵加液 - 副本中按钮Button21弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON21_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button21按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON21_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON21                                        21
-
-//画面流程设置-注射泵加液 - 副本中按钮Button22弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON22_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button22按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON22_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON22                                        22
-
-//画面流程设置-注射泵加液 - 副本中按钮Button26弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON26_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button26按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON26_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON26                                        23
-
-//画面流程设置-注射泵加液 - 副本中按钮Button27弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON27_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button27按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON27_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON27                                        24
-
-//画面流程设置-注射泵加液 - 副本中按钮Button1弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON1_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button1按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON1_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON1                                         25
-
-//画面流程设置-注射泵加液 - 副本中按钮Button3弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON3_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button3按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON3_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON3                                         26
-
-//画面流程设置-注射泵加液 - 副本中按钮Button5弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON5_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button5按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON5_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON5                                         27
-
-//画面流程设置-注射泵加液 - 副本中按钮Button7弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON7_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button7按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON7_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON7                                         28
-
-//画面流程设置-注射泵加液 - 副本中按钮Button8弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON8_UP                                      34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button8按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON8_DOWN                                    35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON8                                         29
-
-//画面流程设置-注射泵加液 - 副本中按钮Button23弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON23_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button23按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON23_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON23                                        30
-
-//画面流程设置-注射泵加液 - 副本中按钮Button24弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON24_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button24按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON24_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON24                                        31
-
-//画面流程设置-注射泵加液 - 副本中按钮Button25弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON25_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button25按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON25_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON25                                        32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button28弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON28_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button28按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON28_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON28                                        33
-
-//画面流程设置-注射泵加液 - 副本中按钮Button29弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON29_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button29按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON29_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON29                                        34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button30弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON30_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button30按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON30_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON30                                        35
-
-//画面流程设置-注射泵加液 - 副本中按钮Button31弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON31_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button31按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON31_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON31                                        36
-
-//画面流程设置-注射泵加液 - 副本中按钮Button32弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON32_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button32按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON32_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON32                                        37
-
-//画面流程设置-注射泵加液 - 副本中按钮Button33弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON33_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button33按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON33_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON33                                        38
-
-//画面流程设置-注射泵加液 - 副本中按钮Button34弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON34_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button34按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON34_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON34                                        39
-
-//画面流程设置-注射泵加液 - 副本中按钮Button36弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON36_UP                                     34
-
-//画面流程设置-注射泵加液 - 副本中按钮Button36按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON36_DOWN                                   35
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON36                                        40
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY5                              46
-
-//画面流程设置-注射泵加液 - 副本中按钮Button44按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON44_DOWN                                   79
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON44                                       163
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY9                              50
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY14                             56
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY19                             60
-
-//画面流程设置-注射泵加液 - 副本中图片Image5使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE5                                          36
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY21                             63
-
-//画面流程设置-注射泵加液 - 副本中按钮Button41弹起时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON41_UP                                     32
-
-//画面流程设置-注射泵加液 - 副本中按钮Button41按下时的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_BUTTON41_DOWN                                   33
-
-#define  _BTN_流程设置-注射泵加液 - 副本_BUTTON41                                         5
-
-//画面流程设置-注射泵加液 - 副本中图片Image9使用的图片
-#define  _IMG_流程设置-注射泵加液 - 副本_IMAGE9                                          38
-
-#define  _TXT_DIS__流程设置-注射泵加液 - 副本_TEXT_DISPLAY22                             64
+#define  _BTN_对话框_BUTTON2                                                      1
 

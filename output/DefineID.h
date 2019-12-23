@@ -4381,6 +4381,19 @@
 
 #define  _BTN_手动操作2_BUTTON35                                                  15
 
+//画面手动操作2中图片Image2使用的图片
+#define  _IMG_手动操作2_IMAGE2                                                    11
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY1                                        11
+
+//画面手动操作2中按钮Button9弹起时的图片
+#define  _IMG_手动操作2_BUTTON9_UP                                                63
+
+//画面手动操作2中按钮Button9按下时的图片
+#define  _IMG_手动操作2_BUTTON9_DOWN                                              64
+
+#define  _BTN_手动操作2_BUTTON9                                                   13
+
 #define  _RTC_手动操作3_RTC1                                                     224
 
 #define  _RTC_手动操作3_RTC2                                                     225

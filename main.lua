@@ -88,6 +88,7 @@ RESET = 0;
 
 OK = 0;
 ERR = 1;
+FAILURE = 1;
 
 FINISHED = 0;--×ÓÁ÷³ÌÖ´ÐÐÍê³É
 
@@ -570,7 +571,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getDrvVer ,NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 6 then--µÚÁù²½£ºÏÔÊ¾Çý¶¯°æ±¾°æ±¾ºÅ ²¢ »ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ
-        if UartArg.recv_data[10] ~= nil then
+        if UartArg.reply_sta == OK then
             softVer1 = bcd_to_string(UartArg.recv_data[10]).."."..bcd_to_string(UartArg.recv_data[11]); 
             hardVer1 = bcd_to_string(UartArg.recv_data[12]).."."..bcd_to_string(UartArg.recv_data[13]);
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId,softVer1);--ÏÔÊ¾Èí¼þ°æ±¾ºÅ
@@ -579,7 +580,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCHardVer, NEED_REPLY);--»ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 7 then--µÚÆß²½£ºÏÔÊ¾´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ ²¢ »ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
-        if UartArg.recv_data[3] ~= nil then
+        if UartArg.reply_sta == OK then
             hardVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]);
             set_text(SYSTEM_INFO_SCREEN, SensorBoardHardVerId, hardVer1);
             hardVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -589,7 +590,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--»ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 8 then--µÚ°Ë²½£ºÏÔÊ¾¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
-        if UartArg.recv_data[3] ~= nil then
+        if UartArg.reply_sta == OK then
             softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]); 
             set_text(SYSTEM_INFO_SCREEN, SensorBoardSoftVerId, softVer1);
             softVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -641,6 +642,7 @@ UartArg = {
     note = "",--ÓÃÓÚ±£´æ´®¿ÚÖ¸ÁîËµÃ÷
     recv_data,--ÓÃÓÚ±£´æ½ÓÊÕµ½µÄÊý¾Ý
     reply_data = {[0] = 0, [1] = 0},--ÓÃÓÚ±£´æÐèÒª½ÓÊÜµ½µÄ»Ø¸´Êý¾Ý
+    reply_sta = FAILURE;--ÓÃÓÚÖ¸Ê¾·¢ËÍµÄ´®¿ÚÖ¸ÁîÊÇ·ñÓÐÕýÈ·»Ø¸´
     lock = UNLOCKED,--ÓÃÓÚÖ¸Ê¾´®¿ÚÊÇ·ñÉÏËø, µ±·¢ËÍÒ»ÌõÐèÒªµÈ´ý»Ø¸´µÄ´®¿ÚÖ¸ÁîÊ±,´®¿ÚÉÏËø, µ±ÊÕµ½»Ø¸´Ê±,´®¿Ú½âËø
 };
 
@@ -665,6 +667,7 @@ function on_uart_recv_data(packet)
     UartArg.recv_data = packet;
 
     if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--½ÓÊÜµ½Êý¾Ý»Ø¸´
+        UartArg.reply_sta = OK;
         UartArg.lock = UNLOCKED;
         stop_timer(1)--Í£Ö¹³¬Ê±¶¨Ê±Æ÷
         local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
@@ -695,6 +698,7 @@ function on_uart_send_data(packet, reply)
     end
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--¼ÆËãcrc16
+    UartArg.reply_sta = FAILURE;
     uart_send_data(packet) --½«Êý¾ÝÍ¨¹ý´®¿Ú·¢ËÍ³öÈ¥
 
     UartArg.note = packet.note;--ÔÚ±£´æ´®¿Ú»Ø¸´³¬Ê±µÄÈÕÖ¾Ê±£¬ÐèÒªÓÃµ½UartArg.note
@@ -721,11 +725,11 @@ function uart_time_out()
     else  --ÖØ·¢Èý´Î¶¼Ã»ÓÐ»Ø¸´,²»ÔÙÖØ·¢
         UartArg.repeat_times = 0;
         --´ËÊ±Èç¹ûÏµÍ³ÔÚÔËÐÐÁ÷³Ì,ÔòËø×¡´®¿Ú,²»ÔÙ¼ÌÐøÍùÏÂÖ´ÐÐ,ÔÚ°´Í£Ö¹ºó»á½âËø´®¿Ú; Èç¹ûÊÇÊÖ¶¯²Ù×÷·¢ËÍ´®¿ÚÖ¸Áî,Ôò½âËø´®¿Ú
---       if Sys.status == WorkStatus[Sys.language].run then
+      if Sys.status == WorkStatus[Sys.language].run then
             UartArg.lock = LOCKED;
---       else
---            UartArg.lock = UNLOCKED;
---        end
+      else
+           UartArg.lock = UNLOCKED;
+       end
         stop_timer(1)--Í£Ö¹³¬Ê±¶¨Ê±Æ÷
         beep(1000);--´®¿Ú»Ø¸´³¬Ê±£¬·äÃùÆ÷Ïì1ÃëÖÓ¡£
         Sys.alarmContent = UartArg.note..SysLog[Sys.language].uartTimeOut;--³õÊ¼»¯±¨¾¯ÄÚÈÝ£¨´®¿Ú»Ø¸´³¬Ê±£©
@@ -1726,30 +1730,30 @@ ProcessSelectTipsTextId = 21;--ÓÃÓÚÏÔÊ¾ÌáÊ¾ÐÅÏ¢µÄÎÄ±¾¿ò,Á÷³ÌÉèÖÃ2/3½çÃæÖÐ¶¼ÊÇÕâ¸
 --ÕâÀï×¢Òâ¹Û²ì¶¯×÷Ñ¡Ôñid,¶¯×÷Ãû³Æid,±à¼­idÖ®¼äµÄÊýÑ§×ª»»¹ØÏµ:typeId = nameId + 100; nameId = editId + 100
 --ÆäÖÐ[1]-[12]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³ÌÉèÖÃ2½çÃæÖÐ,[13]-[24]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³ÌÉèÖÃ3½çÃæÖÐ
 TabAction = {
-    [1 ] = {typeId = 301, nameId = 201, insertId = 501 , editId = 101},
-    [2 ] = {typeId = 302, nameId = 202, insertId = 502 , editId = 102},
-    [3 ] = {typeId = 303, nameId = 203, insertId = 503 , editId = 103},
-    [4 ] = {typeId = 304, nameId = 204, insertId = 504 , editId = 104},
-    [5 ] = {typeId = 305, nameId = 205, insertId = 505 , editId = 105},
-    [6 ] = {typeId = 306, nameId = 206, insertId = 506 , editId = 106},
-    [7 ] = {typeId = 307, nameId = 207, insertId = 507 , editId = 107},
-    [8 ] = {typeId = 308, nameId = 208, insertId = 508 , editId = 108},
-    [9 ] = {typeId = 309, nameId = 209, insertId = 509 , editId = 109},
-    [10] = {typeId = 310, nameId = 210, insertId = 510 , editId = 110},
-    [11] = {typeId = 311, nameId = 211, insertId = 511 , editId = 111},
-    [12] = {typeId = 312, nameId = 212, insertId = 512 , editId = 112},
-    [13] = {typeId = 313, nameId = 213, insertId = 513 , editId = 113},
-    [14] = {typeId = 314, nameId = 214, insertId = 514 , editId = 114},
-    [15] = {typeId = 315, nameId = 215, insertId = 515 , editId = 115},
-    [16] = {typeId = 316, nameId = 216, insertId = 516 , editId = 116},
-    [17] = {typeId = 317, nameId = 217, insertId = 517 , editId = 117},
-    [18] = {typeId = 318, nameId = 218, insertId = 518 , editId = 118},
-    [19] = {typeId = 319, nameId = 219, insertId = 519 , editId = 119},
-    [20] = {typeId = 320, nameId = 220, insertId = 520 , editId = 120},
-    [21] = {typeId = 321, nameId = 221, insertId = 521 , editId = 121},
-    [22] = {typeId = 322, nameId = 222, insertId = 522 , editId = 122},
-    [23] = {typeId = 323, nameId = 223, insertId = 523 , editId = 123},
-    [24] = {typeId = 324, nameId = 224, insertId = 524 , editId = 124},
+    [1 ] = {typeId = 301, nameId = 201, insertId = 501 ,deleteId = 601 , editId = 101},
+    [2 ] = {typeId = 302, nameId = 202, insertId = 502 ,deleteId = 602 , editId = 102},
+    [3 ] = {typeId = 303, nameId = 203, insertId = 503 ,deleteId = 603 , editId = 103},
+    [4 ] = {typeId = 304, nameId = 204, insertId = 504 ,deleteId = 604 , editId = 104},
+    [5 ] = {typeId = 305, nameId = 205, insertId = 505 ,deleteId = 605 , editId = 105},
+    [6 ] = {typeId = 306, nameId = 206, insertId = 506 ,deleteId = 606 , editId = 106},
+    [7 ] = {typeId = 307, nameId = 207, insertId = 507 ,deleteId = 607 , editId = 107},
+    [8 ] = {typeId = 308, nameId = 208, insertId = 508 ,deleteId = 608 , editId = 108},
+    [9 ] = {typeId = 309, nameId = 209, insertId = 509 ,deleteId = 609 , editId = 109},
+    [10] = {typeId = 310, nameId = 210, insertId = 510 ,deleteId = 610 , editId = 110},
+    [11] = {typeId = 311, nameId = 211, insertId = 511 ,deleteId = 611 , editId = 111},
+    [12] = {typeId = 312, nameId = 212, insertId = 512 ,deleteId = 612 , editId = 112},
+    [13] = {typeId = 313, nameId = 213, insertId = 513 ,deleteId = 613 , editId = 113},
+    [14] = {typeId = 314, nameId = 214, insertId = 514 ,deleteId = 614 , editId = 114},
+    [15] = {typeId = 315, nameId = 215, insertId = 515 ,deleteId = 615 , editId = 115},
+    [16] = {typeId = 316, nameId = 216, insertId = 516 ,deleteId = 616 , editId = 116},
+    [17] = {typeId = 317, nameId = 217, insertId = 517 ,deleteId = 617 , editId = 117},
+    [18] = {typeId = 318, nameId = 218, insertId = 518 ,deleteId = 618 , editId = 118},
+    [19] = {typeId = 319, nameId = 219, insertId = 519 ,deleteId = 619 , editId = 119},
+    [20] = {typeId = 320, nameId = 220, insertId = 520 ,deleteId = 620 , editId = 120},
+    [21] = {typeId = 321, nameId = 221, insertId = 521 ,deleteId = 621 , editId = 121},
+    [22] = {typeId = 322, nameId = 222, insertId = 522 ,deleteId = 622 , editId = 122},
+    [23] = {typeId = 323, nameId = 223, insertId = 523 ,deleteId = 623 , editId = 123},
+    [24] = {typeId = 324, nameId = 224, insertId = 524 ,deleteId = 624 , editId = 124},
 };
 
 --ÉèÖÃ±à¼­°´Å¥¶ÔÓ¦µÄÌø×ª½çÃæ
@@ -1790,7 +1794,6 @@ end
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
 --µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
 function process_set2_control_notify(screen,control,value)
-
     if control == ProcessSaveBtId then -- ±£´æ
         if string.len(get_text(PROCESS_SET2_SCREEN, ProcesstypeId)) == 0  then
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 1);--ÏÔÊ¾ÌáÊ¾ÐÅÏ¢
@@ -1810,13 +1813,16 @@ function process_set2_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
         action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--µ±µã»÷"±à¼­"°´Å¥Ê±
-        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--Èç¹ûÉèÖÃÁË¶¯×÷ÀàÐÍ(±à¼­°´Å¥µÄid+200µÈÓÚ¶¯×÷Ãû³Æid)
+        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--Èç¹ûÉèÖÃÁË¶¯×÷ÀàÐÍ(±à¼­°´Å¥µÄid+200µÈÓÚ¶¯×÷Ãû³Æid)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200±íÊ¾¶ÔÓ¦µÄ"¶¯×÷ÀàÐÍ"id
         end
     elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--µ±µã»÷²åÈë°´Å¥Ê±
-        local insertActionId = control - 500;
-        if get_text(PROCESS_SET2_SCREEN,control-200) ~= BLANK_SPACE then--control-200¶ÔÓ¦ÁË²åÈë°´Å¥Ç°ÃæµÄ¶¯×÷ÀàÐÍ
-            InsertAction(insertActionId);
+        if get_value(screen,control) == ENABLE then
+            InsertAction(control - 500);
+        end
+    elseif control >= TabAction[1].deleteId and control <= TabAction[12].deleteId then--µ±µã»÷É¾³ý°´Å¥Ê±
+        if get_value(screen,control) == ENABLE then
+            DeleteAction(control - 600);
         end
     end
 end
@@ -1837,13 +1843,16 @@ function process_set3_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
         action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--µ±µã»÷"±à¼­"°´Å¥Ê±
-        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE then--Èç¹ûÉèÖÃÁË¶¯×÷Ãû³Æ(±à¼­°´Å¥µÄid+100µÈÓÚ¶¯×÷Ãû³Æid)
+        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--Èç¹ûÉèÖÃÁË¶¯×÷Ãû³Æ(±à¼­°´Å¥µÄid+100µÈÓÚ¶¯×÷Ãû³Æid)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200±íÊ¾¶ÔÓ¦µÄ"¶¯×÷ÀàÐÍ"id
         end
     elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--µ±µã»÷²åÈë°´Å¥Ê±
-        local insertActionId = control - 500;
-        if get_text(PROCESS_SET3_SCREEN,control-200) ~= BLANK_SPACE then--control-200¶ÔÓ¦ÁË²åÈë°´Å¥Ç°ÃæµÄ¶¯×÷ÀàÐÍ
-            InsertAction(insertActionId);
+        if get_value(screen,control) == ENABLE then
+            InsertAction(control - 500);
+        end
+    elseif control >= TabAction[13].deleteId and control <= TabAction[24].deleteId then--µ±µã»÷É¾³ý°´Å¥Ê±
+        if get_value(screen,control) == ENABLE then
+            DeleteAction(control - 600);
         end
     end
 end
@@ -1872,11 +1881,11 @@ function InsertAction(actionNumber)
         end
         set_text(PROCESS_SET3_SCREEN, TabAction[13].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[12].typeId));
         set_text(PROCESS_SET3_SCREEN, TabAction[13].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[12].nameId));
-        for i = 12, actionNumber, -1 do--
+        for i = 12, actionNumber+1, -1 do--
             set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].typeId));
             set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].nameId));
         end
-        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
         set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
     else
         for i = 24, actionNumber+1, -1 do--
@@ -2893,7 +2902,7 @@ function process_select_control_notify(screen, control, value)
 		if ProcessSelectItem ~= nil then
 			set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl¶ÔÓ¦Á÷³ÌÑ¡Ôñ
 			if DestScreen == PROCESS_SET1_SCREEN  then
-                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl-100¶ÔÓ¦Á÷³ÌÃû³Æ
+                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]..(DestControl-299));--DestControl-100¶ÔÓ¦Á÷³ÌÃû³Æ
             end
         end
         WriteProcessFile(1);--±£´æÁ÷³ÌÉèÖÃ1½çÃæÖÐµÄ²ÎÊý

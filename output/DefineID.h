@@ -97,6 +97,9 @@
 //创建画面对话框的命令索引ID
 #define  _SCREEN_对话框                                                          32
 
+//创建画面自定义全键盘的命令索引ID
+#define  _SCREEN_自定义全键盘                                                       33
+
 #define  _RTC_首页_RTC1                                                        111
 
 #define  _RTC_首页_RTC2                                                        112
@@ -5979,4 +5982,97 @@
 #define  _BTN_对话框_BUTTON1                                                     98
 
 #define  _BTN_对话框_BUTTON2                                                      1
+
+#define  _TXT_DIS__自定义全键盘_TEXT_DISPLAY1                                        2
+
+#define  _BTN_自定义全键盘_BUTTON1                                                   3
+
+//全局图片自定义键盘-按下.png
+#define  _IMG_自定义键盘-按下_PNG                                                    82
+
+#define  _BTN_自定义全键盘_BUTTON2                                                   4
+
+#define  _BTN_自定义全键盘_BUTTON3                                                   5
+
+#define  _BTN_自定义全键盘_BUTTON4                                                   6
+
+#define  _BTN_自定义全键盘_BUTTON5                                                   7
+
+#define  _BTN_自定义全键盘_BUTTON6                                                   8
+
+#define  _BTN_自定义全键盘_BUTTON7                                                   9
+
+#define  _BTN_自定义全键盘_BUTTON8                                                  10
+
+#define  _BTN_自定义全键盘_BUTTON9                                                  11
+
+#define  _BTN_自定义全键盘_BUTTON10                                                 12
+
+#define  _BTN_自定义全键盘_BUTTON11                                                 13
+
+#define  _BTN_自定义全键盘_BUTTON12                                                 14
+
+#define  _BTN_自定义全键盘_BUTTON13                                                 15
+
+#define  _BTN_自定义全键盘_BUTTON14                                                 16
+
+#define  _BTN_自定义全键盘_BUTTON15                                                 17
+
+#define  _BTN_自定义全键盘_BUTTON16                                                 18
+
+#define  _BTN_自定义全键盘_BUTTON17                                                 19
+
+#define  _BTN_自定义全键盘_BUTTON18                                                 20
+
+#define  _BTN_自定义全键盘_BUTTON19                                                 21
+
+#define  _BTN_自定义全键盘_BUTTON20                                                 22
+
+#define  _BTN_自定义全键盘_BUTTON21                                                 23
+
+#define  _BTN_自定义全键盘_BUTTON22                                                 24
+
+#define  _BTN_自定义全键盘_BUTTON23                                                 25
+
+#define  _BTN_自定义全键盘_BUTTON24                                                 26
+
+#define  _BTN_自定义全键盘_BUTTON25                                                 27
+
+#define  _BTN_自定义全键盘_BUTTON26                                                 28
+
+#define  _BTN_自定义全键盘_BUTTON27                                                 29
+
+#define  _BTN_自定义全键盘_BUTTON28                                                 30
+
+#define  _BTN_自定义全键盘_BUTTON29                                                 31
+
+#define  _BTN_自定义全键盘_BUTTON30                                                 32
+
+#define  _BTN_自定义全键盘_BUTTON31                                                 33
+
+#define  _BTN_自定义全键盘_BUTTON32                                                 34
+
+#define  _BTN_自定义全键盘_BUTTON33                                                 35
+
+#define  _BTN_自定义全键盘_BUTTON34                                                 36
+
+#define  _BTN_自定义全键盘_BUTTON35                                                 37
+
+#define  _BTN_自定义全键盘_BUTTON36                                                 38
+
+#define  _BTN_自定义全键盘_BUTTON37                                                 39
+
+#define  _BTN_自定义全键盘_BUTTON38                                                 40
+
+#define  _BTN_自定义全键盘_BUTTON39                                                 41
+
+#define  _BTN_自定义全键盘_BUTTON40                                                 42
+
+#define  _BTN_自定义全键盘_BUTTON41                                                 43
+
+#define  _BTN_自定义全键盘_BUTTON42                                                 44
+
+#define  _BTN_自定义全键盘_BUTTON43                                                 45
+
+#define  _BTN_自定义全键盘_BUTTON44                                                 46
 

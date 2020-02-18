@@ -1486,7 +1486,7 @@ end
 --***********************************************************************************************
 function process_ready_run()
     Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
-    
+    ShowSysTips("id="..Sys.currentProcessId)
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
         ReadProcessFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置

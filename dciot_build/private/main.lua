@@ -88,6 +88,7 @@ RESET = 0;
 
 OK = 0;
 ERR = 1;
+FAILURE = 1;
 
 FINISHED = 0;--×ÓÁ÷³ÌÖ´ÐÐÍê³É
 
@@ -105,7 +106,10 @@ Direction = {
     [ENG] = {FWD = "CW",REV="CCW"},
 }
 
-
+CalcOrder = {
+    [CHN] = {first = "Ò»½×", second = "¶þ½×", Third = "Èý½×"},
+    [ENG] = {first = "First",second="Second", Third = "Third"},
+}
 
 --ÌáÊ¾ÐÅÏ¢
 TipsTab = {
@@ -169,7 +173,7 @@ WorkStatus = {
     }
 };
 
---¹¤×÷ÀàÐÍ
+--¹¤×÷ÀàÐÍ: ÒªÓëÔËÐÐ¿ØÖÆ½çÃæµÄÔËÐÐ·½Ê½²Ëµ¥Ò»Ò»¶ÔÓ¦
 WorkType = {
     [CHN] = {
         hand = "ÊÖ¶¯",--°´Æô¶¯°´Å¥ºó,Ö´ÐÐÒ»´Î
@@ -230,24 +234,25 @@ CalcWay = {
         diff = "È¡²îÖµ",
     },
     [ENG] = {
-        log = "Logarithm",
-        diff = "Difference",
+        log = "Log10",
+        diff = "Diff",
     },
 };
 
 CalcType = {
     [CHN] = {"·ÖÎö","Ð£ÕýÒ»","Ð£Õý¶þ","Ð£ÕýÈý","Ð£ÕýËÄ"},
-    [ENG] = {"Analysis","Calibrate 1","Calibrate 2","Calibrate 3","Calibrate 4"},
+    [ENG] = {"Analysis","Calibration 1","Calibration 2","Calibration 3","Calibration 4"},
 };
 
 ProcessItem = {
     [CHN] = {"·ÖÎö","Ð£Õý","ÇåÏ´","¹ÜÂ·Ìî³ä","ÁãµãºË²é","±êÑùºË²é","¿ç¶ÈºË²é",BLANK_SPACE},
-    [ENG] = {"Analysis","Calibrate","Washing","Fill","Zero Check","Sample Check","Span Check",BLANK_SPACE},
+    [ENG] = {"Analysis","Calibration","Washing","Fill","Zero Check","STD Check","Span Check",BLANK_SPACE},
 };
 
+--ActionItemÀïÃæµÄÖµÒ»¶¨ÒªÓë¶¯×÷Ñ¡Ôñ½çÃæ°´Å¥ÖÐµÄÖµÒ»Ò»¶ÔÓ¦
 ActionItem = {
     [CHN] = {"³õÊ¼»¯","×¢Éä±Ã","×¢Éä±Ã¼ÓÒºÌå","¶ÁÈ¡ÐÅºÅ","Èä¶¯±Ã¼ÓÒº","¼ÆËã","µÈ´ýÊ±¼ä","Ïû½â","·§²Ù×÷",BLANK_SPACE},
-    [ENG] = {"Init","Inject","Inject Add","Read Signal","Pump Add","Calc","Wait Time","Dispel","Valve",BLANK_SPACE},
+    [ENG] = {"Initialize","Injector","Injector Add","Read Signal","Pump Add","Calculation","Wait Time","Dispel","Valve",BLANK_SPACE},
 };
 
 
@@ -355,7 +360,6 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
-
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--ÏÔÊ¾´¥ÃþÆÁÓ²¼þ°æ±¾ºÅ
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--ÏÔÊ¾´¥ÃþÆÁÈí¼þ°æ±¾ºÅ
 
@@ -382,7 +386,8 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--ÔËÎ¬Ô±Óë¹ÜÀíÔ±µÄÄ¬ÈÏÃÜÂë¶¼ÊÇ171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--ÔËÎ¬Ô±Óë¹ÜÀíÔ±µÄÄ¬ÈÏÃÜÂë¶¼ÊÇ171717
     end
-
+    set_unit();--ÉèÖÃµ¥Î»
+    uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--ÉèÖÃ±¾»ú´®¿Ú²¨ÌØÂÊ
     Sys.hand_control_func = sys_init;--¿ª»úÊ×ÏÈ½øÐÐ³õÊ¼»¯²Ù×÷
  --   SetSysUser(SysUser[Sys.language].maintainer);   --¿ª»úÖ®ºóÄ¬ÈÏÎªÔËÎ¬Ô±
     SetSysUser(SysUser[Sys.language].operator);  --¿ª»úÖ®ºóÄ¬ÈÏÎª²Ù×÷Ô±
@@ -391,7 +396,7 @@ function on_init()
 end
 
 --***********************************************************************************************
---¶¨Ê±Æ÷³¬Ê±£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý,¶¨Ê±Æ÷±àºÅ 0~3
+--¶¨Ê±Æ÷³¬Ê±£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý,¶¨Ê±Æ÷±àºÅ 0~2
 --¶¨Ê±Æ÷0: 1ms³¬Ê±ÖÐ¶Ï, Á÷³ÌÏà¹Øº¯ÊýÖ÷ÒªÔËÐÐÔÚ¸Ã¶¨Ê±Æ÷µ±ÖÐ
 --¶¨Ê±Æ÷1: 3ms³¬Ê±ÖÐ¶Ï, Ö÷ÒªÓÃÓÚÅÐ¶Ï´®¿ÚÊý¾Ý»Ø¸´ÊÇ·ñ³¬Ê±
 --¶¨Ê±Æ÷2: ÓÃÓÚ¶ÁÈ¡E1/E2ÐÅºÅÊ±µÄ³¬Ê±ÅÐ¶Ï; ÓÃÓÚÁ÷³Ì¿ØÖÆÖÐµÄ³¬Ê±ÅÐ¶Ï
@@ -471,6 +476,8 @@ function on_control_notify(screen,control,value)
         hand_operate1_control_notify(screen,control,value);	
     elseif screen == HAND_OPERATE2_SCREEN then --ÊÖ¶¯²Ù×÷2
         hand_operate2_control_notify(screen,control,value);	
+    elseif screen == IN_OUT_SCREEN then--ÊäÈëÊä³ö½çÃæ
+        in_out_control_notify(screen,control,value);
 	elseif screen == SYSTEM_INFO_SCREEN then --ÏµÍ³ÐÅÏ¢½çÃæ
 		system_info_control_notify(screen,control,value);	
     elseif screen == LOGIN_SYSTEM_SCREEN then--µÇÂ¼ÏµÍ³½çÃæ
@@ -564,7 +571,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getDrvVer ,NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 6 then--µÚÁù²½£ºÏÔÊ¾Çý¶¯°æ±¾°æ±¾ºÅ ²¢ »ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ
-        if UartArg.recv_data[10] ~= nil then
+        if UartArg.reply_sta == OK then
             softVer1 = bcd_to_string(UartArg.recv_data[10]).."."..bcd_to_string(UartArg.recv_data[11]); 
             hardVer1 = bcd_to_string(UartArg.recv_data[12]).."."..bcd_to_string(UartArg.recv_data[13]);
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId,softVer1);--ÏÔÊ¾Èí¼þ°æ±¾ºÅ
@@ -573,7 +580,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCHardVer, NEED_REPLY);--»ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 7 then--µÚÆß²½£ºÏÔÊ¾´«¸Ð°æÓë¼ÆËã¿¨Ó²¼þ°æ±¾ºÅ ²¢ »ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
-        if UartArg.recv_data[3] ~= nil then
+        if UartArg.reply_sta == OK then
             hardVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]);
             set_text(SYSTEM_INFO_SCREEN, SensorBoardHardVerId, hardVer1);
             hardVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -583,7 +590,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--»ñÈ¡´«¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 8 then--µÚ°Ë²½£ºÏÔÊ¾¸Ð°æÓë¼ÆËã¿¨Èí¼þ°æ±¾ºÅ
-        if UartArg.recv_data[3] ~= nil then
+        if UartArg.reply_sta == OK then
             softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]); 
             set_text(SYSTEM_INFO_SCREEN, SensorBoardSoftVerId, softVer1);
             softVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -635,6 +642,7 @@ UartArg = {
     note = "",--ÓÃÓÚ±£´æ´®¿ÚÖ¸ÁîËµÃ÷
     recv_data,--ÓÃÓÚ±£´æ½ÓÊÕµ½µÄÊý¾Ý
     reply_data = {[0] = 0, [1] = 0},--ÓÃÓÚ±£´æÐèÒª½ÓÊÜµ½µÄ»Ø¸´Êý¾Ý
+    reply_sta = FAILURE;--ÓÃÓÚÖ¸Ê¾·¢ËÍµÄ´®¿ÚÖ¸ÁîÊÇ·ñÓÐÕýÈ·»Ø¸´
     lock = UNLOCKED,--ÓÃÓÚÖ¸Ê¾´®¿ÚÊÇ·ñÉÏËø, µ±·¢ËÍÒ»ÌõÐèÒªµÈ´ý»Ø¸´µÄ´®¿ÚÖ¸ÁîÊ±,´®¿ÚÉÏËø, µ±ÊÕµ½»Ø¸´Ê±,´®¿Ú½âËø
 };
 
@@ -659,6 +667,7 @@ function on_uart_recv_data(packet)
     UartArg.recv_data = packet;
 
     if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--½ÓÊÜµ½Êý¾Ý»Ø¸´
+        UartArg.reply_sta = OK;
         UartArg.lock = UNLOCKED;
         stop_timer(1)--Í£Ö¹³¬Ê±¶¨Ê±Æ÷
         local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
@@ -689,6 +698,7 @@ function on_uart_send_data(packet, reply)
     end
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--¼ÆËãcrc16
+    UartArg.reply_sta = FAILURE;
     uart_send_data(packet) --½«Êý¾ÝÍ¨¹ý´®¿Ú·¢ËÍ³öÈ¥
 
     UartArg.note = packet.note;--ÔÚ±£´æ´®¿Ú»Ø¸´³¬Ê±µÄÈÕÖ¾Ê±£¬ÐèÒªÓÃµ½UartArg.note
@@ -715,11 +725,11 @@ function uart_time_out()
     else  --ÖØ·¢Èý´Î¶¼Ã»ÓÐ»Ø¸´,²»ÔÙÖØ·¢
         UartArg.repeat_times = 0;
         --´ËÊ±Èç¹ûÏµÍ³ÔÚÔËÐÐÁ÷³Ì,ÔòËø×¡´®¿Ú,²»ÔÙ¼ÌÐøÍùÏÂÖ´ÐÐ,ÔÚ°´Í£Ö¹ºó»á½âËø´®¿Ú; Èç¹ûÊÇÊÖ¶¯²Ù×÷·¢ËÍ´®¿ÚÖ¸Áî,Ôò½âËø´®¿Ú
-        if Sys.status == WorkStatus[Sys.language].run then
+      if Sys.status == WorkStatus[Sys.language].run then
             UartArg.lock = LOCKED;
-        else
-            UartArg.lock = UNLOCKED;
-        end
+      else
+           UartArg.lock = UNLOCKED;
+       end
         stop_timer(1)--Í£Ö¹³¬Ê±¶¨Ê±Æ÷
         beep(1000);--´®¿Ú»Ø¸´³¬Ê±£¬·äÃùÆ÷Ïì1ÃëÖÓ¡£
         Sys.alarmContent = UartArg.note..SysLog[Sys.language].uartTimeOut;--³õÊ¼»¯±¨¾¯ÄÚÈÝ£¨´®¿Ú»Ø¸´³¬Ê±£©
@@ -789,12 +799,12 @@ end
     Ê×Ò³
 --------------------------------------------------------------------------------------------------------------------]]
 
-LastAnalysisTimeId = 20;   --·ÖÎöÊ±¼ä
+LastResultTimeId = 20;   --·ÖÎöÊ±¼ä
 LastAnalyteId = 17;        --·ÖÎöÎï
-LastAnalysisResultId = 18; --·ÖÎö½á¹û
-LastAnalysisUnitId = 19;   --µ¥Î»
-LastAnalysisE1Id = 25;     --E1
-LastAnalysisE2Id = 26;     --E2
+LastResultId = 18; --·ÖÎö½á¹û
+LastResultUnitId = 19;   --µ¥Î»
+LastResultE1Id = 25;     --E1
+LastResultE2Id = 26;     --E2
 NextProcessTimeTextId = 2  --ÏÂ´ÎÆô¶¯Ê±¼ä
 
 ProgressBarId = 14--½ø¶ÈÌõ£¬·¶Î§0-100
@@ -1476,7 +1486,7 @@ end
 --***********************************************************************************************
 function process_ready_run()
     Sys.currentProcessId = get_current_process_id();--»ñÈ¡µ±Ç°ÐèÒªÔËÐÐµÄÁ÷³Ìid
-    
+    ShowSysTips("id="..Sys.currentProcessId)
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--²»µÈÓÚ0,±íÊ¾ÓÐÂú×ãÌõ¼þµÄÁ÷³Ì´ýÖ´ÐÐ,
         set_process_edit_state(DISABLE);            --½ûÖ¹Á÷³ÌÉèÖÃÏà¹ØµÄ²Ù×÷
         ReadProcessFile();                          --¼ÓÔØÁ÷³ÌÉèÖÃ1½çÃæ/ÔËÐÐ¿ØÖÆ½çÃæ/Á¿³ÌÉèÖÃ½çÃæÖÐµÄ²ÎÊýÅäÖÃ
@@ -1720,30 +1730,30 @@ ProcessSelectTipsTextId = 21;--ÓÃÓÚÏÔÊ¾ÌáÊ¾ÐÅÏ¢µÄÎÄ±¾¿ò,Á÷³ÌÉèÖÃ2/3½çÃæÖÐ¶¼ÊÇÕâ¸
 --ÕâÀï×¢Òâ¹Û²ì¶¯×÷Ñ¡Ôñid,¶¯×÷Ãû³Æid,±à¼­idÖ®¼äµÄÊýÑ§×ª»»¹ØÏµ:typeId = nameId + 100; nameId = editId + 100
 --ÆäÖÐ[1]-[12]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³ÌÉèÖÃ2½çÃæÖÐ,[13]-[24]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³ÌÉèÖÃ3½çÃæÖÐ
 TabAction = {
-    [1 ] = {typeId = 301, nameId = 201, insertId = 501 , editId = 101},
-    [2 ] = {typeId = 302, nameId = 202, insertId = 502 , editId = 102},
-    [3 ] = {typeId = 303, nameId = 203, insertId = 503 , editId = 103},
-    [4 ] = {typeId = 304, nameId = 204, insertId = 504 , editId = 104},
-    [5 ] = {typeId = 305, nameId = 205, insertId = 505 , editId = 105},
-    [6 ] = {typeId = 306, nameId = 206, insertId = 506 , editId = 106},
-    [7 ] = {typeId = 307, nameId = 207, insertId = 507 , editId = 107},
-    [8 ] = {typeId = 308, nameId = 208, insertId = 508 , editId = 108},
-    [9 ] = {typeId = 309, nameId = 209, insertId = 509 , editId = 109},
-    [10] = {typeId = 310, nameId = 210, insertId = 510 , editId = 110},
-    [11] = {typeId = 311, nameId = 211, insertId = 511 , editId = 111},
-    [12] = {typeId = 312, nameId = 212, insertId = 512 , editId = 112},
-    [13] = {typeId = 313, nameId = 213, insertId = 513 , editId = 113},
-    [14] = {typeId = 314, nameId = 214, insertId = 514 , editId = 114},
-    [15] = {typeId = 315, nameId = 215, insertId = 515 , editId = 115},
-    [16] = {typeId = 316, nameId = 216, insertId = 516 , editId = 116},
-    [17] = {typeId = 317, nameId = 217, insertId = 517 , editId = 117},
-    [18] = {typeId = 318, nameId = 218, insertId = 518 , editId = 118},
-    [19] = {typeId = 319, nameId = 219, insertId = 519 , editId = 119},
-    [20] = {typeId = 320, nameId = 220, insertId = 520 , editId = 120},
-    [21] = {typeId = 321, nameId = 221, insertId = 521 , editId = 121},
-    [22] = {typeId = 322, nameId = 222, insertId = 522 , editId = 122},
-    [23] = {typeId = 323, nameId = 223, insertId = 523 , editId = 123},
-    [24] = {typeId = 324, nameId = 224, insertId = 524 , editId = 124},
+    [1 ] = {typeId = 301, nameId = 201, insertId = 501 ,deleteId = 601 , editId = 101},
+    [2 ] = {typeId = 302, nameId = 202, insertId = 502 ,deleteId = 602 , editId = 102},
+    [3 ] = {typeId = 303, nameId = 203, insertId = 503 ,deleteId = 603 , editId = 103},
+    [4 ] = {typeId = 304, nameId = 204, insertId = 504 ,deleteId = 604 , editId = 104},
+    [5 ] = {typeId = 305, nameId = 205, insertId = 505 ,deleteId = 605 , editId = 105},
+    [6 ] = {typeId = 306, nameId = 206, insertId = 506 ,deleteId = 606 , editId = 106},
+    [7 ] = {typeId = 307, nameId = 207, insertId = 507 ,deleteId = 607 , editId = 107},
+    [8 ] = {typeId = 308, nameId = 208, insertId = 508 ,deleteId = 608 , editId = 108},
+    [9 ] = {typeId = 309, nameId = 209, insertId = 509 ,deleteId = 609 , editId = 109},
+    [10] = {typeId = 310, nameId = 210, insertId = 510 ,deleteId = 610 , editId = 110},
+    [11] = {typeId = 311, nameId = 211, insertId = 511 ,deleteId = 611 , editId = 111},
+    [12] = {typeId = 312, nameId = 212, insertId = 512 ,deleteId = 612 , editId = 112},
+    [13] = {typeId = 313, nameId = 213, insertId = 513 ,deleteId = 613 , editId = 113},
+    [14] = {typeId = 314, nameId = 214, insertId = 514 ,deleteId = 614 , editId = 114},
+    [15] = {typeId = 315, nameId = 215, insertId = 515 ,deleteId = 615 , editId = 115},
+    [16] = {typeId = 316, nameId = 216, insertId = 516 ,deleteId = 616 , editId = 116},
+    [17] = {typeId = 317, nameId = 217, insertId = 517 ,deleteId = 617 , editId = 117},
+    [18] = {typeId = 318, nameId = 218, insertId = 518 ,deleteId = 618 , editId = 118},
+    [19] = {typeId = 319, nameId = 219, insertId = 519 ,deleteId = 619 , editId = 119},
+    [20] = {typeId = 320, nameId = 220, insertId = 520 ,deleteId = 620 , editId = 120},
+    [21] = {typeId = 321, nameId = 221, insertId = 521 ,deleteId = 621 , editId = 121},
+    [22] = {typeId = 322, nameId = 222, insertId = 522 ,deleteId = 622 , editId = 122},
+    [23] = {typeId = 323, nameId = 223, insertId = 523 ,deleteId = 623 , editId = 123},
+    [24] = {typeId = 324, nameId = 224, insertId = 524 ,deleteId = 624 , editId = 124},
 };
 
 --ÉèÖÃ±à¼­°´Å¥¶ÔÓ¦µÄÌø×ª½çÃæ
@@ -1784,7 +1794,6 @@ end
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
 --µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
 function process_set2_control_notify(screen,control,value)
-
     if control == ProcessSaveBtId then -- ±£´æ
         if string.len(get_text(PROCESS_SET2_SCREEN, ProcesstypeId)) == 0  then
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 1);--ÏÔÊ¾ÌáÊ¾ÐÅÏ¢
@@ -1804,13 +1813,16 @@ function process_set2_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
         action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--µ±µã»÷"±à¼­"°´Å¥Ê±
-        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--Èç¹ûÉèÖÃÁË¶¯×÷ÀàÐÍ(±à¼­°´Å¥µÄid+200µÈÓÚ¶¯×÷Ãû³Æid)
+        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--Èç¹ûÉèÖÃÁË¶¯×÷ÀàÐÍ(±à¼­°´Å¥µÄid+200µÈÓÚ¶¯×÷Ãû³Æid)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200±íÊ¾¶ÔÓ¦µÄ"¶¯×÷ÀàÐÍ"id
         end
     elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--µ±µã»÷²åÈë°´Å¥Ê±
-        local insertActionId = control - 500;
-        if get_text(PROCESS_SET2_SCREEN,control-200) ~= BLANK_SPACE then--control-200¶ÔÓ¦ÁË²åÈë°´Å¥Ç°ÃæµÄ¶¯×÷ÀàÐÍ
-            InsertAction(insertActionId);
+        if get_value(screen,control) == ENABLE then
+            InsertAction(control - 500);
+        end
+    elseif control >= TabAction[1].deleteId and control <= TabAction[12].deleteId then--µ±µã»÷É¾³ý°´Å¥Ê±
+        if get_value(screen,control) == ENABLE then
+            DeleteAction(control - 600);
         end
     end
 end
@@ -1831,13 +1843,16 @@ function process_set3_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
         action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--µ±µã»÷"±à¼­"°´Å¥Ê±
-        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE then--Èç¹ûÉèÖÃÁË¶¯×÷Ãû³Æ(±à¼­°´Å¥µÄid+100µÈÓÚ¶¯×÷Ãû³Æid)
+        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--Èç¹ûÉèÖÃÁË¶¯×÷Ãû³Æ(±à¼­°´Å¥µÄid+100µÈÓÚ¶¯×÷Ãû³Æid)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200±íÊ¾¶ÔÓ¦µÄ"¶¯×÷ÀàÐÍ"id
         end
     elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--µ±µã»÷²åÈë°´Å¥Ê±
-        local insertActionId = control - 500;
-        if get_text(PROCESS_SET3_SCREEN,control-200) ~= BLANK_SPACE then--control-200¶ÔÓ¦ÁË²åÈë°´Å¥Ç°ÃæµÄ¶¯×÷ÀàÐÍ
-            InsertAction(insertActionId);
+        if get_value(screen,control) == ENABLE then
+            InsertAction(control - 500);
+        end
+    elseif control >= TabAction[13].deleteId and control <= TabAction[24].deleteId then--µ±µã»÷É¾³ý°´Å¥Ê±
+        if get_value(screen,control) == ENABLE then
+            DeleteAction(control - 600);
         end
     end
 end
@@ -1866,11 +1881,11 @@ function InsertAction(actionNumber)
         end
         set_text(PROCESS_SET3_SCREEN, TabAction[13].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[12].typeId));
         set_text(PROCESS_SET3_SCREEN, TabAction[13].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[12].nameId));
-        for i = 12, actionNumber, -1 do--
+        for i = 12, actionNumber+1, -1 do--
             set_text(PROCESS_SET2_SCREEN, TabAction[i].typeId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].typeId));
             set_text(PROCESS_SET2_SCREEN, TabAction[i].nameId, get_text(PROCESS_SET2_SCREEN, TabAction[i-1].nameId));
         end
-        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
         set_text(PROCESS_SET2_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
     else
         for i = 24, actionNumber+1, -1 do--
@@ -2019,10 +2034,10 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 INJECT_BtStartId = 1;--×¢Éä±Ã½çÃæÖÐ°´Å¥¿ªÊ¼id
-INJECT_BtEndId = 2; --×¢Éä±Ã½çÃæÖÐ°´Å¥½áÊøid
+INJECT_BtEndId = 3; --×¢Éä±Ã½çÃæÖÐ°´Å¥½áÊøid
 
-INJECT_TextStartId = 3;--È¡Ñù½çÃæÖÐÎÄ±¾¿ªÊ¼id
-INJECT_TextEndId = 10; --È¡Ñù½çÃæÖÐÎÄ±¾½áÊøid
+INJECT_TextStartId = 4;--È¡Ñù½çÃæÖÐÎÄ±¾¿ªÊ¼id
+INJECT_TextEndId = 11; --È¡Ñù½çÃæÖÐÎÄ±¾½áÊøid
 
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
 --µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
@@ -2044,8 +2059,8 @@ function excute_inject_process(paraTab)
 
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶Ô×¢Éä±Ã1½øÐÐ²Ù×÷
-            Sys.injectSpeed = tonumber(paraTab[3]);
-            Sys.injectScale = tonumber(paraTab[4]) * 10;
+            Sys.injectSpeed = tonumber(paraTab[4]);
+            Sys.injectScale = tonumber(paraTab[5]) * 10;
             Sys.waitTime = tonumber(paraTab[6]);
             Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--¸Ãº¯ÊýÖ´ÐÐÍê³ÉºóSys.actionSubStep»á¼Ó1
@@ -2056,7 +2071,7 @@ function excute_inject_process(paraTab)
         if paraTab[2] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶Ô×¢Éä±Ã2½øÐÐ²Ù×÷
             Sys.injectSpeed = tonumber(paraTab[7]);
             Sys.injectScale = tonumber(paraTab[8]) * 10;
-            Sys.waitTime = tonumber(paraTab[10]);
+            Sys.waitTime = tonumber(paraTab[9]);
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--¸Ãº¯ÊýÖ´ÐÐÍê³ÉºóSys.actionSubStep»á¼Ó1
         else
@@ -2074,9 +2089,9 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 INJECT_ADD_BtStartId = 1;
-INJECT_ADD_BtEndId = 40;
-INJECT_ADD_TextStartId = 41;
-INJECT_ADD_TextEndId = 64;
+INJECT_ADD_BtEndId = 41;
+INJECT_ADD_TextStartId = 42;
+INJECT_ADD_TextEndId = 62;
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
 --µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
 function process_inject_add_control_notify(screen,control,value)
@@ -2102,18 +2117,18 @@ function excute_inject_add_process(paraTab)
     -----------------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊ®Í¨·§²Ù×÷
-            control_valco( tonumber(paraTab[62]) );--idÎª23µÄ¿Ø¼þÎªÍ¨µÀºÅ
-            start_wait_time( tonumber(paraTab[41]) );
+            control_valco( tonumber(paraTab[42]) );--Í¨µÀºÅ
+            start_wait_time( tonumber(paraTab[43]) );
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then--
         if paraTab[2] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö1½øÐÐ(¿ª·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+8];
+                Sys.valveIdTab[i] = paraTab[i+9];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
-            Sys.waitTime = tonumber(paraTab[42]);--µÈ´ýÊ±¼ä
+            Sys.waitTime = tonumber(paraTab[44]);--µÈ´ýÊ±¼ä
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
@@ -2127,15 +2142,15 @@ function excute_inject_add_process(paraTab)
     -----------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then--ÅÐ¶Ï¶Ô×¢Éä±ÃµÄ²Ù×÷(×¢Éä±Ã1Óë×¢Éä±Ã2Ö»ÄÜÑ¡ÔñÒ»¸ö)
         if paraTab[3] == ENABLE_STRING then
-            Sys.injectSpeed = tonumber(paraTab[44]);
-            Sys.injectScale = tonumber(paraTab[45]) * 10;
+            Sys.injectSpeed = tonumber(paraTab[45]);
+            Sys.injectScale = tonumber(paraTab[46]) * 10;
             Sys.waitTime = tonumber(paraTab[47]);
             Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--¸Ãº¯ÊýÖ´ÐÐÍê³ÉºóSys.actionSubStep»á¼Ó1
         elseif paraTab[4] == ENABLE_STRING then
             Sys.injectSpeed = tonumber(paraTab[48]);
             Sys.injectScale = tonumber(paraTab[49]) * 10;
-            Sys.waitTime = tonumber(paraTab[51]);
+            Sys.waitTime = tonumber(paraTab[50]);
             -- Sys.driverStep1Func = ;
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
@@ -2143,15 +2158,15 @@ function excute_inject_add_process(paraTab)
     -----------------------------------------------------------------
     elseif Sys.actionSubStep == 5 then
         if paraTab[5] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊ®Í¨·§²Ù×÷
-            control_valco( tonumber(paraTab[63]) );--idÎª63µÄ¿Ø¼þÎªÍ¨µÀºÅ
-            start_wait_time( tonumber(paraTab[64]) );
+            control_valco( tonumber(paraTab[52]) );--idÎª63µÄ¿Ø¼þÎªÍ¨µÀºÅ
+            start_wait_time( tonumber(paraTab[53]) );
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
     elseif Sys.actionSubStep == 6 then
         if paraTab[2] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö1½øÐÐ(¹Ø·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+8];
+                Sys.valveIdTab[i] = paraTab[i+9];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0
@@ -2169,10 +2184,10 @@ function excute_inject_add_process(paraTab)
     elseif Sys.actionSubStep == 8 then
         if paraTab[6] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö2½øÐÐ(¿ª·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+24];
+                Sys.valveIdTab[i] = paraTab[i+25];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
-            Sys.waitTime = tonumber(paraTab[52]);
+            Sys.waitTime = tonumber(paraTab[54]);
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
@@ -2187,8 +2202,8 @@ function excute_inject_add_process(paraTab)
     elseif Sys.actionSubStep == 10 then--ÅÐ¶Ï¶Ô×¢Éä±ÃµÄ²Ù×÷(×¢Éä±Ã1Óë×¢Éä±Ã2Ö»ÄÜÑ¡ÔñÒ»¸ö)
         if paraTab[7] == ENABLE_STRING then
             Sys.injectId = 1;
-            Sys.injectSpeed = tonumber(paraTab[54]);
-            Sys.injectScale = tonumber(paraTab[55]) * 10;
+            Sys.injectSpeed = tonumber(paraTab[55]);
+            Sys.injectScale = tonumber(paraTab[56]) * 10;
             Sys.waitTime = tonumber(paraTab[57]);
             Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--¸Ãº¯ÊýÖ´ÐÐÍê³ÉºóSys.actionSubStep»á¼Ó1
@@ -2196,7 +2211,7 @@ function excute_inject_add_process(paraTab)
             Sys.injectId = 2;
             Sys.injectSpeed = tonumber(paraTab[58]);
             Sys.injectScale = tonumber(paraTab[59]) * 10;
-            Sys.waitTime = tonumber(paraTab[61]);
+            Sys.waitTime = tonumber(paraTab[60]);
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--¸Ãº¯ÊýÖ´ÐÐÍê³ÉºóSys.actionSubStep»á¼Ó1
         else
@@ -2206,7 +2221,7 @@ function excute_inject_add_process(paraTab)
     elseif Sys.actionSubStep == 11 then
         if paraTab[6] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö2½øÐÐ(¹Ø·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+24];
+                Sys.valveIdTab[i] = paraTab[i+25];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
@@ -2235,9 +2250,9 @@ end
 
 
 PERISTALTIC_BtStartId = 1;
-PERISTALTIC_BtEndId = 21;
-PERISTALTIC_TextStartId = 22;
-PERISTALTIC_TextEndId = 36;
+PERISTALTIC_BtEndId = 22;
+PERISTALTIC_TextStartId = 23;
+PERISTALTIC_TextEndId = 39;
 
 
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
@@ -2272,7 +2287,7 @@ function excute_peristaltic_process(paraTab)
     elseif Sys.actionSubStep == 2 then
         if paraTab[2] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö1½øÐÐ(¿ª·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+5];
+                Sys.valveIdTab[i] = paraTab[i+6];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
             Sys.waitTime = tonumber(paraTab[24]);
@@ -2314,7 +2329,7 @@ function excute_peristaltic_process(paraTab)
     elseif Sys.actionSubStep == 4 then
         if paraTab[2] == ENABLE_STRING then--ÅÐ¶ÏÊÇ·ñÐèÒª¶ÔÊä³ö1½øÐÐ(¹Ø·§)²Ù×÷
             for i=1,16,1 do
-                Sys.valveIdTab[i] = paraTab[i+5];
+                Sys.valveIdTab[i] = paraTab[i+6];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
@@ -2430,9 +2445,9 @@ function excute_read_signal_process(paraTab)
         local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--»ñÈ¡µÄÐÅºÅÖµÐèÒª³ýÒÔ10²ÅÊÇÊµ¼ÊÖµ
         --½«»ñÈ¡µÄµçÑ¹ÊµÊ±ÏÔÊ¾ÔÚÊ×Ò³µ±ÖÐ
         if paraTab[1] == "E1" then
-            set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
+            set_text(MAIN_SCREEN, LastResultE1Id, signalE);
         else
-            set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+            set_text(MAIN_SCREEN, LastResultE2Id, signalE);
         end
         
         Sys.signalTab[ math.fmod(Sys.signalCount, Sys.signalNumber) ] = signalE;--½«µçÑ¹ÐÅºÅ±£´æµ½Êý×éÖÐ
@@ -2459,11 +2474,11 @@ function excute_read_signal_process(paraTab)
                 
                 if paraTab[1] == "E1" then
                     Sys.signalE1 = signalE;
-                    set_text(MAIN_SCREEN, LastAnalysisE1Id, signalE);
+                    set_text(MAIN_SCREEN, LastResultE1Id, signalE);
                     print("E1=",signalE);
                 else
                     Sys.signalE2 = signalE;
-                    set_text(MAIN_SCREEN, LastAnalysisE2Id, signalE);
+                    set_text(MAIN_SCREEN, LastResultE2Id, signalE);
                     print("E2=",signalE);
                 end
                 Sys.actionSubStep = Sys.actionSubStep + 1;--Âú×ãÌõ¼þ,Ìø×ªÏÂÒ»²½½áÊø²É¼¯
@@ -2486,7 +2501,7 @@ end
 CALCULATE_BtStartId = 1;
 CALCULATE_BtEndId = 4;
 CALCULATE_TextStartId = 5;
-CALCULATE_TextEndId = 13;
+CALCULATE_TextEndId = 14;
 
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
 --µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
@@ -2498,6 +2513,131 @@ function process_calculate_control_notify(screen,control,value)
         change_screen(DestScreen);
     end
 end
+
+--***********************************************************************************************
+--  Ö´ÐÐ¼ÆËãÁ÷³Ì
+--***********************************************************************************************
+function excute_calculate_process(paraTab)
+    Sys.calculateWay = paraTab[10];
+    Sys.calculateType = paraTab[12];
+    Sys.calibrationValue = tonumber(paraTab[13]);
+    Sys.resultTime = Sys.dateTime;--»ñÈ¡µ±Ç°Ê±¼ä
+    if Sys.calculateType == CalcType[Sys.language][1] then--µ±Ç°¼ÆËãÎª·ÖÎö
+        calc_analysis_result(Sys.calculateWay);
+        if paraTab[1] == ENABLE_STRING then--½á¹ûÏßÐÔ²¹³¥
+            Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
+        end
+        print("·ÖÎö½á¹û =",Sys.result);
+    elseif Sys.calculateType == CalcType[Sys.language][2] then--µ±Ç°¼ÆËãÎªÐ£Õý1
+        Sys.caliE1[1] = Sys.signalE1;
+        Sys.caliE2[1] = Sys.signalE2;
+        Sys.caliValue[1] = Sys.calibrationValue;
+        print("Ð£Õý1£ºE1=",Sys.caliE1[1],",E2=",Sys.caliE2[1]);
+    elseif Sys.calculateType == CalcType[Sys.language][3] then--µ±Ç°¼ÆËãÎªÐ£Õý2
+        Sys.caliE1[2] = Sys.signalE1;
+        Sys.caliE2[2] = Sys.signalE2;
+        Sys.caliValue[2] = Sys.calibrationValue;
+        print("Ð£Õý2£ºE1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
+        if Sys.calculateWay == CalcWay[Sys.language].log then--Èç¹ûÊÇÈ¡¶ÔÊý·½Ê½£¬ÔòÔÚÐ£Õý2Ê±¾Í¼ÆËã½á¹û
+            calc_calibrate_result_by_log();
+        elseif Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].First then
+            calc_calibrate_result_by_diff(2);--Í¨¹ýÐÐÁÐÊ½Óë¿ËÀ³Ä··¨Ôò×Ô¶¯Ëã³öc,dµÄÖµ
+        end
+    elseif Sys.calculateType == CalcType[Sys.language][4] then--µ±Ç°¼ÆËãÎªÐ£Õý3
+        Sys.caliE1[3] = Sys.signalE1;
+        Sys.caliE2[3] = Sys.signalE2;
+        Sys.caliValue[3] = Sys.calibrationValue;
+        if Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].Second then
+            calc_calibrate_result_by_diff(3);--Í¨¹ýÐÐÁÐÊ½Óë¿ËÀ³Ä··¨Ôò×Ô¶¯Ëã³öb,c,dµÄÖµ
+        end
+        print("Ð£Õý3£ºE1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
+    elseif Sys.calculateType == CalcType[Sys.language][5] then--µ±Ç°¼ÆËãÎªÐ£Õý4
+        Sys.caliE1[4] = Sys.signalE1;
+        Sys.caliE2[4] = Sys.signalE2;
+        Sys.caliValue[4] = Sys.calibrationValue;
+        calc_calibrate_result_by_diff(4);--Í¨¹ýÐÐÁÐÊ½Óë¿ËÀ³Ä··¨Ôò×Ô¶¯Ëã³öa,b,c,dµÄÖµ
+        print("Ð£Õý4£ºE1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
+    end
+
+
+    if paraTab[2] == ENABLE_STRING then--ÊÇ·ñÐèÒª½øÐÐ±¨¾¯
+        
+    end
+
+    if paraTab[3] == ENABLE_STRING then--ÊÇ·ñÐèÒª±£´æÀúÊ·¼ÇÂ¼
+        if Sys.calculateType == CalcType[Sys.language][1] then--µ±Ç°¼ÆËãÎª·ÖÎö
+            add_history_record(HISTORY_ANALYSIS_SCREEN);
+        else
+            add_history_record(HISTORY_CALIBRATION_SCREEN);--µ±Ç°¼ÆËãÎªÐ£×¼
+        end
+    end
+
+    --ÔÚÖ÷½çÃæ½øÐÐÏÔÊ¾½á¹ûÓë½á¹ûÊ±¼ä
+    if Sys.calculateType == CalcType[Sys.language][1] then--µ±Ç°¼ÆËãÎª·ÖÎö
+        set_text(MAIN_SCREEN, LastResultId, Sys.result);
+    else
+        set_text(MAIN_SCREEN, LastResultId, Sys.calibrationValue);
+    end
+    set_text(MAIN_SCREEN, LastResultTimeId, Sys.resultTime.year.."-"..Sys.resultTime.mon.."-"..Sys.resultTime.day..
+                                              "  "..Sys.resultTime.hour..":"..Sys.resultTime.min);
+    return FINISHED;
+end
+
+--***********************************************************************************************
+--  ¿ËÀ³Ä··¨Ôò¼ÆËãa,b,c,dµÄÖµÊ±,»áÓÃµ½¸Ãº¯Êý
+--  n±íÊ¾ÎªËÄÔªÒ»´Î·½³Ì(Çóa,b,c,d),»¹ÊÇÈýÔªÒ»´Î·½³Ì(Çób,c,d,aµÈÓÚ0)
+--***********************************************************************************************
+function term (n, k, x)
+    local p,q,t = 1,1,1;
+
+    for p = 1, n-1, 1 do
+        for q = 0, p-1, 1 do
+            if k[q] > k[p] then
+                t = -t;
+            end
+        end
+    end
+    for p = 0, n-1, 1 do
+        t = t * x[p][k[p]];
+    end
+    return (t);
+end
+
+--***********************************************************************************************
+--  ¿ËÀ³Ä··¨Ôò¼ÆËãa,b,c,dµÄÖµÊ±,»áÓÃµ½¸Ãº¯Êý
+--  n±íÊ¾ÎªËÄÔªÒ»´Î·½³Ì(Çóa,b,c,d),»¹ÊÇÈýÔªÒ»´Î·½³Ì(Çób,c,d,aµÈÓÚ0)
+--***********************************************************************************************
+function det(n, x)
+    local j0, j1, j2, j3, j4, j5, j6, d;
+    local k = {};
+    d = 0;
+    for j0 = 0, n-1, 1 do
+        if(x[0][j0] == 0)  then goto for0_ctn end;
+        k[0] = j0;
+        for j1 = 0, n-1, 1 do
+            if(j1 == j0 or x[1][j1] == 0) then goto for1_ctn end;
+
+            k[1] = j1;
+            if(n == 2) then d = d + term(n, k, x); end
+            for j2 = 0, n-1, 1 do
+                if(j2 == j0 or j2 == j1 or x[2][j2] == 0) then goto for2_ctn end;
+                k[2] = j2;
+                if(n == 3) then d = d + term(n, k, x); end
+                for j3 = 0, n-1, 1 do
+                    if(j3 == j0 or j3 == j1 or j3 == j2 or x[3][j3] == 0) then goto for3_ctn; end
+                    k[3] = j3;
+                    d = d + term(n, k, x);
+                    ::for3_ctn:: ;
+                end
+                ::for2_ctn:: ;
+            end
+            ::for1_ctn:: ;
+        end
+        ::for0_ctn:: ;
+    end
+    return (d);
+end
+
 
 --***********************************************************************************************
 --  Í¨¹ý¶ÔÊý·½Ê½¼ÆËãÐ£Õý½á¹û
@@ -2532,14 +2672,81 @@ end
 --***********************************************************************************************
 --  Í¨¹ý²îÖµ·½Ê½¼ÆËãÐ£Õý½á¹û
 --***********************************************************************************************
-function calc_calibrate_result_by_diff(void)
+function calc_calibrate_result_by_diff(n)
+    local diff0,diff1,diff2,diff3,detV;-- = Sys.caliE1[1] - Sys.caliE2[1];
+    local x,y,detVs = {},{},{};
+    for i = 0,3,1 do
+        x[i] = {};
+        y[i] = {};
+    end
+    diff0 = Sys.caliE1[1] - Sys.caliE2[1];
+    diff1 = Sys.caliE1[2] - Sys.caliE2[2];
+    diff2 = Sys.caliE1[3] - Sys.caliE2[3];
+    diff3 = Sys.caliE1[4] - Sys.caliE2[4];
 
+    --ÒÔÏÂ×¢ÊÍÎªÄ£ÄâÊý¾Ý,µÃ³öµÄ½á¹ûÓ¦¸ÃÎªa = 0.8333 b=0 c=-0.83333 d = 10.0
+    -- n = 4;
+    -- local diff0 = 1;
+    -- local diff1 = 2;
+    -- local diff2 = 3;
+    -- local diff3 = 4;
+    -- Sys.caliValue[1] = 10;
+    -- Sys.caliValue[2] = 15;
+    -- Sys.caliValue[3] = 30;
+    -- Sys.caliValue[4] = 60;
+
+    if n == 4 then 
+        x[0][0] = diff0*diff0*diff0; x[0][1] = diff0*diff0; x[0][2] = diff0; x[0][3] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1*diff1*diff1; x[1][1] = diff1*diff1; x[1][2] = diff1; x[1][3] = 1; y[1] = Sys.caliValue[2];
+        x[2][0] = diff2*diff2*diff2; x[2][1] = diff2*diff2; x[2][2] = diff2; x[2][3] = 1; y[2] = Sys.caliValue[3];
+        x[3][0] = diff3*diff3*diff3; x[3][1] = diff3*diff3; x[3][2] = diff3; x[3][3] = 1; y[3] = Sys.caliValue[4];
+    elseif n == 3 then
+        x[0][0] = diff0*diff0; x[0][1] = diff0; x[0][2] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1*diff1; x[1][1] = diff1; x[1][2] = 1; y[1] = Sys.caliValue[2];
+        x[2][0] = diff2*diff2; x[2][1] = diff2; x[2][2] = 1; y[2] = Sys.caliValue[3];
+    elseif n == 2 then
+        x[0][0] = diff0; x[0][1] = 1; y[0] = Sys.caliValue[1];
+        x[1][0] = diff1; x[1][1] = 1; y[1] = Sys.caliValue[2];
+    end
+    local detV = det(n,x);
+--   print("D = "..detV);
+
+    for j = 0, n-1, 1 do
+        for i = 0, n-1, 1 do
+            temp[i] = x[i][j];
+            x[i][j] = y[i];
+        end
+        detVs[j] = det(n,x);
+--        print("D"..j.."="..detVs[j]);
+        for i = 0, n-1, 1 do
+            x[i][j] = temp[i];
+        end
+    end
+
+    local a,b,c,d
+    if n == 2 then
+        a = 0;
+        b = 0;
+        c = detVs[0] / detV;
+        d = detVs[1] / detV;
+    elseif n == 3 then
+        a = 0;
+        b = detVs[0] / detV;
+        c = detVs[1] / detV;
+        d = detVs[2] / detV;
+    elseif n == 4 then
+        a = detVs[0] / detV;
+        b = detVs[1] / detV;
+        c = detVs[2] / detV;
+        d = detVs[3] / detV;
+    end
     
     --ÉèÖÃ¼ÆËã³öµÄa,b,c,d½á¹û
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
+    print("a="..a..",b="..b..",c="..c..",d="..d);
     WriteProcessFile(3);--±£´æÁ¿³ÌÉèÖÃ½çÃæµÄ²ÎÊý
 end
 
@@ -2567,60 +2774,10 @@ function calc_analysis_result(type)
     d = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
 
     Sys.result = a*(x^3) + b*(x^2) + c*x + d;
-    set_text(MAIN_SCREEN, LastAnalysisResultId, Sys.result);--ÔÚÖ÷½çÃæÏÔÊ¾½á¹û
+    set_text(MAIN_SCREEN, LastResultId, Sys.result);--ÔÚÖ÷½çÃæÏÔÊ¾½á¹û
 end
 
---***********************************************************************************************
---  Ö´ÐÐ¼ÆËãÁ÷³Ì
---***********************************************************************************************
-function excute_calculate_process(paraTab)
-    Sys.calculateWay = paraTab[11];
-    Sys.calculateType = paraTab[12];
-    Sys.calibrationValue = tonumber(paraTab[13]);
-    Sys.resultTime = Sys.dateTime;--»ñÈ¡µ±Ç°Ê±¼ä
-    if Sys.calculateType == CalcType[Sys.language][1] then--µ±Ç°¼ÆËãÎª·ÖÎö
-        calc_analysis_result(Sys.calculateWay);
-        if paraTab[1] == ENABLE_STRING then--½á¹ûµ÷Õû
-            Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
-        end
-        print("·ÖÎö½á¹û =",Sys.result);
-    elseif Sys.calculateType == CalcType[Sys.language][2] then--µ±Ç°¼ÆËãÎªÐ£Õý1
-        Sys.caliE1[1] = Sys.signalE1;
-        Sys.caliE2[1] = Sys.signalE2;
-        Sys.caliValue[1] = Sys.calibrationValue;
-        print("Ð£Õý1£ºE1=",Sys.caliE1[1],",E2=",Sys.caliE2[1]);
-    elseif Sys.calculateType == CalcType[Sys.language][3] then--µ±Ç°¼ÆËãÎªÐ£Õý2
-        Sys.caliE1[2] = Sys.signalE1;
-        Sys.caliE2[2] = Sys.signalE2;
-        Sys.caliValue[2] = Sys.calibrationValue;
-        print("Ð£Õý2£ºE1=",Sys.caliE1[2],",E2=",Sys.caliE2[2]);
-        if Sys.calculateWay == CalcWay[Sys.language].log then--Èç¹ûÊÇÈ¡¶ÔÊý·½Ê½£¬ÔòÔÚÐ£Õý2Ê±¾Í¼ÆËã½á¹û
-            calc_calibrate_result_by_log();
-        end
-    elseif Sys.calculateType == CalcType[Sys.language][4] then--µ±Ç°¼ÆËãÎªÐ£Õý3
-        Sys.caliE1[3] = Sys.signalE1;
-        Sys.caliE2[3] = Sys.signalE2;
-        Sys.caliValue[3] = Sys.calibrationValue;
-        print("Ð£Õý3£ºE1=",Sys.caliE1[3],",E2=",Sys.caliE2[3]);
-    elseif Sys.calculateType == CalcType[Sys.language][5] then--µ±Ç°¼ÆËãÎªÐ£Õý4
-        Sys.caliE1[4] = Sys.signalE1;
-        Sys.caliE2[4] = Sys.signalE2;
-        Sys.caliValue[4] = Sys.calibrationValue;
-        print("Ð£Õý4£ºE1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
- --       calc_calibrate_result_by_diff();--Í¨¹ýÐÐÁÐÊ½Óë¿ËÀ³Ä··¨Ôò×Ô¶¯Ëã³öa,b,c,dµÄÖµ
-    end
 
-
-    if paraTab[4] == ENABLE_STRING then--ÊÇ·ñÐèÒª±£´æÀúÊ·¼ÇÂ¼
-        if Sys.calculateType == CalcType[Sys.language][1] then--µ±Ç°¼ÆËãÎª·ÖÎö
-            add_history_record(HISTORY_ANALYSIS_SCREEN);
-        else
-            add_history_record(HISTORY_CALIBRATION_SCREEN);--µ±Ç°¼ÆËãÎªÐ£×¼
-        end
-    end
-
-    return FINISHED;
-end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -2745,7 +2902,7 @@ function process_select_control_notify(screen, control, value)
 		if ProcessSelectItem ~= nil then
 			set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl¶ÔÓ¦Á÷³ÌÑ¡Ôñ
 			if DestScreen == PROCESS_SET1_SCREEN  then
-                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl-100¶ÔÓ¦Á÷³ÌÃû³Æ
+                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]..(DestControl-299));--DestControl-100¶ÔÓ¦Á÷³ÌÃû³Æ
             end
         end
         WriteProcessFile(1);--±£´æÁ÷³ÌÉèÖÃ1½çÃæÖÐµÄ²ÎÊý
@@ -2887,7 +3044,7 @@ end
 --ÔÚÁ¿³ÌÉèÖÃ/Á¿³ÌÑ¡Ôñ½çÃæÖÐ,Á¿³Ì1/2/3ÎÄ±¾µÄid¶¼ÊÇÒ»ÑùµÄ
 
 RANGESET_TextStartId = 1;
-RANGESET_TextEndId = 25;
+RANGESET_TextEndId = 18;
 
 UniteSetTextId = 25--µ¥Î»ÉèÖÃ³É¹¦ºó,ÓÃÓÚÏÔÊ¾µ¥Î»ÎÄ±¾µÄid
 UniteSetMenuId = 26;--µ¥Î»Ñ¡Ôñ
@@ -2901,12 +3058,13 @@ RangeTab = {
 --ÉèÖÃµ¥Î»
 function set_unit()
     local Unite = get_text(RANGE_SET_SCREEN, UniteSetTextId);
-    --Á¿³ÌÉèÖÃ½çÃæÖÐ,¿Ø¼þId = 300 ~ 308Îªµ¥Î»ÏÔÊ¾ÎÄ±¾
-    for i = 300,308,1 do 
+    --Á¿³ÌÉèÖÃ½çÃæÖÐ,¿Ø¼þId = 300 ~ 302Îªµ¥Î»ÏÔÊ¾ÎÄ±¾
+    for i = 300,302,1 do 
         set_text(RANGE_SET_SCREEN, i, Unite);
     end
     --Ê×Ò³ÖÐ,¿Õ¼äId= 19 Îªµ¥Î»ÏÔÊ¾
-    set_text(MAIN_SCREEN,LastAnalysisUnitId, Unite);
+    set_text(MAIN_SCREEN,LastResultUnitId, Unite);
+
     --Á¿³ÌÑ¡Ôñ½çÃæÖÐ,¿Ø¼þId = 15/20/25Îªµ¥Î»ÏÔÊ¾ÎÄ±¾
     set_text(RANGE_SELECT_SCREEN,15 , Unite);
     set_text(RANGE_SELECT_SCREEN,20 , Unite);
@@ -3036,8 +3194,8 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     ÊÖ¶¯²Ù×÷2
 --------------------------------------------------------------------------------------------------------------------]]
-HandGetVoltageId = 73;
-HandShowVoltageId = 35;
+HandGetVoltageId = 74;
+HandShowVoltageId = 42;
 HandLedStatusId = 6;
 HandLedCtrlBtId = 3;
 --ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
@@ -3096,9 +3254,25 @@ UartRecordId = 1--´®¿ÚÍ¨Ñ¶¼ÇÂ¼¿Õ¼äid
 --[[-----------------------------------------------------------------------------------------------------------------
     ÊäÈëÊä³ö
 --------------------------------------------------------------------------------------------------------------------]]
+IOSET_TextStartId = 1;
+IOSET_TextEndId = 13;
+IOSET_ComputerSetId = 25;
+IOSET_TouchScreenSetId = 26;
+IOSET_Output1SetId = 27;
+IOSET_Output2SetId = 30;
+IOSET_ScreenBaudId = 7;
+--ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
+--µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
+function in_out_control_notify(screen,control,value)
+    if control == IOSET_ComputerSetId then
 
+    elseif control == IOSET_TouchScreenSetId then
+        uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );
+    elseif control == IOSET_Output1SetId then
 
-
+    elseif control == IOSET_Output2SetId then
+    end
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -3378,6 +3552,7 @@ cfgFileTab = {
     [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--Á÷³ÌÉèÖÃ1½çÃæÖÐµÄ²ÎÊý±£´æÔÚÕâ¸ötagÖÐ
     [2] = {sTag = "<RunControl>",eTag = "</RunControl>"};--ÔËÐÐ¿ØÖÆ½çÃæÖÐµÄ²ÎÊý±£´æÔÚÕâ¸ötagÖÐ
     [3] = {sTag = "<RangeSet>",eTag = "</RangeSet>"};--Á¿³ÌÉèÖÃ½çÃæÖÐµÄ²ÎÊý±£´æÔÚÕâ¸ötagÖÐ
+    [4] = {sTag = "<IOSet>",eTag="</IOSet>"};--Êä³öÊä³öÖÐµÄ²ÎÊý±£´æÔÚÕâ¸ötagÖÐ
 };
 --***********************************************************************************************
 --´´½¨ÅäÖÃÎÄ¼þ,²¢±£´æÔÚ"0"ÎÄ¼þÖÐ
@@ -3410,6 +3585,10 @@ function WriteProcessFile(tagNum)
     elseif tagNum == 3 then--Á¿³ÌÉèÖÃ½çÃæÖÐµÄ²ÎÊý
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
             configFile:write(get_text(RANGE_SET_SCREEN, i)..",");
+        end
+    elseif tagNum == 4 then
+        for i = IOSET_TextStartId,IOSET_TextEndId,1 do
+            configFile:write(get_text(IN_OUT_SCREEN, i)..",");
         end
     end
     configFile:write(cfgFileTab[tagNum].eTag);
@@ -3480,6 +3659,10 @@ function ReadProcessTag(tagNum)
     elseif tagNum == 3 then--Á¿³ÌÉèÖÃ½çÃæÖÐµÄ²ÎÊý
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
             set_text(RANGE_SET_SCREEN, i, tab[i]);
+        end
+    elseif tagNum == 4 then
+        for i = IOSET_TextStartId, IO_TextEndId, 1 do
+            set_text(IN_OUT_SCREEN, i, tab[i]);
         end
     end
 end

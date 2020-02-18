@@ -100,6 +100,12 @@
 //创建画面自定义全键盘的命令索引ID
 #define  _SCREEN_自定义全键盘                                                       33
 
+//创建画面无线连接的命令索引ID
+#define  _SCREEN_无线连接                                                         34
+
+//创建画面远程升级的命令索引ID
+#define  _SCREEN_远程升级                                                         35
+
 #define  _RTC_首页_RTC1                                                        111
 
 #define  _RTC_首页_RTC2                                                        112
@@ -5896,6 +5902,30 @@
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY21                                        27
 
+//画面系统信息中按钮Button28弹起时的图片
+#define  _IMG_系统信息_BUTTON28_UP                                                78
+
+//画面系统信息中按钮Button28按下时的图片
+#define  _IMG_系统信息_BUTTON28_DOWN                                              78
+
+#define  _BTN_系统信息_BUTTON28                                                  140
+
+//画面系统信息中按钮Button29弹起时的图片
+#define  _IMG_系统信息_BUTTON29_UP                                                12
+
+//画面系统信息中按钮Button29按下时的图片
+#define  _IMG_系统信息_BUTTON29_DOWN                                              72
+
+#define  _BTN_系统信息_BUTTON29                                                   22
+
+//画面系统信息中按钮Button30弹起时的图片
+#define  _IMG_系统信息_BUTTON30_UP                                                73
+
+//画面系统信息中按钮Button30按下时的图片
+#define  _IMG_系统信息_BUTTON30_DOWN                                              74
+
+#define  _BTN_系统信息_BUTTON30                                                   23
+
 //画面密码设置中按钮Button3弹起时的图片
 #define  _IMG_密码设置_BUTTON3_UP                                                 29
 
@@ -6075,4 +6105,161 @@
 #define  _BTN_自定义全键盘_BUTTON43                                                 45
 
 #define  _BTN_自定义全键盘_BUTTON44                                                 46
+
+//画面无线连接中按钮Button37弹起时的图片
+#define  _IMG_无线连接_BUTTON37_UP                                                29
+
+//画面无线连接中按钮Button37按下时的图片
+#define  _IMG_无线连接_BUTTON37_DOWN                                              30
+
+#define  _BTN_无线连接_BUTTON37                                                   99
+
+//画面无线连接中图片Image1使用的图片
+#define  _IMG_无线连接_IMAGE1                                                     31
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY2                                          1
+
+//画面无线连接中图片Image2使用的图片
+#define  _IMG_无线连接_IMAGE2                                                     31
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY1                                          5
+
+//画面无线连接中图片Image3使用的图片
+#define  _IMG_无线连接_IMAGE3                                                     31
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY3                                          9
+
+#define  _BTN_无线连接_BUTTON2                                                    10
+
+//画面无线连接中按钮Button1弹起时的图片
+#define  _IMG_无线连接_BUTTON1_UP                                                 29
+
+//画面无线连接中按钮Button1按下时的图片
+#define  _IMG_无线连接_BUTTON1_DOWN                                               30
+
+#define  _BTN_无线连接_BUTTON1                                                    98
+
+//画面无线连接中图片Image5使用的图片
+#define  _IMG_无线连接_IMAGE5                                                     83
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY4                                         13
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY5                                         14
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY6                                         15
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY7                                         16
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY8                                         17
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY9                                         18
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY10                                        19
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY11                                        20
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY12                                        21
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY13                                        22
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY14                                        23
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY15                                        24
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY16                                        25
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY17                                        26
+
+#define  _BTN_无线连接_BUTTON3                                                    27
+
+#define  _BTN_无线连接_BUTTON4                                                    28
+
+#define  _BTN_无线连接_BUTTON5                                                    29
+
+#define  _BTN_无线连接_BUTTON6                                                    30
+
+#define  _BTN_无线连接_BUTTON7                                                    31
+
+#define  _BTN_无线连接_BUTTON8                                                    32
+
+#define  _BTN_无线连接_BUTTON9                                                    33
+
+#define  _BTN_无线连接_BUTTON10                                                   34
+
+#define  _BTN_无线连接_BUTTON11                                                   35
+
+#define  _BTN_无线连接_BUTTON12                                                   36
+
+#define  _BTN_无线连接_BUTTON13                                                   37
+
+#define  _BTN_无线连接_BUTTON14                                                   38
+
+#define  _BTN_无线连接_BUTTON15                                                   39
+
+#define  _BTN_无线连接_BUTTON16                                                   40
+
+//画面远程升级中按钮Button37弹起时的图片
+#define  _IMG_远程升级_BUTTON37_UP                                                29
+
+//画面远程升级中按钮Button37按下时的图片
+#define  _IMG_远程升级_BUTTON37_DOWN                                              30
+
+#define  _BTN_远程升级_BUTTON37                                                   99
+
+//画面远程升级中按钮Button1弹起时的图片
+#define  _IMG_远程升级_BUTTON1_UP                                                 29
+
+//画面远程升级中按钮Button1按下时的图片
+#define  _IMG_远程升级_BUTTON1_DOWN                                               30
+
+#define  _BTN_远程升级_BUTTON1                                                    98
+
+//画面远程升级中按钮Button24弹起时的图片
+#define  _IMG_远程升级_BUTTON24_UP                                                63
+
+//画面远程升级中按钮Button24按下时的图片
+#define  _IMG_远程升级_BUTTON24_DOWN                                              64
+
+#define  _BTN_远程升级_BUTTON24                                                   72
+
+//画面远程升级中按钮Button2弹起时的图片
+#define  _IMG_远程升级_BUTTON2_UP                                                 63
+
+//画面远程升级中按钮Button2按下时的图片
+#define  _IMG_远程升级_BUTTON2_DOWN                                               64
+
+#define  _BTN_远程升级_BUTTON2                                                     4
+
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY4                                         10
+
+//画面远程升级中图片Image1使用的图片
+#define  _IMG_远程升级_IMAGE1                                                     86
+
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY1                                          6
+
+//画面远程升级中按钮Button3弹起时的图片
+#define  _IMG_远程升级_BUTTON3_UP                                                 63
+
+//画面远程升级中按钮Button3按下时的图片
+#define  _IMG_远程升级_BUTTON3_DOWN                                               64
+
+#define  _BTN_远程升级_BUTTON3                                                     8
+
+//画面远程升级中按钮Button4弹起时的图片
+#define  _IMG_远程升级_BUTTON4_UP                                                 63
+
+//画面远程升级中按钮Button4按下时的图片
+#define  _IMG_远程升级_BUTTON4_DOWN                                               64
+
+#define  _BTN_远程升级_BUTTON4                                                     9
+
+//画面远程升级中图片Image2使用的图片
+#define  _IMG_远程升级_IMAGE2                                                     86
+
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY2                                         13
+
+//画面远程升级中图片Image3使用的图片
+#define  _IMG_远程升级_IMAGE3                                                     86
+
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY3                                         15
 

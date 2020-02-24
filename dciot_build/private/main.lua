@@ -46,6 +46,8 @@ HISTORY_LOG_SCREEN = 27;
 SYSTEM_INFO_SCREEN = 28;
 PASSWORD_SET_SCREEN = 29;
 LOGIN_SYSTEM_SCREEN = 30;
+WIFI_CONNECT_SCREEN = 34;
+REMOTE_UPDATE_SCREEN = 35;
 
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
 PublicTab = {
@@ -114,7 +116,7 @@ CalcOrder = {
 --提示信息
 TipsTab = {
     [CHN] = {
-        insertSdUsb = "请插入SD卡或者U盘",
+        insertSdUsb = "请插入SD卡",
         insertSd    = "插入SD卡",
         insertUsb   = "插入U盘",
         pullOutSd   = "拔出SD卡",
@@ -123,13 +125,13 @@ TipsTab = {
         imported    = "配置文件导入成功",
         exporting   = "正在导出配置文件...",
         exported    = "配置文件导出成功",
-        exportTips  = "请在SD卡或U盘创建config文件夹后重试",
+        exportTips  = "请在SD卡创建config文件夹后重试",
         selectProcess = "请选择流程",
         sysInit = "系统初始化",
         null    = "无",
     },
     [ENG] = {
-        insertSdUsb = "Please Insert SD Card Or U Disk",
+        insertSdUsb = "Please Insert SD Card",
         insertSd    = "Please Insert SD Card",
         insertUsb   = "Please Insert U Disk",
         pullOutSd   = "Pull Out The SD card",
@@ -138,7 +140,7 @@ TipsTab = {
         imported    = "Configuration File Imported Successfully",
         exporting   = "Exporting Configuration File...",
         exported    = "Configuration File Exported Successfully",
-        exportTips  = "Create The \"config\" Folder On The U Disk First",
+        exportTips  = "Create The \"config\" Folder On The SD Card First",
         selectProcess = "Select Process",
         sysInit = "System Initial",
         null    = "NULL",
@@ -346,6 +348,10 @@ Sys = {
 
     alarmContent = "",--用于保存当前报警信息
     logContent = "",--用于保存当前日志信息
+
+
+    ssid = 0,
+    wifi_connect = 0,
 }
 
 
@@ -388,9 +394,9 @@ function on_init()
     end
     set_unit();--设置单位
     uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
- --   SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
-    SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
+ --   Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+ --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
 end
@@ -427,6 +433,24 @@ function on_systick()
     if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
         process_ready_run();
     end
+
+    --判断wifi连接状态
+    if string.len(Sys.ssid) > 0 then
+        Sys.wifi_connect = get_network_state() --获取网络状态
+        wifimode,secumode,ssid,password = get_wifi_cfg() --获取WIFI配置
+        local dhcp, ipaddr, netmask, gateway, dns = get_network_cfg() --获取ip地址
+        if Sys.wifi_connect ~= 0 then
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "已连接");
+            set_text(WIFI_CONNECT_SCREEN, WifiSsid, ssid);
+            set_text(WIFI_CONNECT_SCREEN, WifiIpAddrId, ipaddr);
+        end
+    else
+        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "未连接");
+    end
+
+    --判断触摸屏更新进度
+    local state,process = get_upgrade_state()                    --获取更新状态与进度      
+    set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
 end
 
 --***********************************************************************************************
@@ -483,8 +507,14 @@ function on_control_notify(screen,control,value)
     elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
 		login_system_control_notify(screen,control,value);	
 	elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
-		password_set_control_notify(screen,control,value);		
-	end
+        password_set_control_notify(screen,control,value);	
+    elseif screen == WIFI_CONNECT_SCREEN then--Wifi设置界面
+        wifi_connect_control_notify(screen,control,value);		
+    elseif screen == REMOTE_UPDATE_SCREEN then
+        remote_update_control_notify(screen,control,value);
+    end
+    
+    
 end
 
 --***********************************************************************************************
@@ -504,7 +534,9 @@ function on_screen_change(screen)
 	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
 		goto_LoginSystem();
 	elseif screen== PASSWORD_SET_SCREEN then--密码设置
-		goto_PasswordSet();
+        goto_PasswordSet();
+    elseif screen== WIFI_CONNECT_SCREEN then--密码设置
+        goto_WifiConnect();
 	end
 end
 
@@ -630,7 +662,7 @@ updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6,
     closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
     enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
    mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
- setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
+ setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6,   note = "设置注射泵速度"},
     rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
 }
 
@@ -1187,7 +1219,7 @@ function run_control_notify(screen,control,value)
         HandProcessTab[1].times = tonumber(get_text(RUN_CONTROL_SCREEN, control));
         WriteProcessFile(2);
     elseif control >= PeriodicTab[5].textId and control <= PeriodicTab[10].textId then --更改周期开始时间与频率
-        PeriodicTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与频率
+        PeriodicTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与?德?
         WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startHourId and control <= TimedProcessTab[24].startHourId then--更改定时流程时间中的小时
         TimedProcessTab[control-37].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-37后,对应了定时流程的序号
@@ -1388,7 +1420,7 @@ function set_process_start_date_time(year,mon,day,hour,min)
 end
 
 --***********************************************************************************************
---当点击开始按钮时,调用该函数执行流程
+--当点击开始按钮时,调用该函数执行??程
 --***********************************************************************************************
 function get_current_process_id()
     local processId = 0;
@@ -1509,7 +1541,7 @@ end
 
 --***********************************************************************************************
 --该函数在定时器中调用,在运行状态时调用该函数
---系统为运行状态,此时SystemArg.currentProcessId保存了当前需要运行的流程序号, 而该以该序号为名的流程配置文件保存了该流程的所有动作,通过解析该文件可以知道该做什么动作.
+--系统为运行状态,此时SystemArg.currentProcessId保存了当前需要运行的流程序号, 而该以该序号为名的流程配置文件保存了该流程的所有动??通过解析该文件可以知道该做什么动作.
 --Sys.actionNumber统计了action的总数
 --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
 --Sys.actionTab中保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
@@ -1581,7 +1613,7 @@ function excute_process()
                     set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
                 end
                 WriteProcessFile(2);
-                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次流程了
+                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行?乱淮瘟鞒塘?
             ----------------反控模式--------------------
             elseif Sys.runType == WorkType[Sys.language].controlled then
                 SystemStop();
@@ -1601,7 +1633,7 @@ function SystemStop()
     SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     ShowSysCurrentAction(TipsTab[Sys.language].null);--将当前动作显示为"无"
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
-    if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管理员
+    if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管?碓?
         set_process_edit_state(ENABLE);--允许编辑流程
     end
     UartArg.lock = UNLOCKED;--解锁串口
@@ -1813,7 +1845,7 @@ function process_set2_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动作类型(编辑按钮的id+200等于动作名称id)
+        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?骼嘈?编辑按钮的id+200等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作类型"id
         end
     elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--当点击插入按钮时
@@ -1843,7 +1875,7 @@ function process_set3_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动作名称(编辑按钮的id+100等于动作名称id)
+        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?髅?编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作类型"id
         end
     elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--当点击插入按钮时
@@ -2936,7 +2968,7 @@ function process_select2_control_notify(screen,control,value)
 
         if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
             set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
-            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动作名称
+            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅?
             if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
                 ReadActionTag(0);
             elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
@@ -2984,7 +3016,7 @@ function goto_ProcessSelect2()
             end
             NumberOfProcess = NumberOfProcess + 1;--个数+1
             set_visiable(PROCESS_SELECT2_SCREEN, NumberOfProcess,  1);--显示id为NumberOfProcess的文本
-            set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,ProcessTab[i].nameId))--为该文本框设置内容
+            set_text(PROCESS_SELECT2_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN,ProcessTab[i].nameId))--为该文本框设?媚谌?
             set_visiable(PROCESS_SELECT2_SCREEN,100+NumberOfProcess,1);--显示与该文本框对应的按钮
         end
     end
@@ -3501,7 +3533,7 @@ function goto_PasswordSet()
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    登录系统
+登录系统
 --------------------------------------------------------------------------------------------------------------------]]
 PwdId = 2;
 PwdTipsId = 3;
@@ -3542,7 +3574,93 @@ function goto_LoginSystem()
     end
 end
 
+--[[-----------------------------------------------------------------------------------------------------------------
+连接wifi
+--------------------------------------------------------------------------------------------------------------------]]
+ScanBtId = 97;
+WifiSsid = 1;
+WifiPwdId = 5;
+WifiStatusTextId = 9;
+WifiConnectBtId = 10;
+WifiIpAddrId = 42;
+function wifi_connect_control_notify(screen,control,value)
+    if control == ScanBtId then
+        scan_ap_fill_list();
+    elseif control >= 27 and control <= 40 then--选取热点
+        Sys.ssid = get_text(WIFI_CONNECT_SCREEN, (control-14)) --文本控件从13~26
+        set_text(WIFI_CONNECT_SCREEN, WifiSsid, Sys.ssid)
+    elseif control == WifiConnectBtId then
+        if string.len(Sys.ssid) > 0 then
+            Sys.ssid = get_text(WIFI_CONNECT_SCREEN, WifiSsid);
+            wifiPwd = get_text(WIFI_CONNECT_SCREEN, WifiPwdId);
+            set_wifi_cfg(1, 0, Sys.ssid, wifiPwd) --连接 WIFI，1 网卡模式，0 自动识别加密
+            save_network_cfg();
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId,' 连接中...')
+        end
+    end
+end
 
+--切换到wifi连接界面
+function goto_WifiConnect()
+    scan_ap_fill_list();
+end
+
+
+--扫描wifi与显示
+function scan_ap_fill_list()
+    ap_cnt = scan_ap()  --扫描可用热点
+
+	for i=1,ap_cnt,1 do
+	  Sys.ssid, Sys.security, Sys.quality = get_ap_info(i-1)  --获取信息
+	  set_text(WIFI_CONNECT_SCREEN, i+12, Sys.ssid)  --显示id
+	end
+	
+	for i=ap_cnt+1, 14, 1 do
+	   set_text(WIFI_CONNECT_SCREEN, i+12, "")  --清空后面的
+	end
+end
+
+--[[-----------------------------------------------------------------------------------------------------------------
+远程升级
+--------------------------------------------------------------------------------------------------------------------]]
+RemoteFtpAddrTextId = 1;
+RemoteTsVerTextId = 2;
+RemoteUpdateTsStaId = 3;
+RemoteDrvTextId = 4;
+RemoteUpdateDrvStaId = 5;
+RemoteGetTsVerBtId = 6;
+RemoteStartUpdateTsBtId = 7;
+RemoteGetDrvVerBtId = 8;
+RemoteStartUpdateDrvBtId = 9;
+
+--在远程升级界面，单击控件调用该函数
+function remote_update_control_notify(screen,control,value)
+    if control == RemoteGetTsVerBtId then
+        http_download(1, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/tsVer.txt', "tsVer.txt");
+    elseif control == RemoteStartUpdateTsBtId then
+        start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
+    end
+end
+
+--http_download回调函数
+function on_http_download (taskid, status)
+    if taskid == 1 then
+		if status == 0 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "获取版本失败")
+        elseif status == 1 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "保存文件失败")
+		elseif status == 2 then
+			local verFile = io.open("tsVer.txt", "r");        --以只读方式打开文件.
+            if verFile == nil then
+                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "打开文件失败")
+                return 
+            end
+            local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+            verFile:close();                           --关闭文件
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, ts_version);
+		end
+	end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     配置文件操作相关函数
@@ -3897,7 +4015,7 @@ function ReadActionTag(actionNumber)
         return 
     end
     
-    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作类型与动作名称
+    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作?嘈陀攵髅?
     actionType = split(actionType, ",");--分割字符串
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称

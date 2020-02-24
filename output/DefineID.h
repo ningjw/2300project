@@ -6114,18 +6114,15 @@
 
 #define  _BTN_无线连接_BUTTON37                                                   99
 
-//画面无线连接中图片Image1使用的图片
-#define  _IMG_无线连接_IMAGE1                                                     31
-
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY2                                          1
 
 //画面无线连接中图片Image2使用的图片
-#define  _IMG_无线连接_IMAGE2                                                     31
+#define  _IMG_无线连接_IMAGE2                                                     84
 
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY1                                          5
 
 //画面无线连接中图片Image3使用的图片
-#define  _IMG_无线连接_IMAGE3                                                     31
+#define  _IMG_无线连接_IMAGE3                                                     84
 
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY3                                          9
 
@@ -6137,10 +6134,7 @@
 //画面无线连接中按钮Button1按下时的图片
 #define  _IMG_无线连接_BUTTON1_DOWN                                               30
 
-#define  _BTN_无线连接_BUTTON1                                                    98
-
-//画面无线连接中图片Image5使用的图片
-#define  _IMG_无线连接_IMAGE5                                                     83
+#define  _BTN_无线连接_BUTTON1                                                    97
 
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY4                                         13
 
@@ -6198,6 +6192,11 @@
 
 #define  _BTN_无线连接_BUTTON16                                                   40
 
+//画面无线连接中图片Image6使用的图片
+#define  _IMG_无线连接_IMAGE6                                                     84
+
+#define  _TXT_DIS__无线连接_TEXT_DISPLAY18                                        42
+
 //画面远程升级中按钮Button37弹起时的图片
 #define  _IMG_远程升级_BUTTON37_UP                                                29
 
@@ -6214,52 +6213,51 @@
 
 #define  _BTN_远程升级_BUTTON1                                                    98
 
-//画面远程升级中按钮Button24弹起时的图片
-#define  _IMG_远程升级_BUTTON24_UP                                                63
-
-//画面远程升级中按钮Button24按下时的图片
-#define  _IMG_远程升级_BUTTON24_DOWN                                              64
-
-#define  _BTN_远程升级_BUTTON24                                                   72
+#define  _BTN_远程升级_BUTTON24                                                    6
 
 //画面远程升级中按钮Button2弹起时的图片
-#define  _IMG_远程升级_BUTTON2_UP                                                 63
+#define  _IMG_远程升级_BUTTON2_UP                                                 88
 
 //画面远程升级中按钮Button2按下时的图片
-#define  _IMG_远程升级_BUTTON2_DOWN                                               64
+#define  _IMG_远程升级_BUTTON2_DOWN                                               89
 
-#define  _BTN_远程升级_BUTTON2                                                     4
-
-#define  _TXT_DIS__远程升级_TEXT_DISPLAY4                                         10
+#define  _BTN_远程升级_BUTTON2                                                     7
 
 //画面远程升级中图片Image1使用的图片
-#define  _IMG_远程升级_IMAGE1                                                     86
+#define  _IMG_远程升级_IMAGE1                                                     90
 
-#define  _TXT_DIS__远程升级_TEXT_DISPLAY1                                          6
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY1                                          2
 
 //画面远程升级中按钮Button3弹起时的图片
-#define  _IMG_远程升级_BUTTON3_UP                                                 63
+#define  _IMG_远程升级_BUTTON3_UP                                                 88
 
 //画面远程升级中按钮Button3按下时的图片
-#define  _IMG_远程升级_BUTTON3_DOWN                                               64
+#define  _IMG_远程升级_BUTTON3_DOWN                                               89
 
 #define  _BTN_远程升级_BUTTON3                                                     8
 
 //画面远程升级中按钮Button4弹起时的图片
-#define  _IMG_远程升级_BUTTON4_UP                                                 63
+#define  _IMG_远程升级_BUTTON4_UP                                                 88
 
 //画面远程升级中按钮Button4按下时的图片
-#define  _IMG_远程升级_BUTTON4_DOWN                                               64
+#define  _IMG_远程升级_BUTTON4_DOWN                                               89
 
 #define  _BTN_远程升级_BUTTON4                                                     9
 
 //画面远程升级中图片Image2使用的图片
-#define  _IMG_远程升级_IMAGE2                                                     86
+#define  _IMG_远程升级_IMAGE2                                                     90
 
-#define  _TXT_DIS__远程升级_TEXT_DISPLAY2                                         13
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY2                                          5
 
 //画面远程升级中图片Image3使用的图片
-#define  _IMG_远程升级_IMAGE3                                                     86
+#define  _IMG_远程升级_IMAGE3                                                     90
 
-#define  _TXT_DIS__远程升级_TEXT_DISPLAY3                                         15
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY3                                          4
+
+//画面远程升级中图片Image4使用的图片
+#define  _IMG_远程升级_IMAGE4                                                     90
+
+#define  _TXT_DIS__远程升级_TEXT_DISPLAY5                                          1
+
+#define  _SELECTOR_远程升级_SELECTOR1                                              3
 

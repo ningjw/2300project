@@ -116,7 +116,7 @@ CalcOrder = {
 --提示信息
 TipsTab = {
     [CHN] = {
-        insertSdUsb = "请插入SD卡或者U盘",
+        insertSdUsb = "请插入SD卡",
         insertSd    = "插入SD卡",
         insertUsb   = "插入U盘",
         pullOutSd   = "拔出SD卡",
@@ -125,13 +125,13 @@ TipsTab = {
         imported    = "配置文件导入成功",
         exporting   = "正在导出配置文件...",
         exported    = "配置文件导出成功",
-        exportTips  = "请在SD卡或U盘创建config文件夹后重试",
+        exportTips  = "请在SD卡创建config文件夹后重试",
         selectProcess = "请选择流程",
         sysInit = "系统初始化",
         null    = "无",
     },
     [ENG] = {
-        insertSdUsb = "Please Insert SD Card Or U Disk",
+        insertSdUsb = "Please Insert SD Card",
         insertSd    = "Please Insert SD Card",
         insertUsb   = "Please Insert U Disk",
         pullOutSd   = "Pull Out The SD card",
@@ -140,7 +140,7 @@ TipsTab = {
         imported    = "Configuration File Imported Successfully",
         exporting   = "Exporting Configuration File...",
         exported    = "Configuration File Exported Successfully",
-        exportTips  = "Create The \"config\" Folder On The U Disk First",
+        exportTips  = "Create The \"config\" Folder On The SD Card First",
         selectProcess = "Select Process",
         sysInit = "System Initial",
         null    = "NULL",
@@ -394,9 +394,9 @@ function on_init()
     end
     set_unit();--设置单位
     uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
- --   SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
-    SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
+ --   Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+ --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
 end
@@ -438,15 +438,19 @@ function on_systick()
     if string.len(Sys.ssid) > 0 then
         Sys.wifi_connect = get_network_state() --获取网络状态
         wifimode,secumode,ssid,password = get_wifi_cfg() --获取WIFI配置
+        local dhcp, ipaddr, netmask, gateway, dns = get_network_cfg() --获取ip地址
         if Sys.wifi_connect ~= 0 then
-            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId,' 连接'..ssid.."成功") 
-		    set_text(WIFI_CONNECT_SCREEN, 3,ssid)
-        else
-            set_text(WIFI_CONNECT_SCREEN, 1,' 连接'..ssid.."中...")
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "已连接");
+            set_text(WIFI_CONNECT_SCREEN, WifiSsid, ssid);
+            set_text(WIFI_CONNECT_SCREEN, WifiIpAddrId, ipaddr);
         end
     else
-        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, '未连接')
+        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "未连接");
     end
+
+    --判断触摸屏更新进度
+    local state,process = get_upgrade_state()                    --获取更新状态与进度      
+    set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
 end
 
 --***********************************************************************************************
@@ -505,7 +509,9 @@ function on_control_notify(screen,control,value)
 	elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
         password_set_control_notify(screen,control,value);	
     elseif screen == WIFI_CONNECT_SCREEN then--Wifi设置界面
-		wifi_connect_control_notify(screen,control,value);		
+        wifi_connect_control_notify(screen,control,value);		
+    elseif screen == REMOTE_UPDATE_SCREEN then
+        remote_update_control_notify(screen,control,value);
     end
     
     
@@ -528,7 +534,9 @@ function on_screen_change(screen)
 	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
 		goto_LoginSystem();
 	elseif screen== PASSWORD_SET_SCREEN then--密码设置
-		goto_PasswordSet();
+        goto_PasswordSet();
+    elseif screen== WIFI_CONNECT_SCREEN then--密码设置
+        goto_WifiConnect();
 	end
 end
 
@@ -654,7 +662,7 @@ updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6,
     closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
     enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
    mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
- setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
+ setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6,   note = "设置注射泵速度"},
     rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
 }
 
@@ -3526,7 +3534,7 @@ end
 
 --[[-----------------------------------------------------------------------------------------------------------------
 登录系统
----------------------------------------    -----------------------------------------------------------------------------]]
+--------------------------------------------------------------------------------------------------------------------]]
 PwdId = 2;
 PwdTipsId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
@@ -3568,12 +3576,13 @@ end
 
 --[[-----------------------------------------------------------------------------------------------------------------
 连接wifi
----------------------------------------    -----------------------------------------------------------------------------]]
+--------------------------------------------------------------------------------------------------------------------]]
 ScanBtId = 97;
 WifiSsid = 1;
 WifiPwdId = 5;
 WifiStatusTextId = 9;
 WifiConnectBtId = 10;
+WifiIpAddrId = 42;
 function wifi_connect_control_notify(screen,control,value)
     if control == ScanBtId then
         scan_ap_fill_list();
@@ -3581,27 +3590,75 @@ function wifi_connect_control_notify(screen,control,value)
         Sys.ssid = get_text(WIFI_CONNECT_SCREEN, (control-14)) --文本控件从13~26
         set_text(WIFI_CONNECT_SCREEN, WifiSsid, Sys.ssid)
     elseif control == WifiConnectBtId then
-        set_network_cfg(1, 192.168.1.100, 255.255.255.0, 192.168.1.1, 192.168.1.1);--启动DHCP
-        Sys.ssid = get_text(WIFI_CONNECT_SCREEN, WifiSsid);
-	    wifiPwd = get_text(WIFI_CONNECT_SCREEN, WifiPwdId); 
-	    set_wifi_cfg(1, 0, Sys.ssid, wifiPwd) --连接 WIFI，1 网卡模式，0 自动识别加密
-	    save_network_cfg();
-	    set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId,' 连接中'..ssid.."...")
+        if string.len(Sys.ssid) > 0 then
+            Sys.ssid = get_text(WIFI_CONNECT_SCREEN, WifiSsid);
+            wifiPwd = get_text(WIFI_CONNECT_SCREEN, WifiPwdId);
+            set_wifi_cfg(1, 0, Sys.ssid, wifiPwd) --连接 WIFI，1 网卡模式，0 自动识别加密
+            save_network_cfg();
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId,' 连接中...')
+        end
     end
+end
+
+--切换到wifi连接界面
+function goto_WifiConnect()
+    scan_ap_fill_list();
 end
 
 
 --扫描wifi与显示
 function scan_ap_fill_list()
     ap_cnt = scan_ap()  --扫描可用热点
-	
-	for i=1,ap_cnt do
+
+	for i=1,ap_cnt,1 do
 	  Sys.ssid, Sys.security, Sys.quality = get_ap_info(i-1)  --获取信息
-	  set_text(WIFI_CONNECT_SCREEN, i+12, ssid)  --显示id
+	  set_text(WIFI_CONNECT_SCREEN, i+12, Sys.ssid)  --显示id
 	end
 	
-	for i=ap_cnt, 14 do
+	for i=ap_cnt+1, 14, 1 do
 	   set_text(WIFI_CONNECT_SCREEN, i+12, "")  --清空后面的
+	end
+end
+
+--[[-----------------------------------------------------------------------------------------------------------------
+远程升级
+--------------------------------------------------------------------------------------------------------------------]]
+RemoteFtpAddrTextId = 1;
+RemoteTsVerTextId = 2;
+RemoteUpdateTsStaId = 3;
+RemoteDrvTextId = 4;
+RemoteUpdateDrvStaId = 5;
+RemoteGetTsVerBtId = 6;
+RemoteStartUpdateTsBtId = 7;
+RemoteGetDrvVerBtId = 8;
+RemoteStartUpdateDrvBtId = 9;
+
+--在远程升级界面，单击控件调用该函数
+function remote_update_control_notify(screen,control,value)
+    if control == RemoteGetTsVerBtId then
+        http_download(1, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/tsVer.txt', "tsVer.txt");
+    elseif control == RemoteStartUpdateTsBtId then
+        start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
+    end
+end
+
+--http_download回调函数
+function on_http_download (taskid, status)
+    if taskid == 1 then
+		if status == 0 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "获取版本失败")
+        elseif status == 1 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "保存文件失败")
+		elseif status == 2 then
+			local verFile = io.open("tsVer.txt", "r");        --以只读方式打开文件.
+            if verFile == nil then
+                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "打开文件失败")
+                return 
+            end
+            local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+            verFile:close();                           --关闭文件
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, ts_version);
+		end
 	end
 end
 

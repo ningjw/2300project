@@ -366,6 +366,7 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
+    UpdataDriverBoard();
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
 
@@ -662,7 +663,7 @@ updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6,
     closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
     enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
    mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
- setInject1Spd ={[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6,   note = "设置注射泵速度"},
+ setInject1Spd = {[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6,   note = "设置注射泵速度"},
     rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
 }
 
@@ -744,6 +745,8 @@ function on_uart_send_data(packet, reply)
     print(packet.note);--调试输出
     record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
 end
+
+
 
 
 --***********************************************************************************************
@@ -3352,8 +3355,6 @@ end
 
 
 
-
-
 --[[-----------------------------------------------------------------------------------------------------------------
     系统信息
 --------------------------------------------------------------------------------------------------------------------]]
@@ -3561,7 +3562,7 @@ function login_system_control_notify(screen,control,value)
     end
 end
 
---当画面切换时，执行此回调函数，screen为目标画面。
+--当画面切换为登录系统界面时，执行此回调函数，screen为目标画面。
 function goto_LoginSystem()
     set_text(LOGIN_SYSTEM_SCREEN, UserNameId, userNameSet);
     set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 0);--隐藏密码错误提示信息
@@ -3635,31 +3636,124 @@ RemoteStartUpdateDrvBtId = 9;
 
 --在远程升级界面，单击控件调用该函数
 function remote_update_control_notify(screen,control,value)
-    if control == RemoteGetTsVerBtId then
+    if control == RemoteGetTsVerBtId then--获取触摸屏版本文件
         http_download(1, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/tsVer.txt', "tsVer.txt");
-    elseif control == RemoteStartUpdateTsBtId then
+    elseif control == RemoteStartUpdateTsBtId then--开始触摸屏升级
+        --判断权限
+        if Sys.userName == SysUser[Sys.language].operator then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].NoPermission)
+            return
+        end
+        --判断系统是否为停止状态
+        if Sys.status ~= WorkStatus[Sys.language].stop then 
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].stopFirst)
+            return
+        end
+        --开始升级触摸屏程序(在on_systick中获取升级状态进行显示)
         start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
+    elseif control == RemoteGetDrvVerBtId then--获取驱动版本文件
+        http_download(2, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/drvVer.txt', "drvVer.txt");
+    elseif control == RemoteStartUpdateDrvBtId then--获取驱动文件
+        --判断权限
+        if Sys.userName == SysUser[Sys.language].operator then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].NoPermission)
+            return
+        end
+        --判断系统是否为停止状态
+        if Sys.status ~= WorkStatus[Sys.language].stop then 
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].stopFirst)
+            return
+        end
+        --下载STM.BIN文件,在on_http_download函数中判断下载状态
+        http_download(3, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/STM.BIN', "STM.BIN");
     end
 end
 
---http_download回调函数
+
+--http_download回调函数,系统自动调用
 function on_http_download (taskid, status)
-    if taskid == 1 then
+    if taskid == 1 then --下载触摸屏版本文件回调函数
 		if status == 0 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "获取版本失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "获取版本文件失败")
         elseif status == 1 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "保存文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "保存版本文件失败")
 		elseif status == 2 then
 			local verFile = io.open("tsVer.txt", "r");        --以只读方式打开文件.
             if verFile == nil then
-                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "打开文件失败")
+                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "打开版本文件失败")
                 return 
             end
             local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
             verFile:close();                           --关闭文件
             set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, ts_version);
-		end
-	end
+        end
+    elseif taskid == 2 then--下载驱动版本文件回调函数
+        if status == 0 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "获取版本文件失败")
+        elseif status == 1 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "保存版本文件失败")
+        elseif status == 2 then
+            local verFile = io.open("drvVer.txt", "r");        --以只读方式打开文件.
+            if verFile == nil then
+                set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "打开版本文件失败")
+                return 
+            end
+            local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
+            verFile:close();                           --关闭文件
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, ts_version);
+        end
+    elseif taskid == 3 then--下载驱动升级文件回调函数
+        if status == 0 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "获取升级文件失败")
+        elseif status == 1 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "保存升级文件失败")
+        elseif status == 2 then
+            --STM.BIN文件下载成功, 准备将该文件分包下发给驱动板
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "下载升级文件成功")
+
+        end
+    end
+end
+
+--***********************************************************************************************
+--  升级驱动板
+--***********************************************************************************************
+function UpdataDriverBoard()
+    --判断sd卡是否有STM.BIN文件
+    drvFile = io.open("STM.BIN", "rb");
+    if drvFile == nil then
+        set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "打开文件失败")
+        return 
+    end
+    --获取文件长度
+    local len = drvFile:seek("end");
+    print("STM.BIN长度为:"..len);
+
+    binCode = {};
+    local binIndex = 0;
+    
+    --将数据循环发送到驱动板
+    for i = 0, len, 1024 do
+        --重新设置文件索引位置
+        drvFile:seek("set",i)
+        --从当前位置读取1k数据
+        charCode = drvFile:read(1024);
+
+        for i=1,1024,1 do
+            binCode[i-1] = string.byte(charCode,i,i)
+        end
+        --为binCode数据添加头部与尾部的CRC,构成一个完成的串口数据包
+        binCode[0] = 0xD0;
+        binCode[1] = 0x10;
+
+        --将读取到的文件数据发送给驱动板
+        uart_send_data(binCode) --将数据通过串口发送出去
+        print("数据长度"..#binCode)
+        binIndex = binIndex + 1;
+    end
+    
+    --关闭文件
+    drvFile:close();
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------

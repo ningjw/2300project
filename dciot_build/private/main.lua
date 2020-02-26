@@ -128,7 +128,20 @@ TipsTab = {
         exportTips  = "请在SD卡创建config文件夹后重试",
         selectProcess = "请选择流程",
         sysInit = "系统初始化",
-        null    = "无",
+        getVerFileFail = "获取版本文件失败",
+        saveVerFileFail = "保存版本文件失败",
+        openVerFileFail = "打开版本文件失败",
+        getFirmwareFail = "获取固件失败",
+        saveFirmwareFail = "保存固件失败",
+        saveFirmwareOk  = "下载并保存固件成功",
+        openFirmwareFail = "打开固件失败",
+        updateFail = "升级失败",
+        sendFirmwareOk   = "固件发送成功",
+        updateDrvBd = "升级驱动板",
+        reply = "回复",
+        connected = "已连接",
+        unconnected = "未连接",
+        null  = "无",
     },
     [ENG] = {
         insertSdUsb = "Please Insert SD Card",
@@ -143,6 +156,19 @@ TipsTab = {
         exportTips  = "Create The \"config\" Folder On The SD Card First",
         selectProcess = "Select Process",
         sysInit = "System Initial",
+        getVerFileFail = "Failed to get version file",
+        saveVerFileFail= "Failed to save version file",
+        openVerFileFail = "Failed to open version file ",
+        getFirmwareFail = "Failed to get firmware",
+        saveFirmwareFail ="Failed to save firmware",
+        saveFirmwareOk  = "Download and save the firmware",
+        openFirmwareFail = "Failed to open firmware",
+        updateFail = "Upgrade failed",
+        sendFirmwareOk  = "Send firmware successfully",
+        updateDrvBd = "Upgrade Drv Board.",
+        reply = "reply",
+        connected = "connected",
+        unconnected = "unconnected",
         null    = "NULL",
     },
 };
@@ -352,6 +378,7 @@ Sys = {
 
     ssid = 0,
     wifi_connect = 0,
+    binIndex = 0,--用于驱动板升级时,控制数据包位置
 }
 
 
@@ -366,7 +393,6 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
-    UpdataDriverBoard();
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
 
@@ -396,7 +422,8 @@ function on_init()
     set_unit();--设置单位
     uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
  --   Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员
+ --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
+    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
@@ -441,12 +468,12 @@ function on_systick()
         wifimode,secumode,ssid,password = get_wifi_cfg() --获取WIFI配置
         local dhcp, ipaddr, netmask, gateway, dns = get_network_cfg() --获取ip地址
         if Sys.wifi_connect ~= 0 then
-            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "已连接");
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].connected);
             set_text(WIFI_CONNECT_SCREEN, WifiSsid, ssid);
             set_text(WIFI_CONNECT_SCREEN, WifiIpAddrId, ipaddr);
         end
     else
-        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, "未连接");
+        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].unconnected);
     end
 
     --判断触摸屏更新进度
@@ -663,8 +690,9 @@ updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6,
     closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
     enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
    mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
- setInject1Spd = {[0]= 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6,   note = "设置注射泵速度"},
+ setInject1Spd = {[0] = 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
     rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
+    updateDrv  = { },--该变量用于驱动板升级
 }
 
 
@@ -699,17 +727,20 @@ function on_uart_recv_data(packet)
     --将接受到的数据保存到全局变量
     UartArg.recv_data = packet;
 
-    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then--接受到数据回复
+    --判断是否为指令数据回复
+    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
         UartArg.reply_sta = OK;
         UartArg.lock = UNLOCKED;
         stop_timer(1)--停止超时定时器
-        local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
-        local UartData = "";--将需要发送的数据保存到该字符串中
-        for i=0, rev_len-1, 1 do
-            UartData = UartData..string.format("%02x ", packet[i]);
-        end
-        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";".."回复");--添加通信记录
     end
+    
+    --添加通信记录
+    local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
+    local UartData = "";--将需要发送的数据保存到该字符串中
+    for i=0, rev_len-1, 1 do
+        UartData = UartData..string.format("%02x ", packet[i]);
+    end
+    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";"..TipsTab[Sys.language].reply);
 end
 
 --***********************************************************************************************
@@ -739,11 +770,19 @@ function on_uart_send_data(packet, reply)
     --以下代码功能: 每发送一次数据,就将该数据保存在手动操作4的串口收发记录当中,方便从触摸屏查看.
     local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
     local UartData = "";--将需要发送的数据保存到该字符串中
-    for i=0, packet.len+1, 1 do
-        UartData = UartData..string.format("%02x ", packet[i]);
+    --判断为升级数据,只保存前6字节与后两字节的CRC
+    if packet[0] == 0xD0 and packet[1] == 0x10 and packet[2] == 0x30 then
+        for i=0, 5, 1 do
+            UartData = UartData..string.format("%02x ", packet[i]);
+        end
+        UartData = UartData.."..."..string.format("%02x ", packet[packet.len])..string.format("%02x ", packet[packet.len+1]);
+    else
+        for i=0, packet.len+1, 1 do
+            UartData = UartData..string.format("%02x ", packet[i]);
+        end
     end
-    print(packet.note);--调试输出
     record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
+    print(packet.note);--调试输出,方便电脑端调试时查看串口收发数据
 end
 
 
@@ -758,13 +797,19 @@ function uart_time_out()
         UartArg.lock = UNLOCKED;
         on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
     else  --重发三次都没有回复,不再重发
+        print("串口接受超时");
+        --判断为升级驱动板数据,此时升级失败
+        if UartArg.repeat_data[0] == 0xD0 and UartArg.repeat_data[1] == 0x10 and UartArg.repeat_data[2] == 0x30 then
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].updateFail)
+            Sys.hand_control_func = nil;
+        end
         UartArg.repeat_times = 0;
         --此时如果系统在运行流程,则锁住串口,不再继续往下执行,在按停止后会解锁串口; 如果是手动操作发送串口指令,则解锁串口
-      if Sys.status == WorkStatus[Sys.language].run then
+        if Sys.status == WorkStatus[Sys.language].run then
             UartArg.lock = LOCKED;
-      else
+        else
            UartArg.lock = UNLOCKED;
-       end
+        end
         stop_timer(1)--停止超时定时器
         beep(1000);--串口回复超时，蜂鸣器响1秒钟。
         Sys.alarmContent = UartArg.note..SysLog[Sys.language].uartTimeOut;--初始化报警内容（串口回复超时）
@@ -1878,7 +1923,7 @@ function process_set3_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
     elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?髅?编辑按钮的id+100等于动作名称id)
+        if get_text(PROCESS_SET3_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?髅???编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_SET3_SCREEN, control+200), PROCESS_SET3_SCREEN, control);--control+200表示对应的"动作类型"id
         end
     elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--当点击插入按钮时
@@ -2971,7 +3016,7 @@ function process_select2_control_notify(screen,control,value)
 
         if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
             set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
-            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅?
+            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅???
             if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
                 ReadActionTag(0);
             elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
@@ -3660,7 +3705,7 @@ function remote_update_control_notify(screen,control,value)
             return
         end
         --判断系统是否为停止状态
-        if Sys.status ~= WorkStatus[Sys.language].stop then 
+        if Sys.status ~= TipsTab[Sys.language][Sys.language].stop then 
             set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].stopFirst)
             return
         end
@@ -3674,13 +3719,13 @@ end
 function on_http_download (taskid, status)
     if taskid == 1 then --下载触摸屏版本文件回调函数
 		if status == 0 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "获取版本文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].getVerFileFail)
         elseif status == 1 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "保存版本文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].saveVerFileFail)
 		elseif status == 2 then
 			local verFile = io.open("tsVer.txt", "r");        --以只读方式打开文件.
             if verFile == nil then
-                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, "打开版本文件失败")
+                set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].openVerFileFail)
                 return 
             end
             local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
@@ -3689,14 +3734,14 @@ function on_http_download (taskid, status)
         end
     elseif taskid == 2 then--下载驱动版本文件回调函数
         if status == 0 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "获取版本文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].getVerFileFail)
         elseif status == 1 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "保存版本文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].saveVerFileFail)
         elseif status == 2 then
             local verFile = io.open("drvVer.txt", "r");        --以只读方式打开文件.
             if verFile == nil then
-                set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, "打开版本文件失败")
-                return 
+                set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].openVerFileFail)
+                return
             end
             local ts_version = verFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
             verFile:close();                           --关闭文件
@@ -3704,13 +3749,15 @@ function on_http_download (taskid, status)
         end
     elseif taskid == 3 then--下载驱动升级文件回调函数
         if status == 0 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "获取升级文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].getFirmwareFail)
         elseif status == 1 then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "保存升级文件失败")
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].saveFirmwareFail)
         elseif status == 2 then
             --STM.BIN文件下载成功, 准备将该文件分包下发给驱动板
-            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "下载升级文件成功")
-
+            set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].saveFirmwareOk)
+            --执行驱动板升级函数
+            Sys.binIndex = 0;
+            Sys.hand_control_func = UpdataDriverBoard;
         end
     end
 end
@@ -3719,37 +3766,60 @@ end
 --  升级驱动板
 --***********************************************************************************************
 function UpdataDriverBoard()
+    if UartArg.lock == LOCKED then
+        return;
+    end
+
     --判断sd卡是否有STM.BIN文件
     drvFile = io.open("STM.BIN", "rb");
     if drvFile == nil then
-        set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, "打开文件失败")
+        set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].openFirmwareFail)
         return 
     end
-    --获取文件长度
-    local len = drvFile:seek("end");
-    print("STM.BIN长度为:"..len);
+    --获取文件长度(调试时使用)
+    local fileLen = drvFile:seek("end");
 
-    binCode = {};
+    local dataLen = 0;
+    local offset = Sys.binIndex * 1024;
 
-    --将数据循环发送到驱动板
-    for i = 0, len, 1024 do
-        --重新设置文件索引位置
-        drvFile:seek("set",i)
-        --从当前位置读取1k数据
-        charCode = drvFile:read(1024);
-
-        for i=1,1024,1 do
-            binCode[i-1] = string.byte(charCode,i,i)
-        end
-
-        --将读取到的文件数据发送给驱动板
-        uart_send_data(binCode) --将数据通过串口发送出去
-        print("数据长度"..#binCode)
+    --判断文件是否传送完毕
+    if offset > fileLen then
+        drvFile:close()
+        set_text(REMOTE_UPDATE_SCREEN, RemoteUpdateDrvStaId, TipsTab[Sys.language].sendFirmwareOk)
+        print("升级数据发送完成")
+        Sys.hand_control_func = nil;
+        return;
     end
-    
+    --设置文件索引位置
+    drvFile:seek("set", offset)
+    binCode = {};
+    --从当前位置读取1k数据
+    charCode = drvFile:read(1024);
+    --将读取到的1k数据进行格式转换
+    for i=1,1024,1 do
+        binCode[i+5] = string.byte(charCode,i,i)
+    end
+    --计算数据长度,计算出的数据包含头部的6个数据,不包含尾部的两个CRC数据
+    dataLen = #binCode + 1;
+    --为binCode数据添加头部与尾部的CRC,构成一个完成的串口数据包
+    binCode[0] = 0xD0;
+    binCode[1] = 0x10;
+    binCode[2] = 0x30;--math.modf( Sys.binIndex/256 ) + 0x30;
+    binCode[3] = math.fmod( Sys.binIndex, 256 )       --0x3000开始表示的是升级数据的第0个包, ox3001表示的是升级数据的第1个包(最大支持传输256k的数据)
+    binCode[4] = math.modf( (dataLen-6)/256 )
+    binCode[5] = math.fmod( (dataLen-6),256 )
+
+    uartSendTab.updateDrv = binCode;
+    uartSendTab.updateDrv.len = dataLen;
+    uartSendTab.updateDrv.note = TipsTab[Sys.language].updateDrvBd;
+    on_uart_send_data(uartSendTab.updateDrv, NEED_REPLY);--在调试时可以使用NO_NEED_REPLY参数,这样就可以不用等待回复
+
+    Sys.binIndex = Sys.binIndex + 1;
+
     --关闭文件
     drvFile:close();
 end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     配置文件操作相关函数
@@ -4104,7 +4174,7 @@ function ReadActionTag(actionNumber)
         return 
     end
     
-    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作?嘈陀攵髅?
+    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作?嘈陀攵?作名??
     actionType = split(actionType, ",");--分割字符串
     local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
     if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称

@@ -421,7 +421,7 @@ function on_init()
     end
     set_unit();--设置单位
     uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+ --   Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -1841,13 +1841,13 @@ TabAction = {
 --screen: 当前屏幕的id, 子界面按"确认" ,"返回" 按钮后需要返回的界面
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
-    if screen == PROCESS_SET2_SCREEN then
+    -- if screen == PROCESS_SET2_SCREEN then
         ReadActionTag(control-100);--在流程设置2界面, 当编辑按钮id号为101时, 当前动作序号为1, 依次类推
         set_screen_actionNumber(screen, control-100);
-    elseif screen == PROCESS_SET3_SCREEN then
-        ReadActionTag(control-100);
-        set_screen_actionNumber(screen, control-100+12);
-    end
+    -- elseif screen == PROCESS_SET3_SCREEN then
+    --     ReadActionTag(control-100);
+    --     set_screen_actionNumber(screen, control-100+12);
+    -- end
 
     if para == ActionItem[Sys.language][1] then --开始界面
         change_screen(PROCESS_INIT_SCREEN);
@@ -2037,8 +2037,9 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_init_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+            print(DestActionNum);
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -4122,14 +4123,16 @@ function ChangeActionFileTag(actionNumber, flag)
     local fileString = actionFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
     actionFile:close();                           --关闭文件
 
-    --字符替换
+    --字符替换;1表示需要对动作进行加操作,此时执行的是插入动作,
     if flag == 1 then
+        fileString = DeleteSubString(fileString, "<action24>", "</action24>");--删除指定的标签内容
         for i = 23, actionNumber, -1 do
             fileString = string.gsub(fileString, "action"..i, "action"..(i+1));
         end
-    else
+    else--2表示需要对动作标签进行减操作,此时执行的是删除操作
+        fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--删除指定的标签内容
         for i = actionNumber+1, 24, 1 do
-            fileString = string.gsub(fileString, "action"..i, "action"..(i+1));
+            fileString = string.gsub(fileString, "action"..i, "action"..(i-1));
         end
     end
 

@@ -1892,8 +1892,10 @@ function process_set2_control_notify(screen,control,value)
     elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?骼嘈?编辑按钮的id+200等于动作名称id)
-            set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作类型"id
+        if get_value(screen,control) == ENABLE then
+            if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动?骼嘈?编辑按钮的id+200等于动作名称id)
+                set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作类型"id
+            end
         end
     elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--当点击插入按钮时
         if get_value(screen,control) == ENABLE then
@@ -2036,8 +2038,10 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_init_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2122,8 +2126,10 @@ INJECT_TextEndId = 11; --取样界面中文本结束id
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2175,8 +2181,10 @@ INJECT_ADD_TextEndId = 62;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_add_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2338,8 +2346,10 @@ PERISTALTIC_TextEndId = 39;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_peristaltic_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2438,8 +2448,10 @@ DISPEL_TextEndId = 5;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_dispel_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2481,8 +2493,10 @@ ReadSignal_TextEndId = 5;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_read_signal_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2586,8 +2600,10 @@ CALCULATE_TextEndId = 14;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_calculate_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2872,8 +2888,10 @@ VALVE_TextEndId = 22;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_valve_ctrl_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2931,8 +2949,10 @@ WAITTIME_TextId = 1;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_wait_time_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2976,15 +2996,17 @@ end
 function process_select_control_notify(screen, control, value)
 	if control >= AnalysisButtonId and control <= NullButtonId then
 		ProcessSelectItem = control;
-	elseif control == SureButtonId then --确认按钮
-		change_screen(DestScreen);
-		if ProcessSelectItem ~= nil then
-			set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl对应流程选择
-			if DestScreen == PROCESS_SET1_SCREEN  then
-                set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]..(DestControl-299));--DestControl-100对应流程名称
+    elseif control == SureButtonId then --确认按钮
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            change_screen(DestScreen);
+            if ProcessSelectItem ~= nil then
+                set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessSelectItem]);--DestControl对应流程选择
+                if DestScreen == PROCESS_SET1_SCREEN  then
+                    set_text(DestScreen, DestControl-100, ProcessItem[Sys.language][ProcessSelectItem]..(DestControl-299));--DestControl-100对应流程名称
+                end
             end
+            WriteProcessFile(1);--保存流程设置1界面中的参数
         end
-        WriteProcessFile(1);--保存流程设置1界面中的参数
 	elseif control == CancelButtonId then --取消按钮
 		change_screen(DestScreen);
 	end
@@ -3011,19 +3033,19 @@ function process_select2_control_notify(screen,control,value)
         ProcessSelec2tItem = control-100;--control-100 = 与该按钮重合的文本框id
 
     elseif control == SureButtonId then --确认按钮,返回之前的界面
-        change_screen(DestScreen);
-
-        if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
-            set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
-            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅???
-            if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
-                ReadActionTag(0);
-            elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
-                process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
-                WriteProcessFile(2);--2对应<RunCtrl>标签
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            change_screen(DestScreen);
+            if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
+                set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
+                set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅???
+                if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
+                    ReadActionTag(0);
+                elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
+                    process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
+                    WriteProcessFile(2);--2对应<RunCtrl>标签
+                end
             end
         end
-
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -3105,12 +3127,14 @@ function action_select_control_notify(screen,control,value)
     if control >= ActionStartButtonId and control <= ActionEndButtonId then --动作类型选择按钮
         ActionSelectItem = control;
     elseif control == SureButtonId then --确认按钮
-        change_screen(DestScreen);
-        if ActionSelectItem ~= nil then
-            set_text(DestScreen, DestControl, ActionItem[Sys.language][ActionSelectItem]);--动作选择
-            set_text(DestScreen, DestControl-100, ActionItem[Sys.language][ActionSelectItem]);--DestControl-100对应动作名称
+        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+            change_screen(DestScreen);
+            if ActionSelectItem ~= nil then
+                set_text(DestScreen, DestControl, ActionItem[Sys.language][ActionSelectItem]);--动作选择
+                set_text(DestScreen, DestControl-100, ActionItem[Sys.language][ActionSelectItem]);--DestControl-100对应动作名称
+            end
+            WriteDefaultActionTag(DestActionNum);
         end
-        WriteDefaultActionTag(DestActionNum);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end

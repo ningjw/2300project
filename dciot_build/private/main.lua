@@ -88,9 +88,8 @@ ENG = 2;--英文
 SET = 1;
 RESET = 0;
 
-OK = 0;
-ERR = 1;
-FAILURE = 1;
+SEND_OK = 0;
+SEND_FAIL = 1;
 
 FINISHED = 0;--子流程执行完成
 
@@ -631,7 +630,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getDrvVer ,NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 6 then--第六步：显示驱动版本版本号 并 获取传感版与计算卡硬件版本号
-        if UartArg.reply_sta == OK then
+        if UartArg.reply_sta == SEND_OK then
             softVer1 = bcd_to_string(UartArg.recv_data[10]).."."..bcd_to_string(UartArg.recv_data[11]); 
             hardVer1 = bcd_to_string(UartArg.recv_data[12]).."."..bcd_to_string(UartArg.recv_data[13]);
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId,softVer1);--显示软件版本号
@@ -640,7 +639,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCHardVer, NEED_REPLY);--获取传感版与计算卡硬件版本号
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 7 then--第七步：显示传感版与计算卡硬件版本号 并 获取传感版与计算卡软件版本号
-        if UartArg.reply_sta == OK then
+        if UartArg.reply_sta == SEND_OK then
             hardVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]);
             set_text(SYSTEM_INFO_SCREEN, SensorBoardHardVerId, hardVer1);
             hardVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -650,7 +649,7 @@ function sys_init()
         on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--获取传感版与计算卡软件版本号
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 8 then--第八步：显示感版与计算卡软件版本号
-        if UartArg.reply_sta == OK then
+        if UartArg.reply_sta == SEND_OK then
             softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4]); 
             set_text(SYSTEM_INFO_SCREEN, SensorBoardSoftVerId, softVer1);
             softVer1 = bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
@@ -678,7 +677,8 @@ uartSendTab = {
   getSCSoftVer = {[0] = 0xEE, 0x03, 0x10, 0x03, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取软件版本" },
   getSCHardVer = {[0] = 0xEE, 0x03, 0x10, 0x02, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取硬件版本" },
     getTemp    = {[0] = 0xEE, 0x03, 0x10, 0x0A, 0x00, 0x01, 0x00, 0x00, len = 6, note = "测量池温度" },
-    getVoltage = {[0] = 0xEE, 0x03, 0x10, 0x14, 0x00, 0x01, 0x00, 0x00, len = 6, note = "光电管电压"},
+    getVoltage = {[0] = 0xEE, 0x03, 0x10, 0x0C, 0x00, 0x01, 0x00, 0x00, len = 6, note = "光电管电压"},
+ setLedCurrnet = {[0] = 0xEE, 0x03, 0x10, 0x0D, 0x00, 0x01, 0x00, 0x00, len = 6, note = "设置LED电流"},
     openLed    = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x01, 0x00, 0x00, len = 6, note = "开LED灯" },
     closeLed   = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关LED灯" },
 updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6, note = "更新计算板"},
@@ -703,7 +703,7 @@ UartArg = {
     note = "",--用于保存串口指令说明
     recv_data,--用于保存接收到的数据
     reply_data = {[0] = 0, [1] = 0},--用于保存需要接受到的回复数据
-    reply_sta = FAILURE;--用于指示发送的串口指令是否有正确回复
+    reply_sta = SEND_OK;--用于指示发送的串口指令是否有正确回复
     lock = UNLOCKED,--用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
 };
 
@@ -729,7 +729,8 @@ function on_uart_recv_data(packet)
 
     --判断是否为指令数据回复
     if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
-        UartArg.reply_sta = OK;
+        UartArg.repeat_times = 0;--重发计数请0
+        UartArg.reply_sta = SEND_OK;
         UartArg.lock = UNLOCKED;
         stop_timer(1)--停止超时定时器
     end
@@ -762,7 +763,7 @@ function on_uart_send_data(packet, reply)
     end
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--计算crc16
-    UartArg.reply_sta = FAILURE;
+    UartArg.reply_sta = SEND_FAIL;
     uart_send_data(packet) --将数据通过串口发送出去
 
     UartArg.note = packet.note;--在保存串口回复超时的日志时，需要用到UartArg.note
@@ -787,16 +788,15 @@ end
 
 
 
-
 --***********************************************************************************************
 --进入到该函数表示串口一定回复超时, 因为如果回复成功, 在on_uart_recv_data函数中就会停止定时器1,就不会进入到该函数
 --***********************************************************************************************
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times <= 3 then
+    if UartArg.repeat_times < 3 then
         UartArg.lock = UNLOCKED;
         on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
-    else  --重发三次都没有回复,不再重发
+    else  --重发2次都没有回复,不再重发
         print("串口接受超时");
         --判断为升级驱动板数据,此时升级失败
         if UartArg.repeat_data[0] == 0xD0 and UartArg.repeat_data[1] == 0x10 and UartArg.repeat_data[2] == 0x30 then
@@ -1566,7 +1566,6 @@ end
 --***********************************************************************************************
 function process_ready_run()
     Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
-    ShowSysTips("id="..Sys.currentProcessId)
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
         ReadProcessFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
@@ -2037,7 +2036,6 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_init_control_notify(screen,control,value)
     if control == SureButtonId then --确认按钮
-            print(DestActionNum);
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
@@ -3206,9 +3204,10 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作1
 --------------------------------------------------------------------------------------------------------------------]]
-HandValve11BtId = 43;
-HandValve12BtId = 44;
-HandCloseAllValveId = 47;
+HandOpenValve11BtId = 19;
+HandOpenValve12BtId = 20;
+HandCloseValve11BtId = 35;
+HandCloseValve12BtId = 36;
 HandValcoChnlId = 130;
 HandValcoCtrlId = 131;
 HandInject1ScaleId = 99;
@@ -3218,24 +3217,29 @@ HandInject1WaitTimeId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate1_control_notify(screen, control, value)
-    if control == HandValve11BtId then--控制阀11
-        if get_value(HAND_OPERATE1_SCREEN, control) == ENABLE then
-            open_single_valve(11);
-        else
-            close_single_valve(11);
-        end
-    elseif control == HandValve12BtId then--控制阀12
-        if get_value(HAND_OPERATE1_SCREEN, control) == ENABLE then
-            open_single_valve(12);
-        else
-            close_single_valve(12);
-        end
-    elseif control == HandCloseAllValveId then--关闭所有阀
-
+    if get_value(screen,control) == DISABLE then--瞬变按钮会调用两次该函数, 增加该判断使得第二次调用后可以立马退出
+        return;
+    end
+    if control == HandOpenValve11BtId then--控制阀11
+            on_uart_send_data(uartSendTab.openV11, NO_NEED_REPLY);
+    elseif control == HandCloseValve11BtId then
+        on_uart_send_data(uartSendTab.closeV11, NO_NEED_REPLY);
+    elseif control == HandOpenValve12BtId then--控制阀12
+        on_uart_send_data(uartSendTab.openV12, NO_NEED_REPLY);
+    elseif control == HandCloseValve12BtId then--控制阀12
+        on_uart_send_data(uartSendTab.closeV12, NO_NEED_REPLY);
     elseif control == HandValcoCtrlId then--控制十通阀
-        control_valco( tonumber( get_text(screen, HandValcoChnlId) ) );
-    elseif control == HandInject1SendId then--控制注射泵
-        Sys.hand_control_func = hand_control_inject1;
+        uartSendTab.openValco[2] = tonumber( get_text(screen, HandValcoChnlId) );
+        on_uart_send_data(uartSendTab.openValco, NO_NEED_REPLY);
+    elseif control == HandInject1SendId  then--控制注射泵
+        if Sys.hand_control_func==nil then
+            Sys.processStep = 1;
+            UartArg.lock = UNLOCKED;
+            Sys.hand_control_func = hand_control_inject1;
+        else
+            set_value(screen, control, DISABLE);
+        end
+        
     end
 end
 
@@ -3247,9 +3251,15 @@ function hand_control_inject1(sta)
     if UartArg.lock == LOCKED then
         return;
     end
-    
+
+    if UartArg.reply_sta == SEND_FAIL and Sys.processStep >= 2 then
+        Sys.processStep = 4;
+        Sys.waitTimeFlag = RESET;
+    end
+
     if Sys.processStep == 1 then--第一步: 使能注射泵
         enable_inject1();
+        ShowSysCurrentAction("手动操作-移动注射泵");
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then --第二步:设置注射泵速度
         set_inject1_speed( tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1SpdId)) );
@@ -3264,11 +3274,12 @@ function hand_control_inject1(sta)
             move_inject1_to( tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1ScaleId)) * 10 );
         end
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 4 and Sys.waitTimeFlag == RESET then --第四步:初始化结束
+    elseif Sys.processStep == 4 and Sys.waitTimeFlag == RESET then --第四步:流程结束
+        ShowSysCurrentAction(TipsTab[Sys.language].null);
+        set_value(HAND_OPERATE1_SCREEN, HandInject1SendId, DISABLE);
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
     end
-
 end
 
 
@@ -3276,14 +3287,32 @@ end
     手动操作2
 --------------------------------------------------------------------------------------------------------------------]]
 HandGetVoltageId = 74;
+HandLedCurrentTextId = 43;
+HandSetLedCurrentId = 72;
 HandShowVoltageId = 42;
 HandLedStatusId = 6;
 HandLedCtrlBtId = 3;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate2_control_notify(screen,control,value)
+    if get_value(screen,control) == DISABLE then--瞬变按钮会调用两次该函数, 增加该判断使得第二次调用后可以立马退出
+        return;
+    end
     if control == HandGetVoltageId then--获取电压
-        Sys.hand_control_func = hand_get_voltage;
+        if  Sys.hand_control_func == nil then
+            Sys.processStep = 1;
+            UartArg.lock = UNLOCKED;
+            set_enable(screen, control, DISABLE);
+            Sys.hand_control_func = hand_get_voltage;
+        else
+        end
+    elseif control == HandSetLedCurrentId  then
+        if  Sys.hand_control_func == nil then
+            Sys.processStep = 1;
+            UartArg.lock = UNLOCKED;
+            Sys.hand_control_func = hand_set_led_current;
+        else
+        end
     elseif control == HandLedCtrlBtId then--控制led灯开关按钮
         if get_text(HAND_OPERATE2_SCREEN, HandLedStatusId) == LedStatus[ Sys.language ].open then--打开
             on_uart_send_data(uartSendTab.openLed, NO_NEED_REPLY);
@@ -3292,9 +3321,36 @@ function hand_operate2_control_notify(screen,control,value)
         end
     end
 end
-
 --***********************************************************************************************
---手动操作-获取偏置电压
+--手动操作-手动设置电流
+--sta: 0-复位; 1-移动到指定位置
+--***********************************************************************************************
+function hand_set_led_current()
+    if UartArg.lock == LOCKED then
+        return;
+    end
+    
+    if Sys.processStep == 1 then--第一步: 发送串口指令设置LED电流
+        ShowSysCurrentAction("手动操作-设置LED电流");
+        local ledCurrentValue = tonumber( get_text(HAND_OPERATE2_SCREEN, HandLedCurrentTextId) );
+        ledCurrentValue = ledCurrentValue * 2048 / 50;
+        ledCurrentValue = math.floor(ledCurrentValue + 0.5);--四舍五入
+        uartSendTab.setLedCurrnet[4] = math.modf( ledCurrentValue / 256 );
+        uartSendTab.setLedCurrnet[5] = math.fmod( ledCurrentValue , 256 );
+        on_uart_send_data(uartSendTab.setLedCurrnet, NO_NEED_REPLY);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 2 then--第二步: 解析电压值并进行显示
+        set_value(HAND_OPERATE2_SCREEN, HandSetLedCurrentId, DISABLE);
+        set_enable(HAND_OPERATE2_SCREEN, HandSetLedCurrentId, ENABLE);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 3 then--第三步:结束
+        ShowSysCurrentAction(TipsTab[Sys.language].null);
+        Sys.processStep = 1;
+        Sys.hand_control_func = nil;
+    end
+end
+--***********************************************************************************************
+--手动操作-手动获取偏置电压
 --sta: 0-复位; 1-移动到指定位置
 --***********************************************************************************************
 function hand_get_voltage()
@@ -3303,17 +3359,25 @@ function hand_get_voltage()
     end
     
     if Sys.processStep == 1 then--第一步: 发送串口指令获取电压
+        ShowSysCurrentAction("手动操作-获取电压");
         on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then--第二步: 解析电压值并进行显示
-        local vol = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;
+        local vol = "time out";
+        if UartArg.reply_sta == SEND_OK then
+            vol = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;
+        end
+        set_enable(HAND_OPERATE2_SCREEN, HandGetVoltageId, ENABLE);
+        set_value(HAND_OPERATE2_SCREEN, HandGetVoltageId, DISABLE);
         set_text(HAND_OPERATE2_SCREEN, HandShowVoltageId, vol);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 3 then--第三步:结束
+        ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
     end
 end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作3
@@ -3699,7 +3763,7 @@ function remote_update_control_notify(screen,control,value)
         start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
     elseif control == RemoteGetDrvVerBtId then--获取驱动版本文件
         http_download(2, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/drvVer.txt', "drvVer.txt");
-    elseif control == RemoteStartUpdateDrvBtId then--获取驱动文件
+    elseif control == RemoteStartUpdateDrvBtId and Sys.hand_control_func == nil then--获取驱动文件
         --判断权限
         if Sys.userName == SysUser[Sys.language].operator then
             set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].NoPermission)

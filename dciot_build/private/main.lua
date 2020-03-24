@@ -374,10 +374,11 @@ Sys = {
     alarmContent = "",--用于保存当前报警信息
     logContent = "",--用于保存当前日志信息
 
-
     ssid = 0,
     wifi_connect = 0,
     binIndex = 0,--用于驱动板升级时,控制数据包位置
+
+    flag_save_uart_log = ENABLE,--该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
 }
 
 
@@ -727,8 +728,11 @@ function on_uart_recv_data(packet)
     --将接受到的数据保存到全局变量
     UartArg.recv_data = packet;
 
+    --当前为反控模式
+    if Sys.runType == WorkType[Sys.language].controlled then
+        ComputerControl(packet);
     --判断是否为指令数据回复
-    if packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
+    elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
         UartArg.repeat_times = 0;--重发计数请0
         UartArg.reply_sta = SEND_OK;
         UartArg.lock = UNLOCKED;
@@ -741,7 +745,10 @@ function on_uart_recv_data(packet)
     for i=0, rev_len-1, 1 do
         UartData = UartData..string.format("%02x ", packet[i]);
     end
-    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";"..TipsTab[Sys.language].reply);
+    --判断是否打开串口通信记录功能
+    if Sys.flag_save_uart_log == ENABLE then
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;"..UartDateTime..";"..UartData..";"..TipsTab[Sys.language].reply);
+    end
 end
 
 --***********************************************************************************************
@@ -782,7 +789,10 @@ function on_uart_send_data(packet, reply)
             UartData = UartData..string.format("%02x ", packet[i]);
         end
     end
-    record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
+    --判断是否打开串口通信记录功能
+    if Sys.flag_save_uart_log == ENABLE then
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
+    end
     print(packet.note);--调试输出,方便电脑端调试时查看串口收发数据
 end
 
@@ -1259,9 +1269,15 @@ function run_control_notify(screen,control,value)
             process_ready_run();--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
             SystemStop();
+            print("SystemStop");
         end
     elseif control == RunTypeMenuId then--更改运行方式
         Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
+        if Sys.runType == WorkType[Sys.language].controlled then
+            set_visiable(RUN_CONTROL_SCREEN, RunStopButtonId, 0);
+        else
+            set_visiable(RUN_CONTROL_SCREEN, RunStopButtonId, 1);
+        end
         WriteProcessFile(2);
     elseif control == HandProcessTab[1].TimesId then--更改手动运行次数
         HandProcessTab[1].times = tonumber(get_text(RUN_CONTROL_SCREEN, control));
@@ -1557,7 +1573,7 @@ function set_process_edit_state(state)
     set_enable(PROCESS_WAIT_TIME_SCREEN, SureButtonId, state)
     set_enable(PROCESS_VALVE_CTRL_SCREEN, SureButtonId, state)
     set_enable(PROCESS_SELECT_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_SELECT2_SCREEN, SureButtonId, state)
+    -- set_enable(PROCESS_SELECT2_SCREEN, SureButtonId, state)
     set_enable(ACTION_SELECT_SCREEN, SureButtonId, state)
 end
 
@@ -1579,10 +1595,14 @@ function process_ready_run()
         Sys.driverStep = 1;
         Sys.driverSubStep = 1;
         Sys.handRunTimes = 0;
+        Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
         set_value(MAIN_SCREEN, ProgressBarId, 0);--设置进度条的值为0
         Sys.logContent = WorkStatus[Sys.language].run.."\""..Sys.processName.."\"";--“运行”+流程名称
         add_history_record(HISTORY_LOG_SCREEN);--添加一条日志信息
-        SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,跳转到excute_process函数执行流程
+        ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
+        set_text(MAIN_SCREEN, LastResultE1Id, 0);--E1显示清0
+        set_text(MAIN_SCREEN, LastResultE2Id, 0);--E2显示清0
+        SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,定时器中断中检测到运行状态后,会跳转到excute_process函数执行流程
     end
 end
 
@@ -1608,6 +1628,7 @@ function excute_process()
         Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
         Sys.startTime = Sys.dateTime;
         ShowSysCurrentAction( Sys.processName..":"..Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
+        print("ShowSysCurrentAction");
         if Sys.actionType == ActionItem[Sys.language][1] then 
             Sys.actionFunction = excute_init_process;--执行 初始化流程
         elseif Sys.actionType == ActionItem[Sys.language][2] then 
@@ -1679,16 +1700,48 @@ end
 function SystemStop()
     SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     ShowSysCurrentAction(TipsTab[Sys.language].null);--将当前动作显示为"无"
+    ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
+    ShowSysTips("");
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
     if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管?碓?
         set_process_edit_state(ENABLE);--允许编辑流程
     end
+    Sys.processStep = 1;
+    Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
-    Sys.waitTimeFlag = RESET;
+    UartArg.repeat_times = 0;--重发计数请0
+    UartArg.reply_sta = SEND_OK;
+    UartArg.lock = UNLOCKED;
+    stop_timer(1)--停止超时定时器
     Sys.logContent = WorkStatus[Sys.language].stop.."\""..Sys.processName.."\"";--“停止”+流程名称
     add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
 end
 
+--***********************************************************************************************
+--  通过电脑控制仪器的运转
+--***********************************************************************************************
+function ComputerControl(package)
+    local replayData = {};
+    --判断第0个字节(地址)
+    if package[0] == tonumber(get_text(IN_OUT_SCREEN,IOSET_ComputerAddr)) then
+        
+        --判断第1个字节(读或写)
+        if package[1] == 0x03 then----读
+            replayData[0] = package[0];--地址
+            replayData[1] = package[1];
+            if package[3] == 0x02 then--读单位
+            elseif package[3] == 0x00 then--读分析结果
+            elseif package[3] == 0x02 then--读校正结果
+            end
+        elseif package[1] == 0x06 then--写
+            if package[3] == 0x04 then--开始分析
+            elseif package[3] == 0x06 then--停止分析
+            end
+            uart_send_data(package) --回复
+        end
+        
+    end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置1
@@ -1893,7 +1946,7 @@ function process_set2_control_notify(screen,control,value)
         action_select_set(PROCESS_SET2_SCREEN, control-100, control-400);
     elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
         if get_value(screen,control) == ENABLE then
-            if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动?骼嘈?编辑按钮的id+200等于动作名称id)
+            if get_text(PROCESS_SET2_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动作类型,(编辑按钮的id+200等于动作名称id)
                 set_edit_screen(get_text(PROCESS_SET2_SCREEN, control+200), PROCESS_SET2_SCREEN, control);--control+200表示对应的"动作类型"id
             end
         end
@@ -2513,14 +2566,19 @@ function excute_read_signal_process(paraTab)
     end
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
+        Sys.flag_save_uart_log = DISABLE;--关闭串口通信日志记录功能(获取电位时会连续不断的获取)
         Sys.signalDrift = tonumber(paraTab[2]);--信号漂移
         Sys.signalMinTime = tonumber(paraTab[3]);--最小时间
         Sys.signalMaxTime = tonumber(paraTab[4]);--最大时间
         Sys.signalNumber = tonumber(paraTab[5]);--取样个数
-        start_wait_time(Sys.signalMinTime);
+        start_wait_time(Sys.signalMinTime);--等待最小的定时器时间
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
+        on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);--通过串口读取信号
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then--解析串口信号
         if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
             if Sys.signalMaxTime < Sys.signalMinTime then
                 Sys.signalMaxTime = Sys.signalMinTime;
@@ -2528,13 +2586,22 @@ function excute_read_signal_process(paraTab)
             start_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
             Sys.signalCount = 0;
             Sys.actionSubStep = Sys.actionSubStep + 1;
+        else
+            local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--获取的信号值需要除以10才是实际值
+            --将获取的电压实时显示在首页当中
+            if paraTab[1] == "E1" then
+                set_text(MAIN_SCREEN, LastResultE1Id, signalE);
+            else
+                set_text(MAIN_SCREEN, LastResultE2Id, signalE);
+            end
+            Sys.actionSubStep = Sys.actionSubStep-1;--跳转第二步继续读取信号
         end
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 3 then--通过串口读取信号
-        on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
+    elseif Sys.actionSubStep == 4 then
+        on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);--通过串口读取信号
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 4 then--解析串口数据, 并判断是否满足信号漂移要求
+    elseif Sys.actionSubStep == 5 then--解析串口数据, 并判断是否满足信号漂移要求
         local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--获取的信号值需要除以10才是实际值
         --将获取的电压实时显示在首页当中
         if paraTab[1] == "E1" then
@@ -2574,13 +2641,16 @@ function excute_read_signal_process(paraTab)
                     set_text(MAIN_SCREEN, LastResultE2Id, signalE);
                     print("E2=",signalE);
                 end
+                Sys.waitTimeFlag = RESET;
+                stop_timer(2); --关闭定时器2
                 Sys.actionSubStep = Sys.actionSubStep + 1;--满足条件,跳转下一步结束采集
             else
                 Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
             end
         end
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 5 then
+    elseif Sys.actionSubStep == 6 then
+        Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
         Sys.actionSubStep = FINISHED;--结束
     end
     return Sys.actionSubStep;
@@ -2592,9 +2662,9 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 CALCULATE_BtStartId = 1;
-CALCULATE_BtEndId = 4;
-CALCULATE_TextStartId = 5;
-CALCULATE_TextEndId = 14;
+CALCULATE_BtEndId = 3;
+CALCULATE_TextStartId = 4;
+CALCULATE_TextEndId = 12;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -2867,12 +2937,28 @@ function calc_analysis_result(type)
     b = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId));
     c = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId));
     d = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
-
+    print(string.format( "a=%f,b=%f,c=%f,d=%f",a,b,c,d));
     Sys.result = a*(x^3) + b*(x^2) + c*x + d;
+    Sys.result = GetPreciseDecimal(Sys.result,4);--保留小数点后四位
     set_text(MAIN_SCREEN, LastResultId, Sys.result);--在主界面显示结果
 end
 
-
+--- nNum 源数字
+--- n 小数位数
+function GetPreciseDecimal(nNum, n)
+    if type(nNum) ~= "number" then
+        return nNum;
+    end
+    n = n or 0;
+    n = math.floor(n)
+    if n < 0 then
+        n = 0;
+    end
+    local nDecimal = 10 ^ n
+    local nTemp = math.floor(nNum * nDecimal);
+    local nRet = nTemp / nDecimal;
+    return nRet;
+end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -3147,15 +3233,15 @@ end
 --在量程设置/量程选择界面中,量程1/2/3文本的id都是一样的
 
 RANGESET_TextStartId = 1;
-RANGESET_TextEndId = 18;
+RANGESET_TextEndId = 20;
 
 UniteSetTextId = 25--单位设置成功后,用于显示单位文本的id
 UniteSetMenuId = 26;--单位选择
 
 RangeTab = {
-    [1] = {LowId = 1, HighId = 2,  densityCalLowId = 3,  densityCalHighId = 4,  aId = 5,  bId = 6,  cId = 7,  dId = 8},
-    [2] = {LowId = 9, HighId = 10, densityCalLowId = 11, densityCalHighId = 12, aId = 13, bId = 14, cId = 15, dId = 16},
-    [3] = {LowId = 17,HighId= 18,  densityCalLowId = 19, densityCalHighId = 20, aId = 21, bId = 22, cId = 23, dId = 24},
+    [1] = {LowId = 1, HighId = 2,   aId = 3,  bId = 4,  cId = 5,  dId = 6},
+    [2] = {LowId = 7, HighId = 8,   aId = 9, bId = 10, cId = 11, dId = 12},
+    [3] = {LowId = 13,HighId= 14,   aId = 15, bId = 16, cId = 17, dId = 18},
 };
 
 --设置单位
@@ -3424,22 +3510,18 @@ UartRecordId = 1--串口通讯记录空间id
     输入输出
 --------------------------------------------------------------------------------------------------------------------]]
 IOSET_TextStartId = 1;
-IOSET_TextEndId = 13;
-IOSET_ComputerSetId = 25;
-IOSET_TouchScreenSetId = 26;
-IOSET_Output1SetId = 27;
-IOSET_Output2SetId = 30;
-IOSET_ScreenBaudId = 7;
+IOSET_TextEndId = 8;
+IOSET_ComputerAddr = 1;
+IOSET_ScreenBaudId = 2;
+IOSET_BaudrateMenu = 20;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function in_out_control_notify(screen,control,value)
-    if control == IOSET_ComputerSetId then
-
-    elseif control == IOSET_TouchScreenSetId then
+    if control == IOSET_BaudrateMenu then--设置波特率
         uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );
-    elseif control == IOSET_Output1SetId then
-
-    elseif control == IOSET_Output2SetId then
+        WriteProcessFile(4);
+    elseif control >=IOSET_TextStartId and control <= IOSET_TextEndId then
+        WriteProcessFile(4);
     end
 end
 
@@ -3455,33 +3537,31 @@ HistoryRecordId = 32;--历史记录控件Id号，分析、校准、报警、日志都是这个。
 --***********************************************************************************************
 function add_history_record(screen)
     local record_count;
+    local date = string.format("%d%02d%02d;",Sys.resultTime.year,Sys.resultTime.mon,Sys.resultTime.day);
+    local time = string.format("%02d:%02d;",Sys.resultTime.hour,Sys.resultTime.min);
     if screen == HISTORY_ANALYSIS_SCREEN then--添加分析记录
         record_count =  record_get_count(screen, HistoryRecordId);
         record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, record_count..";"..--序号
-            Sys.resultTime.year..Sys.resultTime.mon..Sys.resultTime.day..";"..--日期
-            Sys.resultTime.hour..Sys.resultTime.min..";"..--时间
-            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
+        record_add(screen, HistoryRecordId, 
+            record_count..";"..date..time..--序号,日期,时间
+            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");--结果/E2/E2
     elseif screen == HISTORY_CALIBRATION_SCREEN then--添加校准记录
         record_count =  record_get_count(screen, HistoryRecordId);
         record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, record_count..";"..
-            Sys.resultTime.year..Sys.resultTime.mon..Sys.resultTime.day..";"..--日期
-            Sys.resultTime.hour..Sys.resultTime.min..";"..--时间
+        record_add(screen, HistoryRecordId, 
+            record_count..";"..date..time..--序号,日期,时间
             Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
     elseif screen == HISTORY_ALARM_SCREEN then--添加报警记录
         record_count =  record_get_count(screen, HistoryRecordId);
         record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, record_count..";"..
-            Sys.dateTime.year..Sys.dateTime.mon..Sys.dateTime.day..";"..--日期
-            Sys.dateTime.hour..Sys.dateTime.min..";"..--时间
+        record_add(screen, HistoryRecordId,
+            record_count..";"..date..time..--序号,日期,时间
             Sys.alarmContent.."; ");
     elseif screen == HISTORY_LOG_SCREEN then --添加日志记录
         record_count =  record_get_count(screen, HistoryRecordId);
         record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, record_count..";"..
-            Sys.dateTime.year..Sys.dateTime.mon..Sys.dateTime.day..";"..--日期
-            Sys.dateTime.hour..Sys.dateTime.min..";"..--时间
+        record_add(screen, HistoryRecordId, 
+            record_count..";"..date..time..--序号,日期,时间
             Sys.logContent..";"..Sys.userName);
     end
 end
@@ -3927,7 +4007,6 @@ cfgFileTab = {
 --tagNum = 2 : 运行控制界面中的参数
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
-
     local configFile = io.open("0", "a+");        --以可读可写方式打开文本,如文件不存在则创建文件.
     configFile:seek("set");                       --把文件位置定位到开头
     local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
@@ -3968,6 +4047,7 @@ function ReadProcessFile()
     ReadProcessTag(1);
     ReadProcessTag(2);
     ReadProcessTag(3);
+    ReadProcessTag(4);
 end
 
 --***********************************************************************************************
@@ -3983,6 +4063,7 @@ function ReadProcessTag(tagNum)
         WriteProcessFile(1);
         WriteProcessFile(2);
         WriteProcessFile(3);
+        WriteProcessFile(4);
         return;
     end
 	configFile:seek("set")                        --把文件位置定位到开头
@@ -4027,7 +4108,7 @@ function ReadProcessTag(tagNum)
             set_text(RANGE_SET_SCREEN, i, tab[i]);
         end
     elseif tagNum == 4 then
-        for i = IOSET_TextStartId, IO_TextEndId, 1 do
+        for i = IOSET_TextStartId, IOSET_TextEndId, 1 do
             set_text(IN_OUT_SCREEN, i, tab[i]);
         end
     end

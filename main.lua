@@ -424,8 +424,7 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
     set_unit();--设置单位
-    uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );--设置本机串口波特率
- --   Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -544,6 +543,8 @@ function on_control_notify(screen,control,value)
         wifi_connect_control_notify(screen,control,value);		
     elseif screen == REMOTE_UPDATE_SCREEN then
         remote_update_control_notify(screen,control,value);
+    elseif screen == HISTORY_ALARM_SCREEN or screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or screen == HISTORY_LOG_SCREEN then
+        history_control_notify(screen,control,value);
     end
     
     
@@ -733,7 +734,7 @@ function on_uart_recv_data(packet)
     UartArg.recv_data = packet;
 
     --当前为反控模式
-    if Sys.runType == WorkType[Sys.language].controlled then
+    if Sys.runType == WorkType[Sys.language].controlled and package[0] == tonumber(get_text(IN_OUT_SCREEN,IOSET_ComputerAddr)) then
         ComputerControl(packet);
     --判断是否为指令数据回复
     elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
@@ -1665,10 +1666,12 @@ function excute_process()
     --第三步:判断动作是否执行完毕
     elseif Sys.processStep == 3 then
         set_value(MAIN_SCREEN, ProgressBarId, math.floor(Sys.actionStep/Sys.actionTotal*100));--更新进度条
-        ----------------所有动作执行完毕-------------------------------------------
+        ----------------所有动作执行完毕(流程结束)-------------------------------------------
         if Sys.actionStep >= Sys.actionTotal then
-            Sys.actionStep = 1;                       --指向第一个动作
-            Sys.processStep = 1;                      --返回第一步执行动作
+            --自动量程切换判断
+            
+            Sys.actionStep = 1;                       --重新指向第一个动作
+            Sys.processStep = 1;                      --重新计算指向第一个动作的第一步
             ----------------手动模式--------------------
             if Sys.runType == WorkType[Sys.language].hand then                    
                 Sys.handRunTimes = Sys.handRunTimes + 1;  --分析次数+1
@@ -1739,7 +1742,11 @@ function ComputerControl(package)
             end
         elseif package[1] == 0x06 then--写
             if package[3] == 0x04 then--开始分析
+                -- Sys.runType = 
+                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+                process_ready_run();--开始运行前的一些初始化操作
             elseif package[3] == 0x06 then--停止分析
+                SystemStop();
             end
             uart_send_data(package) --回复
         end
@@ -1782,8 +1789,8 @@ function process_set1_control_notify(screen,control,value)
 
     if control == ProcessSaveBtId then -- 保存
         WriteProcessFile(1);
-    ------------------------------------------------------------------------
-    elseif control == InportBtId then --导入按钮
+    --导入按钮----------------------------------------------------------------------
+    elseif control == InportBtId then --
         if SdPath  ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
@@ -1801,8 +1808,8 @@ function process_set1_control_notify(screen,control,value)
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
-    ------------------------------------------------------------------------
-    elseif control == ExportBtId then --导出按钮(将流程配置导出到SD卡中)
+    --导出按钮----------------------------------------------------------------------
+    elseif control == ExportBtId then --(将流程配置导出到SD卡中)
         if SdPath  ~= nil then
             ShowSysTips(TipsTab[Sys.language].exporting);
             for i = 0,12,1 do--依次导出文件"0"~"12"
@@ -1818,31 +1825,32 @@ function process_set1_control_notify(screen,control,value)
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
-    ------------------------------------------------------------------------
+    --下一个界面----------------------------------------------------------------------
     elseif control == NextSetScreen then--跳转到流程设置2界面按钮
         if get_text(PROCESS_SET2_SCREEN, ProcesstypeId) == BLANK_SPACE then
             process_select2_set(PROCESS_SET2_SCREEN, ProcesstypeId);
             change_screen(PROCESS_SELECT2_SCREEN);
         end
-    ------------------------------------------------------------------------
-    elseif control == AnalyteSetId then--
-        set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));--设置分析物
+    --设置分析物----------------------------------------------------------------------
+    elseif control == AnalyteSetId then
+        set_text(MAIN_SCREEN, LastAnalyteId, get_text(PROCESS_SET1_SCREEN, AnalyteSetId));
     ------------------------------------------------------------------------
     elseif (control-100) >= ProcessTab[1].typeId and (control-100) <= ProcessTab[12].typeId then --这里是流程类型下的各个按钮
         process_select_set(screen, control-100);
-    ------------------------------------------------------------------------
-    elseif (control-100) >= ProcessTab[1].rangeId and (control-100) <= ProcessTab[12].rangeId  then --这里是量程选择下的各个按钮
+    --量程选择----------------------------------------------------------------------
+    elseif (control-100) >= ProcessTab[1].rangeId and (control-100) <= ProcessTab[12].rangeId  then
         range_select_set(screen, control-100);
-    ------------------------------------------------------------------------
-    elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[12].deleteId then--删除按钮
+    --删除按钮----------------------------------------------------------------------
+    elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[12].deleteId then
         if get_text(PROCESS_SET1_SCREEN, control+120) ~= BLANK_SPACE then --名称不为空格
             local file = control - 79;--control取值80-91,减去79后,对应了1-12,此为序号.
             set_text(PROCESS_SET1_SCREEN, control+220,BLANK_SPACE);
 			set_text(PROCESS_SET1_SCREEN, control+120,BLANK_SPACE);
-            set_text(PROCESS_SET1_SCREEN, control+232,BLANK_SPACE);
+            -- set_text(PROCESS_SET1_SCREEN, control+232,BLANK_SPACE);
             WriteProcessFile(1);--保存流程设置1界面中的参数
             os.remove(file);--删除配置文件
         end
+        set_value(screen, control, DISABLE);
     end
 end
 
@@ -2568,9 +2576,10 @@ function excute_read_signal_process(paraTab)
     if UartArg.lock == LOCKED then--串口锁定，直接返回
         return;
     end
+
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        Sys.flag_save_uart_log = DISABLE;--关闭串口通信日志记录功能(获取电位时会连续不断的获取)
+        -- Sys.flag_save_uart_log = DISABLE;--关闭串口通信日志记录功能(获取电位时会连续不断的获取)
         Sys.signalDrift = tonumber(paraTab[2]);--信号漂移
         Sys.signalMinTime = tonumber(paraTab[3]);--最小时间
         Sys.signalMaxTime = tonumber(paraTab[4]);--最大时间
@@ -2654,7 +2663,7 @@ function excute_read_signal_process(paraTab)
         end
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 6 then
-        Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
+        -- Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
         Sys.actionSubStep = FINISHED;--结束
     end
     return Sys.actionSubStep;
@@ -2735,7 +2744,6 @@ function excute_calculate_process(paraTab)
         calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
         print("校正4：E1=",Sys.caliE1[4],",E2=",Sys.caliE2[4]);
     end
-
 
     if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
         if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
@@ -3243,7 +3251,7 @@ end
 RANGESET_TextStartId = 1;
 RANGESET_TextEndId = 20;
 
-UniteSetTextId = 25--单位设置成功后,用于显示单位文本的id
+UniteSetTextId = 19--单位设置成功后,用于显示单位文本的id
 UniteSetMenuId = 26;--单位选择
 
 RangeTab = {
@@ -3520,15 +3528,10 @@ UartRecordId = 1--串口通讯记录空间id
 IOSET_TextStartId = 1;
 IOSET_TextEndId = 8;
 IOSET_ComputerAddr = 1;
-IOSET_ScreenBaudId = 2;
-IOSET_BaudrateMenu = 20;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function in_out_control_notify(screen,control,value)
-    if control == IOSET_BaudrateMenu then--设置波特率
-        uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN, IOSET_ScreenBaudId)) );
-        WriteProcessFile(4);
-    elseif control >=IOSET_TextStartId and control <= IOSET_TextEndId then
+    if control >=IOSET_TextStartId and control <= IOSET_TextEndId then
         WriteProcessFile(4);
     end
 end
@@ -3538,7 +3541,8 @@ end
     分析、校准、报警、日志记录
 --------------------------------------------------------------------------------------------------------------------]]
 HistoryRecordId = 32;--历史记录控件Id号，分析、校准、报警、日志都是这个。
-
+HistoryClear = 2;
+HistoryExport = 1;
 --***********************************************************************************************
 --  添加一条历史记录
 -- screen:在哪一个界面的历史记录控件添加内容
@@ -3574,6 +3578,18 @@ function add_history_record(screen)
     end
 end
 
+--***********************************************************************************************
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+--***********************************************************************************************
+function history_control_notify(screen,control,value)
+    if control == HistoryClear then
+        record_clear(screen, HistoryRecordId);--清除记录
+        set_value(screen, control, DISABLE);
+    elseif control == HistoryExport then 
+        record_export(screen,HistoryRecordId);--导出记录
+    end
+end
 
 
 

@@ -334,6 +334,7 @@ Sys = {
 
     waitTimeFlag = RESET,--用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
     waitTime = 0,--用于保存需要等待的时间
+    eWaitTimeFlag = RESET,--在测量E1,E2时的定时器
 
     valcoChannel = 0,--用于保存在运行流程时的十通阀通道号
     valveOperate , --用于指示关阀还是开阀
@@ -423,6 +424,13 @@ function on_init()
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
     end
+
+    --反控模式下,隐藏开始按钮
+    Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
+    if Sys.runType == WorkType[Sys.language].controlled then
+        set_visiable(RUN_CONTROL_SCREEN, RunStopButtonId, 0);
+    end
+    
     set_unit();--设置单位
     Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
@@ -449,6 +457,8 @@ function on_timer(timer_id)
         uart_time_out();
     elseif timer_id == 2 then--等待时间完成
         Sys.waitTimeFlag = RESET ;
+    elseif timer_id == 4 then
+        Sys.eWaitTimeFlag = RESET ;
     end
 end
 
@@ -531,6 +541,8 @@ function on_control_notify(screen,control,value)
         hand_operate1_control_notify(screen,control,value);	
     elseif screen == HAND_OPERATE2_SCREEN then --手动操作2
         hand_operate2_control_notify(screen,control,value);	
+    elseif screen == HAND_OPERATE3_SCREEN then --手动操作3
+        hand_operate3_control_notify(screen,control,value);	
     elseif screen == IN_OUT_SCREEN then--输入输出界面
         in_out_control_notify(screen,control,value);
 	elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
@@ -616,7 +628,7 @@ function sys_init()
     if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then
         return;
     end
-
+    
     if Sys.processStep == 1 then--第一步: 关闭阀11
         set_enable(RUN_CONTROL_SCREEN, RunStopButtonId, DISABLE)--系统初始化时，禁止按开始按钮
         close_single_valve(11);
@@ -633,6 +645,7 @@ function sys_init()
         reset_inject1();
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 5 then--第五步：获取驱动板版本号
+        start_wait_time(1);
         on_uart_send_data(uartSendTab.getDrvVer ,NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 6 then--第六步：显示驱动版本版本号 并 获取传感版与计算卡硬件版本号
@@ -642,6 +655,7 @@ function sys_init()
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId,softVer1);--显示软件版本号
             set_text(SYSTEM_INFO_SCREEN, DriverBoardHardVerId,hardVer1);--显示硬件版本号
         end
+        start_wait_time(1);
         on_uart_send_data(uartSendTab.getSCHardVer, NEED_REPLY);--获取传感版与计算卡硬件版本号
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 7 then--第七步：显示传感版与计算卡硬件版本号 并 获取传感版与计算卡软件版本号
@@ -652,6 +666,7 @@ function sys_init()
             hardVer2 = bcd_to_string(UartArg.recv_data[7])..bcd_to_string(UartArg.recv_data[8]);
             set_text(SYSTEM_INFO_SCREEN, CalcBoardHardVerId, hardVer1..hardVer2);
         end
+        start_wait_time(1);
         on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--获取传感版与计算卡软件版本号
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 8 then--第八步：显示感版与计算卡软件版本号
@@ -770,6 +785,7 @@ function on_uart_send_data(packet, reply)
         start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,0->表示无限重复
         UartArg.lock = LOCKED;      --给串口上锁, 收到回复后自动解锁
         UartArg.repeat_data = packet;--设置重发数据
+        UartArg.repeat_times = 0;
         UartArg.reply_data[0] = packet[0];--设置回复数据,用于判断是否成功接受到回复
         UartArg.reply_data[1] = packet[1];
     end
@@ -808,9 +824,9 @@ end
 --***********************************************************************************************
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times < 3 then
+    if UartArg.repeat_times < 4 then
         UartArg.lock = UNLOCKED;
-        on_uart_send_data(UartArg.repeat_data, NEED_REPLY);--数据重发
+        uart_send_data(UartArg.repeat_data);--数据重发
     else  --重发2次都没有回复,不再重发
         print("串口接受超时");
         --判断为升级驱动板数据,此时升级失败
@@ -1905,13 +1921,9 @@ TabAction = {
 --screen: 当前屏幕的id, 子界面按"确认" ,"返回" 按钮后需要返回的界面
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
-    -- if screen == PROCESS_SET2_SCREEN then
-        ReadActionTag(control-100);--在流程设置2界面, 当编辑按钮id号为101时, 当前动作序号为1, 依次类推
-        set_screen_actionNumber(screen, control-100);
-    -- elseif screen == PROCESS_SET3_SCREEN then
-    --     ReadActionTag(control-100);
-    --     set_screen_actionNumber(screen, control-100+12);
-    -- end
+
+    ReadActionTag(control-100);--在流程设置2界面, 当编辑按钮id号为101时, 当前动作序号为1, 依次类推
+    set_screen_actionNumber(screen, control-100);
 
     if para == ActionItem[Sys.language][1] then --开始界面
         change_screen(PROCESS_INIT_SCREEN);
@@ -2567,16 +2579,26 @@ function process_read_signal_control_notify(screen,control,value)
     end
 end
 
-
+--***********************************************************************************************
+--在测量E1, E2时,用于定时最小时间与最大时间
+--time_s
+--***********************************************************************************************
+function start_e_wait_time(time_s)
+    if time_s == 0 then
+        return;
+    end
+    Sys.eWaitTimeFlag = SET;
+    start_timer(4, time_s * 1000, 1, 1); --开启定时器4，超时时间 wait_time, 1->使用倒计时方式,1->表示只执行一次
+end
 
 --***********************************************************************************************
 --  执行读取信号流程
 --***********************************************************************************************
 function excute_read_signal_process(paraTab)
-    if UartArg.lock == LOCKED then--串口锁定，直接返回
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定，直接返回
         return;
     end
-
+    start_wait_time(1);
     -----------------------------------------------------------
     if Sys.actionSubStep == 1 then
         -- Sys.flag_save_uart_log = DISABLE;--关闭串口通信日志记录功能(获取电位时会连续不断的获取)
@@ -2584,7 +2606,7 @@ function excute_read_signal_process(paraTab)
         Sys.signalMinTime = tonumber(paraTab[3]);--最小时间
         Sys.signalMaxTime = tonumber(paraTab[4]);--最大时间
         Sys.signalNumber = tonumber(paraTab[5]);--取样个数
-        start_wait_time(Sys.signalMinTime);--等待最小的定时器时间
+        start_e_wait_time(Sys.signalMinTime);--等待最小的定时器时间
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
@@ -2592,11 +2614,11 @@ function excute_read_signal_process(paraTab)
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
     elseif Sys.actionSubStep == 3 then--解析串口信号
-        if Sys.waitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
+        if Sys.eWaitTimeFlag == RESET then  --最小定时时间到,跳转下一步读取信号
             if Sys.signalMaxTime < Sys.signalMinTime then
                 Sys.signalMaxTime = Sys.signalMinTime;
             end
-            start_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
+            start_e_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
             Sys.signalCount = 0;
             Sys.actionSubStep = Sys.actionSubStep + 1;
         else
@@ -2638,7 +2660,7 @@ function excute_read_signal_process(paraTab)
             minSignal = tempMin;--获取最小值
             
             --满足信号漂移条件 或者 最大定时时间到
-            if (maxSignal - minSignal <= Sys.signalDrift) or Sys.waitTimeFlag == RESET  then
+            if (maxSignal - minSignal <= Sys.signalDrift) or Sys.eWaitTimeFlag == RESET  then
                 local signalSum = 0;
                 for i = 0, Sys.signalNumber-1, 1 do
                     signalSum = signalSum + Sys.signalTab[i];
@@ -2654,8 +2676,8 @@ function excute_read_signal_process(paraTab)
                     set_text(MAIN_SCREEN, LastResultE2Id, signalE);
                     print("E2=",signalE);
                 end
-                Sys.waitTimeFlag = RESET;
-                stop_timer(2); --关闭定时器2
+                Sys.eWaitTimeFlag = RESET;
+                stop_timer(4); --关闭定时器4
                 Sys.actionSubStep = Sys.actionSubStep + 1;--满足条件,跳转下一步结束采集
             else
                 Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
@@ -3508,10 +3530,28 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作3
 --------------------------------------------------------------------------------------------------------------------]]
+REAGENT_BtStartId = 1;
+REAGENT_BtEndId = 6;
+REAGENT_TextStartId = 7;
+REAGENT_TexEndId = 30;
+REAGENT_SaveId = 45;
 
+ReagentTab = {
+    [1] = {BubbleChkId = 1, NameId = 9,  CapacityId = 7,  RemainId = 8,  AlarmId = 10},
+    [2] = {BubbleChkId = 2, NameId = 13, CapacityId = 11, RemainId = 12, AlarmId = 14},
+    [3] = {BubbleChkId = 3, NameId = 17, CapacityId = 15, RemainId = 16, AlarmId = 18},
+    [4] = {BubbleChkId = 4, NameId = 21, CapacityId = 19, RemainId = 20, AlarmId = 22},
+    [5] = {BubbleChkId = 5, NameId = 25, CapacityId = 23, RemainId = 24, AlarmId = 26},
+    [6] = {BubbleChkId = 6, NameId = 29, CapacityId = 27, RemainId = 28, AlarmId = 30},
+}
 
-
-
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function hand_operate3_control_notify(screen,control,value)
+    if control == REAGENT_SaveId and get_value(screen,control) == ENABLE then
+        WriteProcessFile(5);
+    end
+end
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作4
 --------------------------------------------------------------------------------------------------------------------]]
@@ -3584,6 +3624,11 @@ end
 --***********************************************************************************************
 function history_control_notify(screen,control,value)
     if control == HistoryClear then
+        --判断权限
+        if Sys.userName == SysUser[Sys.language].operator then
+            ShowSysTips(TipsTab[Sys.language].NoPermission);
+            return
+        end
         record_clear(screen, HistoryRecordId);--清除记录
         set_value(screen, control, DISABLE);
     elseif control == HistoryExport then 
@@ -4022,13 +4067,16 @@ cfgFileTab = {
     [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--流程设置1界面中的参数保存在这个tag中
     [2] = {sTag = "<RunControl>",eTag = "</RunControl>"};--运行控制界面中的参数保存在这个tag中
     [3] = {sTag = "<RangeSet>",eTag = "</RangeSet>"};--量程设置界面中的参数保存在这个tag中
-    [4] = {sTag = "<IOSet>",eTag="</IOSet>"};--输出输出中的参数保存在这个tag中
+    [4] = {sTag = "<IOSet>",eTag="</IOSet>"};--输入输出中的参数保存在这个tag中
+    [5] = {sTag = "<ReagentSet>",eTag="</ReagentSet>"};--试剂余量中的参数保存咋这个tag中
 };
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
 --tagNum = 1 : 修改流程设置1界面中的参数 
 --tagNum = 2 : 修改运行控制界面中的参数
---tagNum = 2 : 运行控制界面中的参数
+--tagNum = 3 : 运行控制界面中的参数
+--tagNum = 4 : 输入输出中的参数
+--tagNum = 5 : 试剂余量中的参数
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
     local configFile = io.open("0", "a+");        --以可读可写方式打开文本,如文件不存在则创建文件.
@@ -4059,6 +4107,13 @@ function WriteProcessFile(tagNum)
         for i = IOSET_TextStartId,IOSET_TextEndId,1 do
             configFile:write(get_text(IN_OUT_SCREEN, i)..",");
         end
+    elseif tagNum == 5 then
+        for i = REAGENT_BtStartId,REAGENT_BtEndId,1 do
+            configFile:write(get_value(HAND_OPERATE3_SCREEN, i)..",");
+        end
+        for i = REAGENT_TextStartId, REAGENT_TexEndId, 1 do
+            configFile:write(get_text(HAND_OPERATE3_SCREEN, i)..",");
+        end
     end
     configFile:write(cfgFileTab[tagNum].eTag);
     configFile:close(); --关闭文本
@@ -4072,6 +4127,7 @@ function ReadProcessFile()
     ReadProcessTag(2);
     ReadProcessTag(3);
     ReadProcessTag(4);
+    ReadProcessTag(5);
 end
 
 --***********************************************************************************************
@@ -4088,6 +4144,7 @@ function ReadProcessTag(tagNum)
         WriteProcessFile(2);
         WriteProcessFile(3);
         WriteProcessFile(4);
+        WriteProcessFile(5);
         return;
     end
 	configFile:seek("set")                        --把文件位置定位到开头
@@ -4134,6 +4191,13 @@ function ReadProcessTag(tagNum)
     elseif tagNum == 4 then
         for i = IOSET_TextStartId, IOSET_TextEndId, 1 do
             set_text(IN_OUT_SCREEN, i, tab[i]);
+        end
+    elseif tagNum == 5 then
+        for i = REAGENT_BtStartId,REAGENT_BtEndId,1 do
+            set_value(HAND_OPERATE3_SCREEN, i,tab[i]);
+        end
+        for i = REAGENT_TextStartId, REAGENT_TexEndId, 1 do
+            set_text(HAND_OPERATE3_SCREEN, i, tab[i]);
         end
     end
 end

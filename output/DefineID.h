@@ -1480,6 +1480,14 @@
 
 #define  _BTN_流程设置2_BUTTON61                                                 611
 
+//画面流程设置2中按钮Button42弹起时的图片
+#define  _IMG_流程设置2_BUTTON42_UP                                               19
+
+//画面流程设置2中按钮Button42按下时的图片
+#define  _IMG_流程设置2_BUTTON42_DOWN                                             20
+
+#define  _BTN_流程设置2_BUTTON42                                                  19
+
 //画面流程设置3中图片Image1使用的图片
 #define  _IMG_流程设置3_IMAGE1                                                     1
 
@@ -1939,6 +1947,14 @@
 #define  _IMG_流程设置3_BUTTON61_DOWN                                             28
 
 #define  _BTN_流程设置3_BUTTON61                                                 623
+
+//画面流程设置3中按钮Button42弹起时的图片
+#define  _IMG_流程设置3_BUTTON42_UP                                               19
+
+//画面流程设置3中按钮Button42按下时的图片
+#define  _IMG_流程设置3_BUTTON42_DOWN                                             20
+
+#define  _BTN_流程设置3_BUTTON42                                                  19
 
 //画面流程设置-初始化中按钮Button37按下时的图片
 #define  _IMG_流程设置-初始化_BUTTON37_DOWN                                          29

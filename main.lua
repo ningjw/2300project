@@ -286,6 +286,13 @@ ActionItem = {
     [ENG] = {"Initialize","Injector","Injector Add","Read Signal","Pump Add","Calculation","Wait Time","Dispel","Valve",BLANK_SPACE},
 };
 
+--用于保存配置文件字符串
+--配置文件使用 "0" "1" ... "12"进行命名,其中 "0" 中保存了运行控制界面/输入输入出界面/ 手动控制3界面/量程设置界面的参数
+--配置文件 "1" - "12" 对应了流程设置1 界面中的1-12的流程.
+--在上电后, 就将配置文件 "0" 中的数据读取到 ConfigStr[0]
+--在从流程设置1界面跳转到流程设置2界面当中时,需要选择流程,此时读取流程对应的配置文件 "?" ,将数据读取到ConfigStr[?]. (?取值1-12)
+ConfigStr = {};
+
 
 Sys = {
     language = CHN,--系统语言
@@ -419,7 +426,17 @@ function on_init()
     end
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
     
-    ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+    ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+    for i=1,12,1 do
+        local configFile = io.open(i, "r")      --打开文本
+        if configFile ~= nil then              
+            configFile:seek("set")                  --把文件位置定位到开头
+            ConfigStr[i] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串中
+            configFile:close()                      --关闭文本
+            print(i);
+            print(ConfigStr[i]);
+        end
+    end
     if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
@@ -1605,7 +1622,7 @@ function process_ready_run()
     Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
-        ReadProcessFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+        ReadConfigFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/注射泵/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
@@ -1813,14 +1830,14 @@ function process_set1_control_notify(screen,control,value)
                 ConfigFileCopy( SdPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
             ShowSysTips(TipsTab[Sys.language].imported);
-            ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+            ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         elseif UsbPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( UsbPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
             ShowSysTips(TipsTab[Sys.language].imported);
-            ReadProcessFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+            ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
@@ -1886,7 +1903,7 @@ end
 ProcessSelectButtonId = 35;--位于流程设置2
 ProcesstypeId = 38;      --位于流程设置2/3都是这个id
 ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程设置2/3界面中都是这个id
-
+ProcessSaveId = 19;
 --这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:typeId = nameId + 100; nameId = editId + 100
 --其中[1]-[12]中包含的id控件在流程设置2界面中,[13]-[24]中包含的id控件在流程设置3界面中
 TabAction = {
@@ -1950,13 +1967,14 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_set2_control_notify(screen,control,value)
-    if control == ProcessSaveBtId then -- 保存
+
+    if control == ProcessSaveBtId and get_value(screen,control) == ENABLE then -- 保存
         if string.len(get_text(PROCESS_SET2_SCREEN, ProcesstypeId)) == 0  then
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
             set_visiable(PROCESS_SET2_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
             --手动保存当前正在编辑的流程
-            WriteActionFile(0);
+            WriteCfgToFlash();
         end
     elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
         if get_text(PROCESS_SET2_SCREEN, ProcesstypeId) ~= BLANK_SPACE then
@@ -1990,13 +2008,13 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_set3_control_notify(screen,control,value)
 
-    if control == ProcessSaveBtId then -- 保存
+    if control == ProcessSaveBtId and get_value(screen,control) == ENABLE then -- 保存
         if string.len(get_text(PROCESS_SET3_SCREEN, ProcesstypeId)) == 0 then
             set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
             set_visiable(PROCESS_SET3_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
             --手动保存当前正在编辑的流程
-            WriteActionFile(0);
+            WriteCfgToFlash();
         end
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_SET3_SCREEN, control-100, control-400);
@@ -2114,11 +2132,9 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_init_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
-            WriteActionFile(DestActionNum);
-            change_screen(DestScreen);
-        end
+    if control == SureButtonId  and get_value(screen,control)==ENABLE then --确认按钮
+        WriteActionFile(DestActionNum);
+        change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2202,7 +2218,7 @@ INJECT_TextEndId = 11; --取样界面中文本结束id
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
+    if control == SureButtonId  then --确认按钮
         if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
@@ -3156,18 +3172,16 @@ function process_select2_control_notify(screen,control,value)
     if control >= FirstButtonId and control <= LastButtonId then
         ProcessSelec2tItem = control-100;--control-100 = 与该按钮重合的文本框id
 
-    elseif control == SureButtonId then --确认按钮,返回之前的界面
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
-            change_screen(DestScreen);
-            if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
-                set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
-                set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅???
-                if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
-                    ReadActionTag(0);
-                elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
-                    process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
-                    WriteProcessFile(2);--2对应<RunCtrl>标签
-                end
+    elseif control == SureButtonId and get_value(screen,control) == ENABLE then --确认按钮,返回之前的界面
+        change_screen(DestScreen);
+        if ProcessSelec2tItem ~= nil then --ProcessSelec2tItem默认为nil,如果选择了某个流程则该值不为nil
+            set_text(DestScreen, DestControl, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl对应动作选择
+            set_text(DestScreen, DestControl-100, get_text(PROCESS_SELECT2_SCREEN, ProcessSelec2tItem));--DestControl-100对应动?髅???
+            if DestScreen == PROCESS_SET2_SCREEN then --如果是回到流程设置2界面,则加载该流程对应的配置文件
+                ReadActionTag(0);
+            elseif DestScreen == RUN_CONTROL_SCREEN then --如果是回到运行控制界面,则保存文件名为0"的配置文件
+                process_change(DestControl);--流程改变后,通过调用该函数修改流程对应的id号
+                WriteProcessFile(2);--2对应<RunCtrl>标签
             end
         end
     elseif control == CancelButtonId then --取消按钮
@@ -3301,9 +3315,9 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function range_set_control_notify(screen,control,value)
-    if(control == UniteSetMenuId) then --设置单位
+    if(control == UniteSetMenuId) and get_value(screen,control) == ENABLE then --设置单位
         set_unit();
-    elseif control == 50 then --保存按钮
+    elseif control == 50 and get_value(screen,control) == ENABLE then --保存按钮
         WriteProcessFile(3);
     end
 end
@@ -4062,6 +4076,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     配置文件操作相关函数
 --------------------------------------------------------------------------------------------------------------------]]
+--配置文件的文件名为"0", 在开机时读取到ConfigStr[0]数组当中, 在点击保存时则将ConfigStr[0]字符串保存到"0"文件
 
 cfgFileTab = {
     [1] = {sTag = "<ProcessSet>",eTag = "</ProcessSet>"};--流程设置1界面中的参数保存在这个tag中
@@ -4070,6 +4085,7 @@ cfgFileTab = {
     [4] = {sTag = "<IOSet>",eTag="</IOSet>"};--输入输出中的参数保存在这个tag中
     [5] = {sTag = "<ReagentSet>",eTag="</ReagentSet>"};--试剂余量中的参数保存咋这个tag中
 };
+
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
 --tagNum = 1 : 修改流程设置1界面中的参数 
@@ -4079,82 +4095,84 @@ cfgFileTab = {
 --tagNum = 5 : 试剂余量中的参数
 --***********************************************************************************************
 function WriteProcessFile(tagNum)
-    local configFile = io.open("0", "a+");        --以可读可写方式打开文本,如文件不存在则创建文件.
-    configFile:seek("set");                       --把文件位置定位到开头
-    local fileString = configFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
-    configFile:close();                           --关闭文件
-
-    configFile = io.open("0", "w+");              --打开并清空该文件
-    fileString = DeleteSubString(fileString, cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--删除指定的标签内容
-    configFile:write(fileString);                 --将处理过的原文件内容重新写入文件
-    configFile:write(cfgFileTab[tagNum].sTag);
-
+    --删除ConfigStr[0]中指定的标签内容
+    ConfigStr[0] = DeleteSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);
+    ConfigStr[0] = ConfigStr[0]..cfgFileTab[tagNum].sTag;--添加开始标签
     if tagNum == 1 then--流程设置1界面中的参数
         for i=1,12,1 do
-            configFile:write(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)..",".. --流程类型选择
-                             get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)..","..   --流程名称
-                             get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)..",");  --流程量程
+            ConfigStr[0] =  ConfigStr[0]..
+                            get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)..",".. --流程类型选择
+                            get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)..","..   --流程名称
+                            get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)..",";  --流程量程
         end
     elseif tagNum == 2 then--运行控制界面中的参数
         for i = RUNCTRL_TextStartId, RUNCTRL_TextEndId,1 do
-            configFile:write(get_text(RUN_CONTROL_SCREEN,i)..",");
+            ConfigStr[0] = ConfigStr[0]..get_text(RUN_CONTROL_SCREEN,i)..",";
         end
     elseif tagNum == 3 then--量程设置界面中的参数
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
-            configFile:write(get_text(RANGE_SET_SCREEN, i)..",");
+            ConfigStr[0] = ConfigStr[0]..get_text(RANGE_SET_SCREEN, i)..",";
         end
     elseif tagNum == 4 then
         for i = IOSET_TextStartId,IOSET_TextEndId,1 do
-            configFile:write(get_text(IN_OUT_SCREEN, i)..",");
+            ConfigStr[0] = ConfigStr[0]..get_text(IN_OUT_SCREEN, i)..",";
         end
     elseif tagNum == 5 then
         for i = REAGENT_BtStartId,REAGENT_BtEndId,1 do
-            configFile:write(get_value(HAND_OPERATE3_SCREEN, i)..",");
+            ConfigStr[0] = ConfigStr[0]..get_value(HAND_OPERATE3_SCREEN, i)..",";
         end
         for i = REAGENT_TextStartId, REAGENT_TexEndId, 1 do
-            configFile:write(get_text(HAND_OPERATE3_SCREEN, i)..",");
+            ConfigStr[0] = ConfigStr[0]..get_text(HAND_OPERATE3_SCREEN, i)..",";
         end
     end
-    configFile:write(cfgFileTab[tagNum].eTag);
+    ConfigStr[0] = ConfigStr[0]..cfgFileTab[tagNum].eTag;--添加结束标签
+    
+    --设置参数,此处调用该函数可以检查保存的数据是否正确
+    SetConfigParaToScreen(tagNum);
+
+    local configFile = io.open("0", "w+");  --打开并清空该文件
+    configFile:write(ConfigStr[0]);         --将处理过的原文件内容重新写入文件
     configFile:close(); --关闭文本
 end
 
 --***********************************************************************************************
---读取配置文件中的所有数据
+--读取配置文件中的所有数据,并将数据保存到cfgFileStr[0]表当中
 --***********************************************************************************************
-function ReadProcessFile()
-    ReadProcessTag(1);
-    ReadProcessTag(2);
-    ReadProcessTag(3);
-    ReadProcessTag(4);
-    ReadProcessTag(5);
-end
-
---***********************************************************************************************
---读取配置文件中的数据
---tagNum = 1 : 读取流程设置1界面中的参数 
---tagNum = 2 : 读取运行控制界面中的参数
---tagNum = 3 : 读取量程设置界面中的参数
---***********************************************************************************************
-function ReadProcessTag(tagNum)
-	local configFile = io.open("0", "r")      --打开文本
+function ReadConfigFile()
+    local configFile = io.open("0", "r")      --打开文本
     if configFile == nil then--如果没有该文件则返回
-        --创建一个默认配置文件
+        print("没有找到配置文件:0,创建一个默认的配置文件");
         WriteProcessFile(1);
         WriteProcessFile(2);
         WriteProcessFile(3);
         WriteProcessFile(4);
         WriteProcessFile(5);
-        return;
     end
-	configFile:seek("set")                        --把文件位置定位到开头
-	local fileString = configFile:read("a")       --从当前位置读取整个文件，并赋值到字符串中
-	configFile:close()                            --关闭文本
-    
-    tagString = GetSubString(fileString, cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--截取标签之间的字符串
-    if tagString == nil then--如果文件中没有该标签,则返回.
-        return 
-    end
+    configFile:seek("set")    --把文件位置定位到开头
+    ConfigStr[0] = configFile:read("a")       --从当前位置读取整个文件，并赋值到字符串中
+    configFile:close()                            --关闭文本
+
+    print(ConfigStr[0]);
+
+    SetConfigParaToScreen(1);
+    SetConfigParaToScreen(2);
+    SetConfigParaToScreen(3);
+    SetConfigParaToScreen(4);
+    SetConfigParaToScreen(5);
+
+end
+
+
+--***********************************************************************************************
+--将参数设置到界面当中
+--tagNum = 1 : 修改流程设置1界面中的参数 
+--tagNum = 2 : 修改运行控制界面中的参数
+--tagNum = 3 : 运行控制界面中的参数
+--tagNum = 4 : 输入输出中的参数
+--tagNum = 5 : 试剂余量中的参数
+--***********************************************************************************************
+function SetConfigParaToScreen(tagNum)
+    local tagString = GetSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--截取标签之间的字符串
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
     if tagNum == 1 then--流程设置界面中的参数
         for i=1,12,1 do
@@ -4162,7 +4180,6 @@ function ReadProcessTag(tagNum)
             set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId,   tab[(i-1)*3+2]);  --把数据显示到文本框中
             set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId,  tab[(i-1)*3+3]);  --把数据显示到文本框中
         end
-
     elseif tagNum == 2 then--运行控制界面中的参数
         
         --将文件中的参数在界面上进行解析
@@ -4202,11 +4219,36 @@ function ReadProcessTag(tagNum)
     end
 end
 
+
+--[[-----------------------------------------------------------------------------------------------------------------
+    流程操作相关函数
+--------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--将配置参数保存至文件
+--***********************************************************************************************
+function WriteCfgToFlash()
+    print("调用 WriteCfgToFlash 函数");
+    local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
+    local fileName = 0;
+
+    for i=1,12,1 do
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
+            fileName = i;
+            break;
+        end
+    end
+
+    local configFile = io.open(fileName, "w+");  --打开并清空该文件
+    configFile:write(ConfigStr[fileName]);         --将处理过的原文件内容重新写入文件
+    configFile:close(); --关闭文本
+end
+
 --***********************************************************************************************
 --该函数检测配置文件中是否有<action?>标签, ? 范围1~12. 如果没有该标签,则创建一个默认的配置,如果有则直接返回
 --actionNumber:动作标签,范围:action1~action24
 --***********************************************************************************************
 function WriteDefaultActionTag(actionNumber)
+    print("调用 WriteDefaultActionTag 函数");
     local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
     local fileName = 0;
 
@@ -4218,10 +4260,7 @@ function WriteDefaultActionTag(actionNumber)
     end
     WriteActionTag(fileName, 0);--修改<action0>标签中的内容, 增加或者删除一个动作
     
-    local processFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
-    processFile:seek("set");                       --把文件位置定位到开头
-    local fileString = processFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
-    processFile:close();                           --关闭文件
+    local fileString = ConfigStr[fileName]; 
 
     --如果该配置文件已经有<action?>标签,则直接返回
     if string.find( fileString, "<action"..actionNumber..">", 1) ~= nil then
@@ -4238,15 +4277,14 @@ end
 --actionNumber:动作标签,范围:action0~action24
 --***********************************************************************************************
 function WriteActionTag(fileName, actionNumber)
-    local actionFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
-    actionFile:seek("set");                       --把文件位置定位到开头
-    local fileString = actionFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
-    actionFile:close();                           --关闭文件
-
-    actionFile = io.open(fileName, "w+");         --打开并清空该文件
-    fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--将原来的<action?>-</action?>标签之间的字符串删除
-    actionFile:write(fileString);                 --将处理过的原文件内容重写写入文件
-
+    print("调用 WriteActionTag 函数");
+    --将原来的<action?>-</action?>标签之间的字符串删除
+    if ConfigStr[fileName] ~= nil then
+        ConfigStr[fileName] = DeleteSubString(ConfigStr[fileName], "<action"..actionNumber..">", "</action"..actionNumber..">");
+    else
+        ConfigStr[fileName] = "";
+    end
+    
     local actionType, actionName
     if actionNumber == 0 then
         actionType = get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].typeId);--当前流程名称
@@ -4259,91 +4297,90 @@ function WriteActionTag(fileName, actionNumber)
         actionName = get_text(PROCESS_SET3_SCREEN, TabAction[actionNumber].nameId);--获取当前动作名称
     end
 
-    actionFile:write("<action"..actionNumber..">");--写入开始标签
-    actionFile:write("<type>"..actionType..","..actionName.."</type>");--写入动作类型与动作名称(或流程类型与名称):初始化/注射泵/消解......
-    actionFile:write("<content>");
+    ConfigStr[fileName] = ConfigStr[fileName].."<action"..actionNumber..">";--写入开始标签
+    ConfigStr[fileName] = ConfigStr[fileName].."<type>"..actionType..","..actionName.."</type>"--写入动作类型与动作名称(或流程类型与名称):初始化/注射泵/消解......
+    ConfigStr[fileName] = ConfigStr[fileName].."<content>";
     --------------------------------写<action0>标签内容---------------------------------------------
     --<action0>标签保存的都是该流程中,对应的流程设置2/3界面中的动作选择/动作名称
     if actionNumber == 0 then
         for i=1,12,1 do
-            actionFile:write(get_text(PROCESS_SET2_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
-                              get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  )..","); --动作名称
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_SET2_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
+                              get_text(PROCESS_SET2_SCREEN, TabAction[i].nameId  ).."," --动作名称
         end
         for i=13,24,1 do
-            actionFile:write(get_text(PROCESS_SET3_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
-                              get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  )..","); --动作名称
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_SET3_SCREEN, TabAction[i].typeId)..",".. --动作类型选择
+                              get_text(PROCESS_SET3_SCREEN, TabAction[i].nameId  ).."," --动作名称
         end
     --------------------------------写开始界面参数----------------------------------------------------
     elseif actionType == ActionItem[Sys.language][1] then 
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_INIT_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_INIT_SCREEN, i)..","--写入按钮值
         end
         for i = INIT_TextStartId, INIT_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_INIT_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_INIT_SCREEN, i)..","--写入文本值
         end
     --------------------------------写取样界面参数----------------------------------------------------
     elseif actionType == ActionItem[Sys.language][2] then 
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_INJECT_SCREEN, i)..",");--写入输出1按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_INJECT_SCREEN, i)..","--写入输出1按钮值
         end
         for i = INJECT_TextStartId, INJECT_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_INJECT_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_INJECT_SCREEN, i)..","--写入文本值
         end
     --------------------------------写注射泵加液参数--------------------------------------------------
     elseif actionType == ActionItem[Sys.language][3] then
         for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_INJECT_ADD_SCREEN, i)..","--写入按钮值
         end
         for i = INJECT_ADD_TextStartId, INJECT_ADD_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_INJECT_ADD_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_INJECT_ADD_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-读取信号参数----------------------------------------------------
     elseif actionType == ActionItem[Sys.language][4] then 
         for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_READ_SIGNAL_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_READ_SIGNAL_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-蠕动泵加液参数--------------------------------------------------
     elseif actionType == ActionItem[Sys.language][5] then 
         for i = PERISTALTIC_BtStartId, PERISTALTIC_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_PERISTALTIC_SCREEN, i)..","--写入按钮值
         end
         for i = PERISTALTIC_TextStartId, PERISTALTIC_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_PERISTALTIC_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_PERISTALTIC_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-计算参数--------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][6] then 
         for i = CALCULATE_BtStartId, CALCULATE_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_CALCULATE_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_CALCULATE_SCREEN, i)..","--写入按钮值
         end
         for i = CALCULATE_TextStartId, CALCULATE_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_CALCULATE_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_CALCULATE_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-等待时间参数----------------------------------------------------
     elseif actionType == ActionItem[Sys.language][7] then 
-        actionFile:write(get_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId));
+        ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_WAIT_TIME_SCREEN, WAITTIME_TextId)
     --------------------------------写-消解参数--------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][8] then 
         for i = DISPEL_BtStartId, DISPEL_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_DISPEL_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_DISPEL_SCREEN, i)..","--写入按钮值
         end
         for i = DISPEL_TextStartId, DISPEL_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_DISPEL_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_DISPEL_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-阀操作参数------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][9] then 
         for i = VALVE_BtStartId, VALVE_BtEndId, 1 do
-            actionFile:write(get_value(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入按钮值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_value(PROCESS_VALVE_CTRL_SCREEN, i)..","--写入按钮值
         end
         for i = VALVE_TextStartId, VALVE_TextEndId, 1 do
-            actionFile:write(get_text(PROCESS_VALVE_CTRL_SCREEN, i)..",");--写入文本值
+            ConfigStr[fileName] = ConfigStr[fileName]..get_text(PROCESS_VALVE_CTRL_SCREEN, i)..","--写入文本值
         end
     --------------------------------写-空操作参数------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][10] then 
-        actionFile:write("<content> </content>");
+        ConfigStr[fileName] = ConfigStr[fileName].."<content> </content>"
     end
-    actionFile:write("</content>");
-    actionFile:write("</action"..actionNumber..">");--写入结束标签
-    actionFile:close(); --关闭文本
+    ConfigStr[fileName] = ConfigStr[fileName].."</content>"
+    ConfigStr[fileName] = ConfigStr[fileName].."</action"..actionNumber..">"--写入结束标签
 end
 
 --***********************************************************************************************
@@ -4351,11 +4388,11 @@ end
 --actionNumber:动作标签,范围:action1~action24
 --***********************************************************************************************
 function WriteActionFile(actionNumber)
+    print("调用 WriteActionFile 函数");
     local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
 
     for i=1,12,1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
-            WriteActionTag(i, 0);--修改<action0>标签中的内容
             WriteActionTag(i, actionNumber);--保存数据到文件中,文件名为1~12, 保存的内容为action0~action12标签
         end
     end
@@ -4366,6 +4403,7 @@ end
 --flag 1=加操作, 2=减操作
 --***********************************************************************************************
 function ChangeActionFileTag(actionNumber, flag)
+    print("调用 ChangeActionFileTag 函数");
     local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
     local fileName;
     for i=1,12,1 do
@@ -4375,71 +4413,63 @@ function ChangeActionFileTag(actionNumber, flag)
         end
     end
 
-    local actionFile = io.open(fileName, "a+");   --以可读可写的方式打开文本,如果没有该文件则创建
-    actionFile:seek("set");                       --把文件位置定位到开头
-    local fileString = actionFile:read("a");      --从当前位置读取整个文件，并赋值到字符串中
-    actionFile:close();                           --关闭文件
-
     --字符替换;1表示需要对动作进行加操作,此时执行的是插入动作,
     if flag == 1 then
-        fileString = DeleteSubString(fileString, "<action24>", "</action24>");--删除指定的标签内容
+        ConfigStr[fileName] = DeleteSubString(ConfigStr[fileName], "<action24>", "</action24>");--删除指定的标签内容
         for i = 23, actionNumber, -1 do
-            fileString = string.gsub(fileString, "action"..i, "action"..(i+1));
+            ConfigStr[fileName] = string.gsub(ConfigStr[fileName], "action"..i, "action"..(i+1));
         end
     else--2表示需要对动作标签进行减操作,此时执行的是删除操作
-        fileString = DeleteSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--删除指定的标签内容
+        ConfigStr[fileName] = DeleteSubString(ConfigStr[fileName], "<action"..actionNumber..">", "</action"..actionNumber..">");--删除指定的标签内容
         for i = actionNumber+1, 24, 1 do
-            fileString = string.gsub(fileString, "action"..i, "action"..(i-1));
+            ConfigStr[fileName] = string.gsub(ConfigStr[fileName], "action"..i, "action"..(i-1));
         end
     end
-
-    actionFile = io.open(fileName, "w+");         --打开并清空该文件
-    actionFile:write(fileString);                 --将处理过的原文件内容重写写入文件
-    actionFile:close();                           --关闭文件
 end
 
 --***********************************************************************************************
 --读配置文件函数,这里每次只读取一个标签里的值, 例如<action1>标签之间的值
---actionNumber:当前动作为第几步
+--actionNumber: 当前动作为第几步
 --***********************************************************************************************
 function ReadActionTag(actionNumber)
+    print("调用 ReadActionTag 函数");
     local processName = get_text(PROCESS_SET2_SCREEN, ProcesstypeId);--获取流程名称
-    local fileName = 0;
+    local fileNumber = 0;
     for i=1,12,1 do--循环查找当前流程名称对应的序号.
-        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
-            fileName = i;
+        if string.find(get_text(PROCESS_SET1_SCREEN,ProcessTab[i].nameId), processName ,1) ~= nil then--找到当前流程名对应的序号
+            fileNumber = i;
             break;
         end
     end
-    
-    local processFile = io.open(fileName, "r");      --打开文本
-    if processFile == nil then--还没有该文件,则创建一个新的配置文件,并返回
-        --将流程设置2/3界面清空
-        for i = TabAction[1].typeId,TabAction[12].typeId,1 do
-            set_text(PROCESS_SET2_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
-            set_text(PROCESS_SET2_SCREEN, i-100,BLANK_SPACE);--将对应动作名称的文本清空
-            set_text(PROCESS_SET3_SCREEN, i,BLANK_SPACE);    --将对应动作选择的文本清空
-            set_text(PROCESS_SET3_SCREEN, i-100,BLANK_SPACE);--将对应动作名称的文本清空
-        end
-        WriteActionFile(0);
-        return
-    end
 
-	processFile:seek("set");                        --把文件位置定位到开头
-	fileString = processFile:read("a");             --从当前位置读取整个文件，并赋值到字符串中
-    processFile:close();                            --关闭文本
-
-    actionString = GetSubString(fileString, "<action"..actionNumber..">", "</action"..actionNumber..">");--截取fileString文件中<action?> ~ </action?>标签之间的字符串
-    if actionString == nil then--如果文件中没有该标签,则返回.
-        return 
-    end
-    
-    local actionType = GetSubString(actionString, "<type>","</type>");--截取actionString字符串中<type>标签之间的字符串,获取动作?嘈陀攵?作名??
-    actionType = split(actionType, ",");--分割字符串
-    local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
-    if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
+    if fileNumber == 0 then
+        ShowSysTips("没有找到对应的流程配置文件");
         return;
     end
+
+    if ConfigStr[fileNumber] == nil then
+        ShowSysTips("没有找到对应的流程配置文件");
+        WriteActionFile(0);--添加<action0>标签中的内容
+        return;
+    end
+    
+    --截取fileString文件中<action?> ~ </action?>标签之间的字符串
+    local actionString = GetSubString(ConfigStr[fileNumber], "<action"..actionNumber..">", "</action"..actionNumber..">");
+    if actionString == nil then--如果文件中没有该标签,则返回.
+        ShowSysTips("配置文件没有找到<action?>标签");
+        return 
+    end
+    --截取actionString字符串中<type>标签之间的字符串,获取动作类型与动作名称
+    local actionType = GetSubString(actionString, "<type>","</type>");
+    actionType = split(actionType, ",");--分割字符串
+
+    --再截取<content>标签中的内容
+    local contentTabStr = GetSubString(actionString,"<content>","</content>");
+    if contentTabStr == nil then--如果没有内容,则清空流程设置2/3界面中的动作选择与动作名称
+        ShowSysTips("配置文件没有找到content标签");
+        return;
+    end
+
     local tab = split(contentTabStr, ",");--分割字符串
     if actionNumber == 0 then --判定为<action0>标签
         for i=1,12,1 do
@@ -4523,12 +4553,7 @@ end
 --actionNumber:当前动作为第几步
 --***********************************************************************************************
 function ReadActionFile(fileName)
-    local processFile = io.open(fileName, "r");      --打开文本
-
-    processFile:seek("set");                         --把文件位置定位到开头
-	Sys.processFileStr = processFile:read("a");--从当前位置读取整个文件，并赋值到字符串中
-    processFile:close();                             --关闭文本
-
+	Sys.processFileStr = ConfigStr[fileName];
     --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
     --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
     --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)

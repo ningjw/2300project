@@ -102,6 +102,10 @@ LOCKED = 1;--串口已上锁
 NO_NEED_REPLY = 0;--串口数据不需要回复
 NEED_REPLY = 1;--串口数据需要回复
 
+--processIdType:
+processId = 0;
+autoRangeProcessId = 1;
+
 Direction = {
     [CHN] = {FWD = "正转",REV = "反转"},
     [ENG] = {FWD = "CW",REV="CCW"},
@@ -140,6 +144,8 @@ TipsTab = {
         reply = "回复",
         connected = "已连接",
         unconnected = "未连接",
+        NoPermission = "当前用户无权限执行该操作",
+        stopFirst = "系统运行中,不可执行该操作",
         null  = "无",
     },
     [ENG] = {
@@ -168,6 +174,8 @@ TipsTab = {
         reply = "reply",
         connected = "connected",
         unconnected = "unconnected",
+        NoPermission = "No Permission to Exceut",
+        stopFirst = "System running, stop first",
         null    = "NULL",
     },
 };
@@ -180,6 +188,7 @@ TipsTab = {
         stop = "结束",
         highDensity = "浓度偏高",
         lowDensity = "浓度偏低",
+        lack = "缺",
     },
     [ENG] = {
         uartTimeOut = "Timeout",
@@ -187,6 +196,7 @@ TipsTab = {
         stop = "Stop",
         highDensity = "High Density",
         lowDensity = "Ligh Density",
+        lack = "Lack of "
     },
 };
 
@@ -248,6 +258,18 @@ ValveStatus = {
 
 --LED状态
 LedStatus = {
+    [CHN] = {
+        open = "打开",
+        close = "关闭"
+    },
+    [ENG] = {
+        open = "ON",
+        close = "OFF"
+    },
+};
+
+--自动量程切换
+AutoRangeStatus = {
     [CHN] = {
         open = "打开",
         close = "关闭"
@@ -386,11 +408,18 @@ Sys = {
     alarmContent = "",--用于保存当前报警信息
     logContent = "",--用于保存当前日志信息
 
+    reagentName = {};--试剂名称
+    reagentTotal = {};--试剂容量值:当改值为0时,表示关闭该试剂的相关报警
+    reagentAlarm = {};--试剂报警值
+    reagentRemain = {};--试剂剩余容量
+    reagentStatus = RESET;
+    
     ssid = 0,
     wifi_connect = 0,
     binIndex = 0,--用于驱动板升级时,控制数据包位置
 
     flag_save_uart_log = ENABLE,--该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
+    isAutoRangeProcess = false,--用于指示当前流程是否为自动量程切换流程,该变量用于保证只运行一次量程切换流程
 }
 
 
@@ -408,6 +437,7 @@ function on_init()
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
 
+    --为了防止报nil错误,将一些必要的文本设置为BLANK_SPACE
     set_text(PROCESS_SET2_SCREEN, ProcesstypeId, BLANK_SPACE);
     set_text(PROCESS_SET3_SCREEN, ProcesstypeId, BLANK_SPACE);
     for i = 1,12,1 do
@@ -426,17 +456,7 @@ function on_init()
     end
     set_text(RUN_CONTROL_SCREEN,HandProcessTab[1].textId ,BLANK_SPACE);
     
-    ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
-    for i=1,12,1 do
-        local configFile = io.open(i, "r")      --打开文本
-        if configFile ~= nil then              
-            configFile:seek("set")                  --把文件位置定位到开头
-            ConfigStr[i] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串中
-            configFile:close()                      --关闭文本
-            print(i);
-            print(ConfigStr[i]);
-        end
-    end
+    LoadConfigFile();
     if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
         record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
@@ -455,6 +475,12 @@ function on_init()
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000,1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
+
+    --以下代码用于测试自动量程切换功能
+    -- Sys.rangetypeId = 1;--预设当前量程id为1
+    -- Sys.result = 5;--预设当前分析结果为5
+    -- process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+    --end  测试自动量程切换功能
 end
 
 --***********************************************************************************************
@@ -489,7 +515,7 @@ function on_systick()
     Sys.dateTime.hour,Sys.dateTime.min,Sys.dateTime.sec = get_date_time();--获取当前时间
     
     if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
-        process_ready_run();
+        process_ready_run(processId);
     end
 
     --判断wifi连接状态
@@ -789,7 +815,7 @@ function on_uart_recv_data(packet)
 end
 
 --***********************************************************************************************
---发送串口数据
+--串口发送函数
 --packet : 取值为uartSendTab中的参数, 例如uartSendTab.openV11
 --reply : 表示是否是要等待回复,取值 NEED_REPLY  与 NO_NEED_REPLY
 --***********************************************************************************************
@@ -809,6 +835,7 @@ function on_uart_send_data(packet, reply)
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--计算crc16
     UartArg.reply_sta = SEND_FAIL;
+    print(packet.note);--调试输出,方便电脑端调试时查看串口收发数据
     uart_send_data(packet) --将数据通过串口发送出去
 
     UartArg.note = packet.note;--在保存串口回复超时的日志时，需要用到UartArg.note
@@ -831,12 +858,13 @@ function on_uart_send_data(packet, reply)
     if Sys.flag_save_uart_log == ENABLE then
         record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
     end
-    print(packet.note);--调试输出,方便电脑端调试时查看串口收发数据
+    
 end
 
 
 
 --***********************************************************************************************
+--串口接受超时函数
 --进入到该函数表示串口一定回复超时, 因为如果回复成功, 在on_uart_recv_data函数中就会停止定时器1,就不会进入到该函数
 --***********************************************************************************************
 function uart_time_out()
@@ -1234,7 +1262,7 @@ driver = {
 --流程设置相关的按钮id从101 - 129, 其中101为周期流程第一个, id129为手动流程
 RUNCTRL_TextStartId = 1;
 RUNCTRL_TextEndId = 85;
-
+RUNCTRL_SaveBtId = 88;
 RunTypeID = 30;--运行方式对应的文本空间ID
 RunTypeMenuId = 243;--运行方式菜单
 RunStopButtonId = 229;--运行状态切换按钮"初始化""停止"按钮
@@ -1295,6 +1323,10 @@ TimedProcessTab = {
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function run_control_notify(screen,control,value)
+    if control == RUNCTRL_SaveBtId and get_value(RUN_CONTROL_SCREEN,control) == ENABLE then
+        print("保存运行控制界面参数")
+        WriteProcessFile(2);
+    end
 	--control-100表示与该按钮重合的文本框
 	if (control) >= PeriodicTab[1].buttonId  and control <= HandProcessTab[1].buttonId then--当点击需要选择流程的文本框时
         process_select2_set(screen, control-100);--(control100)表示与该按钮重合的文本框
@@ -1304,7 +1336,7 @@ function run_control_notify(screen,control,value)
     elseif control == RunStopButtonId then
         if get_value(RUN_CONTROL_SCREEN,control) == ENABLE then --按钮按下,此时系统状态变为待机运行
             SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
-            process_ready_run();--开始运行前的一些初始化操作
+            process_ready_run(processId);--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
             SystemStop();
             print("SystemStop");
@@ -1316,19 +1348,14 @@ function run_control_notify(screen,control,value)
         else
             set_visiable(RUN_CONTROL_SCREEN, RunStopButtonId, 1);
         end
-        WriteProcessFile(2);
     elseif control == HandProcessTab[1].TimesId then--更改手动运行次数
         HandProcessTab[1].times = tonumber(get_text(RUN_CONTROL_SCREEN, control));
-        WriteProcessFile(2);
     elseif control >= PeriodicTab[5].textId and control <= PeriodicTab[10].textId then --更改周期开始时间与频率
         PeriodicTab[control-27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与?德?
-        WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startHourId and control <= TimedProcessTab[24].startHourId then--更改定时流程时间中的小时
         TimedProcessTab[control-37].startHour = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-37后,对应了定时流程的序号
-        WriteProcessFile(2);
     elseif control >= TimedProcessTab[1].startMinuteId and control <= TimedProcessTab[24].startMinuteId then--更改定时流程时间中的分钟
         TimedProcessTab[control-61].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,control));--control-61后,对应了定时流程的序号
-        WriteProcessFile(2);
     elseif control == TimedProcessClear then--一键清空所有定时设置
         for i = 1,24,1 do
             set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].textId, BLANK_SPACE);
@@ -1338,7 +1365,6 @@ function run_control_notify(screen,control,value)
             TimedProcessTab[i].startHour   = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startHourId));
             TimedProcessTab[i].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN,TimedProcessTab[i].startMinuteId));
         end
-        WriteProcessFile(2);
     end
 end
 
@@ -1522,14 +1548,52 @@ function set_process_start_date_time(year,mon,day,hour,min)
 end
 
 --***********************************************************************************************
---当点击开始按钮时,调用该函数执行??程
+--[获取自动量程切换时需要运行的流程id
+--当点击开始按钮时,调用该函数获取需要执行的流程id
+--***********************************************************************************************
+function get_auto_range_process_id()
+    local destRangeId = 0;
+    local processId = 0;
+    --浓度偏高当前量程为1
+    if Sys.rangetypeId == 1 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN,RangeTab[1].HighId)) then
+        destRangeId = 2;
+    --浓度偏高当前量程为2
+    elseif Sys.rangetypeId == 2 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN,RangeTab[2].HighId)) then
+        destRangeId = 3;
+    --浓度偏低当前量程为2
+    elseif Sys.rangetypeId == 2 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN,RangeTab[2].LowId)) then
+        destRangeId = 1;
+    --浓度偏低当前量程为3
+    elseif Sys.rangetypeId == 3 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN,RangeTab[3].LowId)) then
+        destRangeId = 2;
+    end
+    print("量程自动切换,查找量程为"..destRangeId.."的流程");
+
+    --查找类型为分析且量程为destRangeId的 流程的id
+    for i=1,12,1 do
+        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
+            tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)) == destRangeId then--量程为目的量程
+                processId = i;
+                break;
+        end
+    end
+    --如果满足了自动量程切换的条件, 且找到了可运行的流程,则直接返回
+    ShowSysTips("量程自动切换,执行流程id为"..processId.."的流程");
+
+    return processId;
+end
+
+--***********************************************************************************************
+--[获取流程id
+--当点击开始按钮时,调用该函数获取需要执行的流程id
 --***********************************************************************************************
 function get_current_process_id()
+
     local processId = 0;
     if Sys.status == WorkStatus[Sys.language].run then--当前状态为运行,直接返回; 如果为停止或者待机则继续往下执行.
         return Sys.currentProcessId;
     end
-
+    
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
     if Sys.runType == WorkType[Sys.language].hand then 
         processId = HandProcessTab[1].processId;
@@ -1578,6 +1642,7 @@ function get_current_process_id()
     elseif Sys.runType == WorkType[Sys.language].controlled then 
 
     end
+    
     return processId;
 end
 
@@ -1616,14 +1681,92 @@ function set_process_edit_state(state)
 end
 
 --***********************************************************************************************
---在开始执行流程前,需要一些准备工作
+--[读取并解析流程配置
+--actionNumber:当前动作为第几步
 --***********************************************************************************************
-function process_ready_run()
-    Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+function LoadActionStr(index)
+	Sys.processFileStr = ConfigStr[index];
+    --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
+    --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
+    --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
+    local actionString = GetSubString(Sys.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
+    local typeString = GetSubString(actionString, "<type>","</type>");--获取流程类型与流程名称
+    local tab = split(typeString, ",");
+    Sys.processType = tab[1];
+    Sys.processName = tab[2];
+    Sys.rangetypeId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[index].rangeId));
+    local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
+    tab = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
+    Sys.actionTotal = 0; 
+    --将流程设置2界面中的动作id 与 动作名称保存到 tab数组中
+    for i = 1,24,2 do -- tab中[1][2]分别保存了一个动作的类型与名称,占用了2个, 由于我们是统计action个数,所以这里步进需要设置为2
+        if tab[i] ~= BLANK_SPACE then--判断动作类型不为nil
+            Sys.actionTotal = Sys.actionTotal + 1;--action个数+1
+            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 (i+1)/2 (1,3,5...)
+            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
+        end
+    end
+    --将流程设置3界面中的动作id 与 动作名称保存到 tab数组中
+    for i = 25,48,2 do
+        if tab[i] ~= BLANK_SPACE then
+            Sys.actionTotal = Sys.actionTotal + 1;
+            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
+            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
+        end
+    end
+    ------------------------试剂余量判断----------------------------------------------------------
+    --统计跑完该流程,需要消耗的各试剂多少量
+    print("试剂余量判断");
+    Sys.reagentStatus = RESET;
+    local reagentUse = {[1]=0,[2]=0,[3]=0,[4]=0,[5]=0,[6]=0};
+    local reagentPreRemain = Sys.reagentRemain;
+    for i=1,Sys.actionTotal,1 do
+        --截取文件中<action?>标签之间的字符串
+        local actionStr = GetSubString(Sys.processFileStr, "<action"..Sys.actionIdTab[i]..">", "</action"..Sys.actionIdTab[i]..">");
+        local typeStr  = GetSubString(actionStr, "<type>","</type>");--获动作类型与名称
+        local typeTab = split(typeString, ",");--将动作类型与名称放在tab表中
+        local contentTabStr = GetSubString(actionStr,"<content>","</content>");--再截取<content>标签中的内容
+        local contentTab    = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
+        --判断是否为注射泵加液
+        if typeTab[1] == ActionItem[Sys.language][3] then
+            if contentTab[9] == ENABLE_STRING then--注射泵加液界面的试剂一栏有选中
+                local index = tonumber(contentTab[62])--试剂序号
+                reagentUse[index] = tonumber(contentTab[61])--试剂用量
+            end
+        end
+    end
+    --计算跑完该流程后,试剂的余量, 并将该余量与报警值进行比较
+    for i=1,6,1 do
+        reagentPreRemain[i] = reagentPreRemain[i] - reagentUse[i];
+        if Sys.reagentTotal[i] ~= 0 and reagentPreRemain[i] <= Sys.reagentAlarm[i] then--试剂总量不为0,开启检测 ;试剂余量少于报警值
+            Sys.alarmContent = SysLog[Sys.language].lack..Sys.reagentName[i];--初始化报警内容（串口回复超时）
+            add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
+            ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
+            Sys.reagentStatus = SET;
+        end
+    end
+end
+
+
+--***********************************************************************************************
+--[流程执行入口函数  
+--processIdType: 参数为 processId,调用get_current_process_id函数获取id
+--               参数为 autoRangeProcessId,调用get_auto_range_process_id函数获取id,该参数一般在执行自动量程切换的时候使用
+--***********************************************************************************************
+function process_ready_run(processIdType)
+    if processIdType == autoRangeProcessId then
+        Sys.currentProcessId = get_auto_range_process_id();
+        Sys.isAutoRangeProcess = true;
+    else
+        Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+        Sys.isAutoRangeProcess = false;
+    end
+    print("当前需要运行的流程id="..Sys.currentProcessId);
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
         ReadConfigFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
-        ReadActionFile(Sys.currentProcessId);       --读取流程配置文件,主要保存的是流程设置2/3 以及开始/注射泵/注射泵加液/蠕动泵加液/消解/阀操作等界面的参数
+        LoadActionStr(Sys.currentProcessId);       --读取流程配置
+        Sys.startTime = Sys.dateTime;
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
         end
@@ -1645,6 +1788,7 @@ function process_ready_run()
 end
 
 --***********************************************************************************************
+--[主流程执行函数
 --该函数在定时器中调用,在运行状态时调用该函数
 --系统为运行状态,此时SystemArg.currentProcessId保存了当前需要运行的流程序号, 而该以该序号为名的流程配置文件保存了该流程的所有动??通过解析该文件可以知道该做什么动作.
 --Sys.actionNumber统计了action的总数
@@ -1659,14 +1803,14 @@ function excute_process()
     if Sys.processStep == 1 then
         local actionId = Sys.actionIdTab[Sys.actionStep];
         Sys.actionString  = GetSubString(Sys.processFileStr, "<action"..actionId..">", "</action"..actionId..">");--截取文件中<action?>标签之间的字符串
+        print("当前需要执行的Action="..Sys.actionString);
         local typeString  = GetSubString(Sys.actionString, "<type>","</type>");--获动作类型与名称
         local tab = split(typeString, ",");--将动作类型与名称放在tab表中
         Sys.actionType    = tab[1];--获取动作类型
         Sys.contentTabStr = GetSubString(Sys.actionString,"<content>","</content>");--再截取<content>标签中的内容
+        set_text(IN_OUT_SCREEN, 9, Sys.actionString);
         Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-        Sys.startTime = Sys.dateTime;
         ShowSysCurrentAction( Sys.processName..":"..Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
-        print("ShowSysCurrentAction");
         if Sys.actionType == ActionItem[Sys.language][1] then 
             Sys.actionFunction = excute_init_process;--执行 初始化流程
         elseif Sys.actionType == ActionItem[Sys.language][2] then 
@@ -1694,19 +1838,26 @@ function excute_process()
     elseif Sys.processStep == 2 then
         if Sys.actionFunction(Sys.contentTab) == FINISHED then
             Sys.processStep = Sys.processStep + 1;
+            print("单个action执行完成");
         end
     ---------------------------------------------------------------------------------------------------
     --第三步:判断动作是否执行完毕
     elseif Sys.processStep == 3 then
+        print("判断是否还有action未执行?总Action="..Sys.actionTotal.."当前Action="..Sys.actionStep);
         set_value(MAIN_SCREEN, ProgressBarId, math.floor(Sys.actionStep/Sys.actionTotal*100));--更新进度条
         ----------------所有动作执行完毕(流程结束)-------------------------------------------
         if Sys.actionStep >= Sys.actionTotal then
-            --自动量程切换判断
-            
             Sys.actionStep = 1;                       --重新指向第一个动作
             Sys.processStep = 1;                      --重新计算指向第一个动作的第一步
+            ------类型为分析且开启了自动量程切换----------
+            if  Sys.processType == ProcessItem[Sys.language][1] and 
+                get_text(RANGE_SET_SCREEN,RANGESET_AutoTextId) == AutoRangeStatus[Sys.language].open and 
+                Sys.isAutoRangeProcess == false then
+                if get_auto_range_process_id() ~= 0 then
+                    process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+                end
             ----------------手动模式--------------------
-            if Sys.runType == WorkType[Sys.language].hand then                    
+            elseif Sys.runType == WorkType[Sys.language].hand then                    
                 Sys.handRunTimes = Sys.handRunTimes + 1;  --分析次数+1
                 if  Sys.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
                     SystemStop();
@@ -1729,12 +1880,13 @@ function excute_process()
         ----------------动作未执行完,继续下一个动作-------------------------------------------
         else
             Sys.actionStep = Sys.actionStep + 1;--指向下一个动作
-            Sys.processStep = 1;                      --返回第一步执行下一个动作
+            Sys.processStep = 1;                --返回第一步执行下一个动作
         end
     end
 end
 
 --***********************************************************************************************
+--[流程停止函数
 --  在底部的状态栏显示提示信息
 --***********************************************************************************************
 function SystemStop()
@@ -1747,6 +1899,7 @@ function SystemStop()
         set_process_edit_state(ENABLE);--允许编辑流程
     end
     Sys.processStep = 1;
+    Sys.isAutoRangeProcess = false;
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
     UartArg.repeat_times = 0;--重发计数请0
@@ -1777,7 +1930,7 @@ function ComputerControl(package)
             if package[3] == 0x04 then--开始分析
                 -- Sys.runType = 
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
-                process_ready_run();--开始运行前的一些初始化操作
+                process_ready_run(processId);--开始运行前的一些初始化操作
             elseif package[3] == 0x06 then--停止分析
                 SystemStop();
             end
@@ -1830,14 +1983,14 @@ function process_set1_control_notify(screen,control,value)
                 ConfigFileCopy( SdPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
             ShowSysTips(TipsTab[Sys.language].imported);
-            ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+            LoadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         elseif UsbPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( UsbPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
             ShowSysTips(TipsTab[Sys.language].imported);
-            ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+            LoadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
@@ -2415,8 +2568,18 @@ function excute_inject_add_process(paraTab)
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 13 then--判断该步骤用了多少试剂
+        if paraTab[9] == ENABLE_STRING and Sys.reagentTotal ~= 0 then
+            local index = tonumber(paraTab[62])
+            Sys.reagentRemain[index] = Sys.reagentRemain[index] - tonumber(paraTab[61]);
+            if Sys.reagentRemain[index] < 0 then
+                Sys.reagentRemain[index] = 0;
+            end
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
-    elseif Sys.actionSubStep == 13 then--结束
+    elseif Sys.actionSubStep == 14 then--结束
         Sys.actionSubStep = FINISHED;
     end
     
@@ -2637,7 +2800,11 @@ function excute_read_signal_process(paraTab)
             start_e_wait_time(Sys.signalMaxTime - Sys.signalMinTime) --开启定时器,用于定时最大定时时间
             Sys.signalCount = 0;
             Sys.actionSubStep = Sys.actionSubStep + 1;
-        else
+        else 
+            if UartArg.reply_sta ~= SEND_OK or UartArg.recv_data[2] ~= 0x02 then
+                Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
+                return;
+            end
             local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--获取的信号值需要除以10才是实际值
             --将获取的电压实时显示在首页当中
             if paraTab[1] == "E1" then
@@ -2652,7 +2819,12 @@ function excute_read_signal_process(paraTab)
         on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);--通过串口读取信号
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------
-    elseif Sys.actionSubStep == 5 then--解析串口数据, 并判断是否满足信号漂移要求
+    elseif Sys.actionSubStep == 5  then--解析串口数据, 并判断是否满足信号漂移要求
+        if UartArg.reply_sta ~= SEND_OK or UartArg.recv_data[2] ~= 0x02 then
+            Sys.actionSubStep = Sys.actionSubStep - 1;--不满足条件,执行上一步,继续读取电压信号
+            return;
+        end
+
         local signalE = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;--获取的信号值需要除以10才是实际值
         --将获取的电压实时显示在首页当中
         if paraTab[1] == "E1" then
@@ -2715,7 +2887,7 @@ end
 CALCULATE_BtStartId = 1;
 CALCULATE_BtEndId = 3;
 CALCULATE_TextStartId = 4;
-CALCULATE_TextEndId = 12;
+CALCULATE_TextEndId = 13;
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -2797,8 +2969,10 @@ function excute_calculate_process(paraTab)
     else
         set_text(MAIN_SCREEN, LastResultId, Sys.calibrationValue);
     end
-    set_text(MAIN_SCREEN, LastResultTimeId, Sys.resultTime.year.."-"..Sys.resultTime.mon.."-"..Sys.resultTime.day..
-                                              "  "..Sys.resultTime.hour..":"..Sys.resultTime.min);
+    local resultTime = string.format("%d-%02d-%02d %02d:%02d",Sys.resultTime.year,Sys.resultTime.mon,Sys.resultTime.day,
+                                                               Sys.resultTime.hour,Sys.resultTime.min);
+    set_text(MAIN_SCREEN, LastResultTimeId, resultTime);
+    print("执行完成计算流程");
     return FINISHED;
 end
 
@@ -3289,7 +3463,7 @@ RANGESET_TextEndId = 20;
 
 UniteSetTextId = 19--单位设置成功后,用于显示单位文本的id
 UniteSetMenuId = 26;--单位选择
-
+RANGESET_AutoTextId = 20;--自动量程设置文本
 RangeTab = {
     [1] = {LowId = 1, HighId = 2,   aId = 3,  bId = 4,  cId = 5,  dId = 6},
     [2] = {LowId = 7, HighId = 8,   aId = 9, bId = 10, cId = 11, dId = 12},
@@ -3319,6 +3493,10 @@ function range_set_control_notify(screen,control,value)
         set_unit();
     elseif control == 50 and get_value(screen,control) == ENABLE then --保存按钮
         WriteProcessFile(3);
+    elseif control >= 1 and control <= 18 then
+        if get_text(RANGE_SET_SCREEN,control) == "" then
+            set_text(RANGE_SET_SCREEN,control,0);
+        end
     end
 end
 
@@ -3551,21 +3729,46 @@ REAGENT_TexEndId = 30;
 REAGENT_SaveId = 45;
 
 ReagentTab = {
-    [1] = {BubbleChkId = 1, NameId = 9,  CapacityId = 7,  RemainId = 8,  AlarmId = 10},
-    [2] = {BubbleChkId = 2, NameId = 13, CapacityId = 11, RemainId = 12, AlarmId = 14},
-    [3] = {BubbleChkId = 3, NameId = 17, CapacityId = 15, RemainId = 16, AlarmId = 18},
-    [4] = {BubbleChkId = 4, NameId = 21, CapacityId = 19, RemainId = 20, AlarmId = 22},
-    [5] = {BubbleChkId = 5, NameId = 25, CapacityId = 23, RemainId = 24, AlarmId = 26},
-    [6] = {BubbleChkId = 6, NameId = 29, CapacityId = 27, RemainId = 28, AlarmId = 30},
+    [1] = {BubbleChkId = 1, NameId = 9,  totalId = 7,  remainId = 8,  alarmId = 10},
+    [2] = {BubbleChkId = 2, NameId = 13, totalId = 11, remainId = 12, alarmId = 14},
+    [3] = {BubbleChkId = 3, NameId = 17, totalId = 15, remainId = 16, alarmId = 18},
+    [4] = {BubbleChkId = 4, NameId = 21, totalId = 19, remainId = 20, alarmId = 22},
+    [5] = {BubbleChkId = 5, NameId = 25, totalId = 23, remainId = 24, alarmId = 26},
+    [6] = {BubbleChkId = 6, NameId = 29, totalId = 27, remainId = 28, alarmId = 30},
 }
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate3_control_notify(screen,control,value)
-    if control == REAGENT_SaveId and get_value(screen,control) == ENABLE then
+    if control == REAGENT_SET_Save and get_value(screen,control) == ENABLE then--保存按钮
+        for i = 1, 6, 1 do
+            Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId));
+            Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].remainId));
+            Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].alarmId));
+        end
         WriteProcessFile(5);
+    else
+        for i = 1,6,1 do
+            if control == ReagentTab[i].NameId then--试剂名
+                Sys.reagentName[i] = get_text(HAND_OPERATE3_SCREEN,control)
+                break;
+            elseif control == ReagentTab[i].totalId then--试剂总量
+                Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
+                break;
+            elseif control == ReagentTab[i].remainId then--试剂余量
+                Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
+                break;
+            elseif control == ReagentTab[i].alarmId then--试剂报警量
+                Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
+                break;
+            end
+        end
     end
 end
+
+
+
+
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作4
 --------------------------------------------------------------------------------------------------------------------]]
@@ -3616,7 +3819,7 @@ function add_history_record(screen)
         record_count = record_count + 1;
         record_add(screen, HistoryRecordId, 
             record_count..";"..date..time..--序号,日期,时间
-            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
+            Sys.calibrationValue..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
     elseif screen == HISTORY_ALARM_SCREEN then--添加报警记录
         record_count =  record_get_count(screen, HistoryRecordId);
         record_count = record_count + 1;
@@ -3637,15 +3840,11 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function history_control_notify(screen,control,value)
-    if control == HistoryClear then
-        --判断权限
-        if Sys.userName == SysUser[Sys.language].operator then
-            ShowSysTips(TipsTab[Sys.language].NoPermission);
-            return
-        end
+    if control == HistoryClear and get_value(screen,control) == ENABLE then
         record_clear(screen, HistoryRecordId);--清除记录
-        set_value(screen, control, DISABLE);
-    elseif control == HistoryExport then 
+        print("清除记录");
+    elseif control == HistoryExport and get_value(screen,control) == ENABLE then 
+        print("导出记录");
         record_export(screen,HistoryRecordId);--导出记录
     end
 end
@@ -3663,7 +3862,6 @@ OperatorLoginId = 16;
 maintainerLoginId = 17;
 administratorLoginId = 18;
 pwdRecordId = 13;--用于保存密码的记录控件
-
 
 TouchScreenHardVerId = 3;
 TouchScreenSoftVerId = 27;
@@ -3872,6 +4070,28 @@ function goto_LoginSystem()
     end
 end
 
+--***********************************************************************************************
+--操作权限检测
+--para 1=只检测是否在运行中; 2=同事检测是否在运行中与用户权限
+--***********************************************************************************************
+function operate_permission_detect(para)
+    if Sys.status == WorkStatus[Sys.language].run then --系统运行中,不可执行该操作
+        ShowSysTips(TipsTab[Sys.language].stopFirst);
+        return DISABLE;
+    end
+    --只检测是否在运行中
+    if para == 1 then 
+        return ENABLE
+    end
+    --检测用户权限
+    if Sys.userName == SysUser[Sys.language].operator then
+        ShowSysTips(TipsTab[Sys.language].NoPermission);--无权限
+        return DISABLE;
+    end
+    
+    return ENABLE;
+end
+
 --[[-----------------------------------------------------------------------------------------------------------------
 连接wifi
 --------------------------------------------------------------------------------------------------------------------]]
@@ -4076,6 +4296,30 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     配置文件操作相关函数
 --------------------------------------------------------------------------------------------------------------------]]
+---
+--***********************************************************************************************
+--从配置文件中加载数据到ConfigStr{}缓存
+--***********************************************************************************************
+function LoadConfigFile()
+    ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+    for i=1,12,1 do
+        local configFile = io.open(i, "r")      --打开文本
+        if configFile ~= nil then              
+            configFile:seek("set")                  --把文件位置定位到开头
+            ConfigStr[i] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串中
+            configFile:close()                      --关闭文本
+        else
+            ConfigStr[i] = nil;
+        end
+    end
+    for i = 1, 6, 1 do
+        Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId));
+        Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].remainId));
+        Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].alarmId));
+    end
+end
+
+
 --配置文件的文件名为"0", 在开机时读取到ConfigStr[0]数组当中, 在点击保存时则将ConfigStr[0]字符串保存到"0"文件
 
 cfgFileTab = {
@@ -4548,40 +4792,6 @@ function ReadActionTag(actionNumber)
 end
 
 
---***********************************************************************************************
---读取整个流程配置文件中的值,并统计有多少个步骤
---actionNumber:当前动作为第几步
---***********************************************************************************************
-function ReadActionFile(fileName)
-	Sys.processFileStr = ConfigStr[fileName];
-    --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
-    --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
-    --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
-    local actionString = GetSubString(Sys.processFileStr, "<action0>", "</action0>");--截取文件中<action0>标签之间的字符串
-    local typeString = GetSubString(actionString, "<type>","</type>");--获取流程类型与流程名称
-    local tab = split(typeString, ",");
-    Sys.processType = tab[1];
-    Sys.processName = tab[2];
-    Sys.rangetypeId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[fileName].rangeId));
-    local contentTabStr = GetSubString(actionString,"<content>","</content>");--再截取<content>标签中的内容
-    tab = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-    Sys.actionTotal = 0; 
-    for i = 1,24,2 do -- tab中[1][2]分别保存了一个动作的类型与名称,占用了2个, 由于我们是统计action个数,所以这里步进需要设置为2
-        if tab[i] ~= BLANK_SPACE then--判断动作类型不为nil
-            Sys.actionTotal = Sys.actionTotal + 1;--action个数+1
-            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2 (1,3,5...)
-            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
-        end
-    end
-
-    for i = 25,48,2 do
-        if tab[i] ~= BLANK_SPACE then
-            Sys.actionTotal = Sys.actionTotal + 1;
-            Sys.actionIdTab[Sys.actionTotal] = math.modf((i+1)/2);--由于这个for循环是从1开始,且步进是2,所以需要取 i+1/2
-            Sys.actionNameTab[Sys.actionTotal] = tab[i+1];--i+1对应了(2,4,6...)
-        end
-    end
-end
 
 
 
@@ -4691,8 +4901,92 @@ end
 --***********************************************************************************************
 function bcd_to_string(bcd)
     --取模获得低四位,取整获得高四位
-    local str = tostring(math.modf(bcd/16))..tostring(math.fmod(bcd, 16));
-   return str;
+    local str = "";
+    if bcd ~= nil then
+        str = tostring(math.modf(bcd/16))..tostring(math.fmod(bcd, 16));
+    end;
+    return str;
 end
 
+--***********************************************************************************************
+--将16进制转换为浮点数表示
+--验证网址:https://www.h-schmidt.net/FloatConverter/IEEE754.html
+--***********************************************************************************************
+function hexToFloat( hexString )
+	if hexString == nil then
+		return 0
+	end
+	local t = type( hexString )
+	if t == "string" then
+		hexString = tonumber(hexString , 16)
+	end
+ 
+	local hexNums = hexString
+ 
+	local sign = math.modf(hexNums/(2^31))
+ 
+	local exponent = hexNums % (2^31)
+	exponent = math.modf(exponent/(2^23)) -127
+ 
+	local mantissa = hexNums % (2^23)
+ 
+	for i=1,23 do
+		mantissa = mantissa / 2
+	end
+	mantissa = 1+mantissa
+--	print(mantissa)
+	local result = (-1)^sign * mantissa * 2^exponent
+	return result
+end
+
+
+--***********************************************************************************************
+--将浮点数转换为16进制表示
+--***********************************************************************************************
+function FloatToHex( floatNum )
+	local S = 0
+	local E = 0
+	local M = 0
+	if floatNum == 0 then
+        return "00000000"
+    end
+	local num1,num2 = math.modf(floatNum/1)
+	local InterPart = num1
+ 
+	if floatNum > 0 then
+		S = 0 * 2^31
+	else
+		S = 1 * 2^31
+	end
+	local intercount = 0
+	repeat
+		num1 = math.modf(num1/2)
+		intercount = intercount + 1
+	until (num1 == 0)
+ 
+	E = intercount - 1
+	local Elen = 23 - E
+	InterPart = InterPart % (2^E)
+	InterPart = InterPart * (2^Elen)
+ 
+	E = E + 127
+	E = E * 2^23
+ 
+	for i=1,Elen do
+		num2 = num2 * 2
+		num1,num2 = math.modf(num2/1)
+		M = M + num1 * 2^(Elen - i)
+	end
+ 
+	M = InterPart + M
+ 
+	--E值为整数部分转成二进制数后左移位数：22.8125 转成二进制10110.1101，左移4位 1.01101101
+    --E=4 ，再加上127 就为所需E值
+	--010000011 01101101 000000000000000
+ 
+	local Result = S + E + M
+ 
+	Result = string.format("%08X",Result)
+	return Result
+end
 

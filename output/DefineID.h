@@ -3680,13 +3680,16 @@
 
 #define  _BTN_动作选择_BUTTON14                                                   98
 
-//画面量程设置中图片Image1使用的图片
-#define  _IMG_量程设置_IMAGE1                                                      1
+//画面量程设置中按钮Button12弹起时的图片
+#define  _IMG_量程设置_BUTTON12_UP                                                20
 
 //画面量程设置中按钮Button12按下时的图片
-#define  _IMG_量程设置_BUTTON12_DOWN                                              45
+#define  _IMG_量程设置_BUTTON12_DOWN                                              20
 
 #define  _BTN_量程设置_BUTTON12                                                   22
+
+//画面量程设置中图片Image1使用的图片
+#define  _IMG_量程设置_IMAGE1                                                      1
 
 #define  _RTC_量程设置_RTC1                                                      224
 
@@ -3695,13 +3698,13 @@
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY88                                       900
 
 //画面量程设置中图片Image3使用的图片
-#define  _IMG_量程设置_IMAGE3                                                     46
+#define  _IMG_量程设置_IMAGE3                                                     45
 
 //画面量程设置中图片Image4使用的图片
-#define  _IMG_量程设置_IMAGE4                                                     46
+#define  _IMG_量程设置_IMAGE4                                                     45
 
 //画面量程设置中图片Image5使用的图片
-#define  _IMG_量程设置_IMAGE5                                                     46
+#define  _IMG_量程设置_IMAGE5                                                     45
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY1                                          3
 
@@ -3724,21 +3727,21 @@
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY29                                       300
 
 //画面量程设置中按钮Button9按下时的图片
-#define  _IMG_量程设置_BUTTON9_DOWN                                               47
+#define  _IMG_量程设置_BUTTON9_DOWN                                               46
 
 #define  _BTN_量程设置_BUTTON9                                                   250
 
 //画面量程设置中图片Image6使用的图片
-#define  _IMG_量程设置_IMAGE6                                                     46
+#define  _IMG_量程设置_IMAGE6                                                     45
 
 //画面量程设置中图片Image7使用的图片
-#define  _IMG_量程设置_IMAGE7                                                     46
+#define  _IMG_量程设置_IMAGE7                                                     45
 
 //画面量程设置中图片Image8使用的图片
-#define  _IMG_量程设置_IMAGE8                                                     46
+#define  _IMG_量程设置_IMAGE8                                                     45
 
 //画面量程设置中图片Image9使用的图片
-#define  _IMG_量程设置_IMAGE9                                                     46
+#define  _IMG_量程设置_IMAGE9                                                     45
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY4                                          9
 
@@ -3761,24 +3764,24 @@
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY32                                       301
 
 //画面量程设置中按钮Button10弹起时的图片
-#define  _IMG_量程设置_BUTTON10_UP                                                47
+#define  _IMG_量程设置_BUTTON10_UP                                                46
 
 //画面量程设置中按钮Button10按下时的图片
-#define  _IMG_量程设置_BUTTON10_DOWN                                              47
+#define  _IMG_量程设置_BUTTON10_DOWN                                              46
 
 #define  _BTN_量程设置_BUTTON10                                                  264
 
 //画面量程设置中图片Image16使用的图片
-#define  _IMG_量程设置_IMAGE16                                                    46
+#define  _IMG_量程设置_IMAGE16                                                    45
 
 //画面量程设置中图片Image17使用的图片
-#define  _IMG_量程设置_IMAGE17                                                    46
+#define  _IMG_量程设置_IMAGE17                                                    45
 
 //画面量程设置中图片Image18使用的图片
-#define  _IMG_量程设置_IMAGE18                                                    46
+#define  _IMG_量程设置_IMAGE18                                                    45
 
 //画面量程设置中图片Image21使用的图片
-#define  _IMG_量程设置_IMAGE21                                                    46
+#define  _IMG_量程设置_IMAGE21                                                    45
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY19                                        15
 
@@ -3801,10 +3804,10 @@
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY34                                       302
 
 //画面量程设置中按钮Button11弹起时的图片
-#define  _IMG_量程设置_BUTTON11_UP                                                47
+#define  _IMG_量程设置_BUTTON11_UP                                                46
 
 //画面量程设置中按钮Button11按下时的图片
-#define  _IMG_量程设置_BUTTON11_DOWN                                              47
+#define  _IMG_量程设置_BUTTON11_DOWN                                              46
 
 #define  _BTN_量程设置_BUTTON11                                                  280
 
@@ -3816,11 +3819,8 @@
 
 #define  _BTN_量程设置_BUTTON42                                                   50
 
-//画面量程设置中按钮Button61弹起时的图片
-#define  _IMG_量程设置_BUTTON61_UP                                                45
-
 //画面量程设置中按钮Button61按下时的图片
-#define  _IMG_量程设置_BUTTON61_DOWN                                              45
+#define  _IMG_量程设置_BUTTON61_DOWN                                              47
 
 #define  _BTN_量程设置_BUTTON61                                                  297
 
@@ -3959,26 +3959,26 @@
 #define  _BTN_量程选择_BUTTON7                                                     3
 
 //画面量程选择中按钮Button1弹起时的图片
-#define  _IMG_量程选择_BUTTON1_UP                                                 47
+#define  _IMG_量程选择_BUTTON1_UP                                                 46
 
 //画面量程选择中按钮Button1按下时的图片
-#define  _IMG_量程选择_BUTTON1_DOWN                                               47
+#define  _IMG_量程选择_BUTTON1_DOWN                                               46
 
 #define  _BTN_量程选择_BUTTON1                                                   101
 
 //画面量程选择中按钮Button10弹起时的图片
-#define  _IMG_量程选择_BUTTON10_UP                                                47
+#define  _IMG_量程选择_BUTTON10_UP                                                46
 
 //画面量程选择中按钮Button10按下时的图片
-#define  _IMG_量程选择_BUTTON10_DOWN                                              47
+#define  _IMG_量程选择_BUTTON10_DOWN                                              46
 
 #define  _BTN_量程选择_BUTTON10                                                  102
 
 //画面量程选择中按钮Button11弹起时的图片
-#define  _IMG_量程选择_BUTTON11_UP                                                47
+#define  _IMG_量程选择_BUTTON11_UP                                                46
 
 //画面量程选择中按钮Button11按下时的图片
-#define  _IMG_量程选择_BUTTON11_DOWN                                              47
+#define  _IMG_量程选择_BUTTON11_DOWN                                              46
 
 #define  _BTN_量程选择_BUTTON11                                                  103
 

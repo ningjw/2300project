@@ -106,6 +106,10 @@ NEED_REPLY = 1;--串口数据需要回复
 processId = 0;
 autoRangeProcessId = 1;
 
+--stopType
+stopByNormal = 0;
+stopByClickButton = 1;
+
 Direction = {
     [CHN] = {FWD = "正转",REV = "反转"},
     [ENG] = {FWD = "CW",REV="CCW"},
@@ -346,9 +350,9 @@ Sys = {
     contentTab = {},  --用于保存content标签中的内容,此时已经调用split对contentTabStr中的内容进行了分割
 
     currentProcessId = 0,--当前正在执行的流程,所对应的的序号.
-    processFileStr = nil,--读出取流程相关的配置文件后,保存到该变量当中
-    processName = nil ,--流程名称
-    processType = nil,--流程类型, 通过该变量判断是校正 还是 非校正. 校正使用一种算法, 非校正使用另一种算法
+    processFileStr = "",--读出取流程相关的配置文件后,保存到该变量当中
+    processName = "" ,--流程名称
+    processType = "",--流程类型, 通过该变量判断是校正 还是 非校正. 校正使用一种算法, 非校正使用另一种算法
     processStep = 1,--执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
     isPeriodOrTimed = 0,--使用该变量判断是周期流程还是定时流程
 
@@ -408,10 +412,7 @@ Sys = {
     alarmContent = "",--用于保存当前报警信息
     logContent = "",--用于保存当前日志信息
 
-    reagentName = {};--试剂名称
-    reagentTotal = {};--试剂容量值:当改值为0时,表示关闭该试剂的相关报警
-    reagentAlarm = {};--试剂报警值
-    reagentRemain = {};--试剂剩余容量
+
     reagentStatus = RESET;
     
     ssid = 0,
@@ -419,6 +420,7 @@ Sys = {
     binIndex = 0,--用于驱动板升级时,控制数据包位置
 
     flag_save_uart_log = ENABLE,--该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
+    isAutoRangeProcess = false,--用于指示当前流程是否为自动量程切换流程,该变量用于保证只运行一次量程切换流程
 }
 
 
@@ -468,7 +470,7 @@ function on_init()
     end
     
     set_unit();--设置单位
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -1337,7 +1339,7 @@ function run_control_notify(screen,control,value)
             SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             process_ready_run(processId);--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
-            SystemStop();
+            SystemStop(stopByClickButton);
             print("SystemStop");
         end
     elseif control == RunTypeMenuId then--更改运行方式
@@ -1715,15 +1717,17 @@ function LoadActionStr(index)
     end
     ------------------------试剂余量判断----------------------------------------------------------
     --统计跑完该流程,需要消耗的各试剂多少量
-    print("试剂余量判断");
     Sys.reagentStatus = RESET;
     local reagentUse = {[1]=0,[2]=0,[3]=0,[4]=0,[5]=0,[6]=0};
-    local reagentPreRemain = Sys.reagentRemain;
+    local reagentPreRemain = {};
+    for i=1,6,1 do
+        reagentPreRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].remainId));
+    end
     for i=1,Sys.actionTotal,1 do
         --截取文件中<action?>标签之间的字符串
         local actionStr = GetSubString(Sys.processFileStr, "<action"..Sys.actionIdTab[i]..">", "</action"..Sys.actionIdTab[i]..">");
         local typeStr  = GetSubString(actionStr, "<type>","</type>");--获动作类型与名称
-        local typeTab = split(typeString, ",");--将动作类型与名称放在tab表中
+        local typeTab = split(typeStr, ",");--将动作类型与名称放在tab表中
         local contentTabStr = GetSubString(actionStr,"<content>","</content>");--再截取<content>标签中的内容
         local contentTab    = split(contentTabStr, ",");--分割字符串,并将字符串存入tab数组
         --判断是否为注射泵加液
@@ -1731,14 +1735,22 @@ function LoadActionStr(index)
             if contentTab[9] == ENABLE_STRING then--注射泵加液界面的试剂一栏有选中
                 local index = tonumber(contentTab[62])--试剂序号
                 reagentUse[index] = tonumber(contentTab[61])--试剂用量
+                print("本次流程将消耗试剂"..index..":"..reagentUse[index].."mL");
+                if reagentPreRemain[index] > reagentUse[index] then
+                    reagentPreRemain[index] = reagentPreRemain[index] - reagentUse[index];
+                else
+                    reagentPreRemain[index] = 0;
+                end
+                print("试剂"..index.."将会剩余"..reagentPreRemain[index].."mL");
             end
         end
     end
     --计算跑完该流程后,试剂的余量, 并将该余量与报警值进行比较
     for i=1,6,1 do
-        reagentPreRemain[i] = reagentPreRemain[i] - reagentUse[i];
-        if Sys.reagentTotal[i] ~= 0 and reagentPreRemain[i] <= Sys.reagentAlarm[i] then--试剂总量不为0,开启检测 ;试剂余量少于报警值
-            Sys.alarmContent = SysLog[Sys.language].lack..Sys.reagentName[i];--初始化报警内容（串口回复超时）
+        --试剂总量不为0,开启检测 ;试剂余量少于报警值
+        if tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId)) ~= 0 and 
+           reagentPreRemain[i] <= tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].alarmId)) then
+            Sys.alarmContent = SysLog[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容（串口回复超时）
             add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
             ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
             Sys.reagentStatus = SET;
@@ -1755,14 +1767,21 @@ end
 function process_ready_run(processIdType)
     if processIdType == autoRangeProcessId then
         Sys.currentProcessId = get_auto_range_process_id();
+        Sys.isAutoRangeProcess = true;
     else
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
+        Sys.isAutoRangeProcess = false;
     end
     print("当前需要运行的流程id="..Sys.currentProcessId);
     if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
         set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
         ReadConfigFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         LoadActionStr(Sys.currentProcessId);       --读取流程配置
+        if Sys.reagentStatus == SET then
+            SystemStop(stopByNormal);
+            ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
+            return;
+        end
         Sys.startTime = Sys.dateTime;
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
@@ -1848,15 +1867,18 @@ function excute_process()
             Sys.processStep = 1;                      --重新计算指向第一个动作的第一步
             ------类型为分析且开启了自动量程切换----------
             if  Sys.processType == ProcessItem[Sys.language][1] and 
-                get_text(RANGE_SET_SCREEN,RANGESET_AutoTextId) == AutoRangeStatus[Sys.language].open then
+                get_text(RANGE_SET_SCREEN,RANGESET_AutoTextId) == AutoRangeStatus[Sys.language].open and 
+                Sys.isAutoRangeProcess == false then
                 if get_auto_range_process_id() ~= 0 then
                     process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+                else
+                    SystemStop(stopByNormal);
                 end
             ----------------手动模式--------------------
             elseif Sys.runType == WorkType[Sys.language].hand then                    
                 Sys.handRunTimes = Sys.handRunTimes + 1;  --分析次数+1
                 if  Sys.handRunTimes >= HandProcessTab[1].times then--已达到指定的运行次数,系统停止
-                    SystemStop();
+                    SystemStop(stopByNormal);
                 end
             ----------------自动模式--------------------
             elseif Sys.runType == WorkType[Sys.language].auto then
@@ -1871,7 +1893,7 @@ function excute_process()
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行?乱淮瘟鞒塘?
             ----------------反控模式--------------------
             elseif Sys.runType == WorkType[Sys.language].controlled then
-                SystemStop();
+                SystemStop(stopByNormal);
             end
         ----------------动作未执行完,继续下一个动作-------------------------------------------
         else
@@ -1882,9 +1904,11 @@ function excute_process()
 end
 
 --***********************************************************************************************
+--[流程停止函数
 --  在底部的状态栏显示提示信息
+--stopType : stopByNormal-跑完一次流程后正常停止 ;stopByClickButton-通过手动点击停止按钮强制停止流程
 --***********************************************************************************************
-function SystemStop()
+function SystemStop(stopType) 
     SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     ShowSysCurrentAction(TipsTab[Sys.language].null);--将当前动作显示为"无"
     ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
@@ -1894,6 +1918,7 @@ function SystemStop()
         set_process_edit_state(ENABLE);--允许编辑流程
     end
     Sys.processStep = 1;
+    Sys.isAutoRangeProcess = false;
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
     UartArg.repeat_times = 0;--重发计数请0
@@ -1926,7 +1951,7 @@ function ComputerControl(package)
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
                 process_ready_run(processId);--开始运行前的一些初始化操作
             elseif package[3] == 0x06 then--停止分析
-                SystemStop();
+                SystemStop(stopByClickButton);
             end
             uart_send_data(package) --回复
         end
@@ -2566,10 +2591,14 @@ function excute_inject_add_process(paraTab)
     elseif Sys.actionSubStep == 13 then--判断该步骤用了多少试剂
         if paraTab[9] == ENABLE_STRING and Sys.reagentTotal ~= 0 then
             local index = tonumber(paraTab[62])
-            Sys.reagentRemain[index] = Sys.reagentRemain[index] - tonumber(paraTab[61]);
-            if Sys.reagentRemain[index] < 0 then
-                Sys.reagentRemain[index] = 0;
+            local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[index].remainId));
+            reagentRemain = reagentRemain - tonumber(paraTab[61]);
+            if reagentRemain < 0 then
+                reagentRemain = 0;
             end
+            print("消耗试剂"..index..":"..reagentRemain.."mL");
+            set_text(HAND_OPERATE3_SCREEN,ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
+            WriteProcessFile(5);--保存试剂余量界面的数据到配置文件
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
     -----------------------------------------------------------------
@@ -3723,38 +3752,25 @@ REAGENT_TexEndId = 30;
 REAGENT_SaveId = 45;
 
 ReagentTab = {
-    [1] = {BubbleChkId = 1, NameId = 9,  totalId = 7,  remainId = 8,  alarmId = 10},
-    [2] = {BubbleChkId = 2, NameId = 13, totalId = 11, remainId = 12, alarmId = 14},
-    [3] = {BubbleChkId = 3, NameId = 17, totalId = 15, remainId = 16, alarmId = 18},
-    [4] = {BubbleChkId = 4, NameId = 21, totalId = 19, remainId = 20, alarmId = 22},
-    [5] = {BubbleChkId = 5, NameId = 25, totalId = 23, remainId = 24, alarmId = 26},
-    [6] = {BubbleChkId = 6, NameId = 29, totalId = 27, remainId = 28, alarmId = 30},
+    [1] = {BubbleChkId = 1, nameId = 9,  totalId = 7,  remainId = 8,  alarmId = 10},
+    [2] = {BubbleChkId = 2, nameId = 13, totalId = 11, remainId = 12, alarmId = 14},
+    [3] = {BubbleChkId = 3, nameId = 17, totalId = 15, remainId = 16, alarmId = 18},
+    [4] = {BubbleChkId = 4, nameId = 21, totalId = 19, remainId = 20, alarmId = 22},
+    [5] = {BubbleChkId = 5, nameId = 25, totalId = 23, remainId = 24, alarmId = 26},
+    [6] = {BubbleChkId = 6, nameId = 29, totalId = 27, remainId = 28, alarmId = 30},
 }
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate3_control_notify(screen,control,value)
-    if control == REAGENT_SET_Save and get_value(screen,control) == ENABLE then--保存按钮
-        for i = 1, 6, 1 do
-            Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId));
-            Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].remainId));
-            Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].alarmId));
-        end
+    if control == REAGENT_SaveId and get_value(screen,control) == ENABLE then--保存按钮
         WriteProcessFile(5);
-    else
-        for i = 1,6,1 do
-            if control == ReagentTab[i].NameId then--试剂名
-                Sys.reagentName[i] = get_text(HAND_OPERATE3_SCREEN,control)
-                break;
-            elseif control == ReagentTab[i].totalId then--试剂总量
-                Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
-                break;
-            elseif control == ReagentTab[i].remainId then--试剂余量
-                Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
-                break;
-            elseif control == ReagentTab[i].alarmId then--试剂报警量
-                Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,control));
-                break;
+    elseif control >=7 and control <= 30 then--试剂判断
+        ShowSysAlarm("");
+        for i=1,6,1 do
+            if tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].remainId)) <= tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].alarmId)) then
+                Sys.alarmContent = SysLog[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容
+                ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
             end
         end
     end
@@ -4305,11 +4321,6 @@ function LoadConfigFile()
         else
             ConfigStr[i] = nil;
         end
-    end
-    for i = 1, 6, 1 do
-        Sys.reagentTotal[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId));
-        Sys.reagentRemain[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].remainId));
-        Sys.reagentAlarm[i] = tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].alarmId));
     end
 end
 

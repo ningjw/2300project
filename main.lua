@@ -421,6 +421,8 @@ Sys = {
 
     flag_save_uart_log = ENABLE,--该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
     isAutoRangeProcess = false,--用于指示当前流程是否为自动量程切换流程,该变量用于保证只运行一次量程切换流程
+
+    ReadyToReadConfigFile = false,--导入配置文件后,不能第一时间读取,需要过一段时间,该变量用于指示配置文件已经导入,可以延时读取了
 }
 
 
@@ -470,7 +472,7 @@ function on_init()
     end
     
     set_unit();--设置单位
-    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -1686,7 +1688,15 @@ end
 --actionNumber:当前动作为第几步
 --***********************************************************************************************
 function LoadActionStr(index)
-	Sys.processFileStr = ConfigStr[index];
+    local configFile = io.open(index, "r")          --打开文本
+    if configFile ~= nil then              
+        configFile:seek("set")                  --把文件位置定位到开头
+        ConfigStr[index] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串
+        configFile:close()                      --关闭文本
+    else
+        ShowSysTips("未找到配置文件");
+    end
+    Sys.processFileStr = ConfigStr[index];
     --统计action个数,给SystemArg.actionNumber变量,以及SystemArg.actionTab赋值 ----------------------
     --Sys.actionTab数组长度为24,表示最多可记录24个action, 其值保存的是当前步骤对应的action序号
     --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
@@ -1773,14 +1783,14 @@ function process_ready_run(processIdType)
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
         Sys.isAutoRangeProcess = false;
     end
+    ShowSysTips("当前需要运行的流程id="..Sys.currentProcessId);
     print("当前需要运行的流程id="..Sys.currentProcessId);
-    if Sys.currentProcessId ~= 0  and io.open(Sys.currentProcessId, "r") ~= nil then--不等于0,表示有满足条件的流程待执行,
-        set_process_edit_state(DISABLE);            --禁止流程设置相关的操作
-        ReadConfigFile();                          --加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
+    if Sys.currentProcessId ~= 0  then--不等于0,表示有满足条件的流程待执行,
+        set_process_edit_state(DISABLE);           --禁止流程设置相关的操作
         LoadActionStr(Sys.currentProcessId);       --读取流程配置
-        if Sys.reagentStatus == SET then
+        if Sys.reagentStatus == SET then           --当前缺液,不执行流程
             SystemStop(stopByNormal);
-            ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
+            ShowSysAlarm(Sys.alarmContent);        --在底部状态栏显示报警信息
             return;
         end
         Sys.startTime = Sys.dateTime;
@@ -2002,15 +2012,19 @@ function process_set1_control_notify(screen,control,value)
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( SdPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
+            on_init();
+            Sys.hand_control_func = nil;
+            SystemStop(stopByNormal);
             ShowSysTips(TipsTab[Sys.language].imported);
-            LoadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         elseif UsbPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0,12,1 do--依次导出文件"0"~"12"
                 ConfigFileCopy( UsbPath.."config/"..i, i);--将Sd卡中的配置文件导入都系统
             end
+            on_init();
+            Sys.hand_control_func = nil;
+            SystemStop(stopByNormal);
             ShowSysTips(TipsTab[Sys.language].imported);
-            LoadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
@@ -4312,12 +4326,12 @@ end
 --从配置文件中加载数据到ConfigStr{}缓存
 --***********************************************************************************************
 function LoadConfigFile()
-    ReadConfigFile();--加载流程设置1界面/运行控制界面/量程设置界面中的参数配置
-    for i=1,12,1 do
-        local configFile = io.open(i, "r")      --打开文本
+    ReadConfigFile();--读取"0"文件,并将文件里的参数设置到 流程设置1界面/运行控制界面/量程设置界面/手动操作3界面/输入输出界面
+    for i=1,12,1 do--循环读取文件"1"-"12"
+        local configFile = io.open(i, "r")          --打开文本
         if configFile ~= nil then              
             configFile:seek("set")                  --把文件位置定位到开头
-            ConfigStr[i] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串中
+            ConfigStr[i] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串
             configFile:close()                      --关闭文本
         else
             ConfigStr[i] = nil;

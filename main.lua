@@ -437,6 +437,10 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
+
+    Sys.dateTime.year,Sys.dateTime.mon,Sys.dateTime.day,
+    Sys.dateTime.hour,Sys.dateTime.min,Sys.dateTime.sec = get_date_time();--获取当前时间
+
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
 
@@ -472,7 +476,7 @@ function on_init()
     end
     
     set_unit();--设置单位
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
  --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
  --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
@@ -484,6 +488,15 @@ function on_init()
     -- Sys.result = 5;--预设当前分析结果为5
     -- process_ready_run(autoRangeProcessId);--运行自动量程切换流程
     --end  测试自动量程切换功能
+
+    --以下代码用于测试当记录满了之后, 是否会删除一条最旧记录的记录(报警记录)
+    SdPath = "";
+    for i = 1,55,1 do
+        Sys.alarmContent = i;
+        add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
+    end
+    --以下代码用于测试删除文件首行内容
+    -- getFileLines("AlarmHistory.txt");
 end
 
 --***********************************************************************************************
@@ -621,7 +634,15 @@ function on_screen_change(screen)
     elseif(screen == RANGE_SELECT_SCREEN) then --跳转到量程选择
 		goto_range_select();
 	elseif screen== PROCESS_SELECT2_SCREEN then --跳转到流程选择2
-		goto_ProcessSelect2();
+        goto_ProcessSelect2();
+    elseif screen == HISTORY_ANALYSIS_SCREEN then--跳转到分析记录界面
+        goto_history_analysis(screen);
+    elseif screen == HISTORY_CALIBRATION_SCREEN then--跳转到校正记录界面
+        goto_history_calibration(screen);
+    elseif screen ==HISTORY_ALARM_SCREEN then--跳转到报警记录界面
+        goto_history_alarm(screen);
+    elseif screen == HISTORY_LOG_SCREEN then--跳转到日志记录界面
+        goto_history_log(screen);
 	elseif screen== LOGIN_SYSTEM_SCREEN then--登录系统
 		goto_LoginSystem();
 	elseif screen== PASSWORD_SET_SCREEN then--密码设置
@@ -635,7 +656,7 @@ end
 --插入 U 盘后，执行此回调函数
 --***********************************************************************************************
 function on_usb_inserted(dir)
-    ShowSysTips(TipsTab[Sys.language].insertUsb);
+    ShowSysTips(TipsTab[Sys.language].insertUsb..",路径:"..UsbPath);
     UsbPath = dir;
 end
 
@@ -650,7 +671,7 @@ end
 --插入 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_inserted(dir)
-    ShowSysTips(TipsTab[Sys.language].insertSd);
+    ShowSysTips(TipsTab[Sys.language].insertSd..",路径:"..SdPath);
     SdPath = dir;
 end
 
@@ -658,12 +679,12 @@ end
 --拔出 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_removed()
-    ShowSysTips(TipsTab[Sys.language].pullOutUSB);
+    ShowSysTips(TipsTab[Sys.language].pullOutSd);
 end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    流程控制函数
+    系统初始化函数
 --------------------------------------------------------------------------------------------------------------------]]
 --***********************************************************************************************
 --系统初始化, 一般在开机或者急停时调用该函数
@@ -955,7 +976,7 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    首页
+    首页/状态栏显示函数
 --------------------------------------------------------------------------------------------------------------------]]
 
 LastResultTimeId = 20;   --分析时间
@@ -2895,10 +2916,12 @@ function excute_read_signal_process(paraTab)
                 
                 if paraTab[1] == "E1" then
                     Sys.signalE1 = signalE;
+                    Sys.signalE1 = GetPreciseDecimal(Sys.signalE1, 1);--保留小数点后1位
                     set_text(MAIN_SCREEN, LastResultE1Id, signalE);
                     print("E1=",signalE);
                 else
                     Sys.signalE2 = signalE;
+                    Sys.signalE2 = GetPreciseDecimal(Sys.signalE2, 1);--保留小数点后1位
                     set_text(MAIN_SCREEN, LastResultE2Id, signalE);
                     print("E2=",signalE);
                 end
@@ -3205,7 +3228,7 @@ function calc_analysis_result(type)
     d = tonumber( get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
     print(string.format( "a=%f,b=%f,c=%f,d=%f",a,b,c,d));
     Sys.result = a*(x^3) + b*(x^2) + c*x + d;
-    Sys.result = GetPreciseDecimal(Sys.result,4);--保留小数点后四位
+    Sys.result = GetPreciseDecimal(Sys.result, 4);--保留小数点后四位
     set_text(MAIN_SCREEN, LastResultId, Sys.result);--在主界面显示结果
 end
 
@@ -3825,38 +3848,151 @@ end
 HistoryRecordId = 32;--历史记录控件Id号，分析、校准、报警、日志都是这个。
 HistoryClear = 2;
 HistoryExport = 1;
+MAX_ANALYSIS_HISTORY_NUM = 1200;
+MAX_CALIBRARE_HISTORY_NUM = 100;
+MAX_ALARM_HISTORY_NUM = 50;
+MAX_LOG_HISTORY_NUM = 100;
+
+MAX_ANALYSIS_FILE_NUM = 20000;
+MAX_CALIBRARE_FILE_NUM = 2000;
+MAX_ALARM_FILE_NUM = 1000;
+MAX_LOG_FILE_NUM = 1000;
 --***********************************************************************************************
 --  添加一条历史记录
 -- screen:在哪一个界面的历史记录控件添加内容
 --***********************************************************************************************
 function add_history_record(screen)
-    local record_count;
-    local date = string.format("%d%02d%02d;",Sys.resultTime.year,Sys.resultTime.mon,Sys.resultTime.day);
-    local time = string.format("%02d:%02d;",Sys.resultTime.hour,Sys.resultTime.min);
-    if screen == HISTORY_ANALYSIS_SCREEN then--添加分析记录
-        record_count =  record_get_count(screen, HistoryRecordId);
+    local date,time;
+    if screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CALIBRATION_SCREEN then
+        date = string.format("%d%02d%02d",Sys.resultTime.year,Sys.resultTime.mon,Sys.resultTime.day);
+        time = string.format("%02d:%02d",Sys.resultTime.hour,Sys.resultTime.min);
+    else
+        date = string.format("%d%02d%02d",Sys.dateTime.year,Sys.dateTime.mon,Sys.dateTime.day);
+        time = string.format("%02d:%02d",Sys.dateTime.hour,Sys.dateTime.min);
+    end
+    --------------------添加分析记录----------------------------------------
+    if screen == HISTORY_ANALYSIS_SCREEN then
+        record_count =  record_get_count(screen, HistoryRecordId);--获取记录个数
+        if record_count >= MAX_ANALYSIS_HISTORY_NUM then
+            record_delete(screen, HistoryRecordId, 0);--删除最旧的一条记录
+        end
         record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, 
-            record_count..";"..date..time..--序号,日期,时间
-            Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");--结果/E2/E2
-    elseif screen == HISTORY_CALIBRATION_SCREEN then--添加校准记录
+        history_content = record_count..";"..date..";"..time..";"..--序号,日期,时间
+                  Sys.result..";"..Sys.signalE1..";"..Sys.signalE2..";"..Sys.rangetypeId;--结果/E2/E2/量程
+        record_add(screen, HistoryRecordId, history_content);
+        
+        --添加历史记录到文件当中
+        if SdPath ~= nil then
+            file_lines,lastContent = getFileLines(SdPath.."AnalysisHistory.txt");--获取文件行数以及最后一行的数据
+            if file_lines >= MAX_ANALYSIS_FILE_NUM then
+                lastContentTab = split(lastContent, ";");
+                record_count = tonumber(lastContentTab[1])+1;--提取该字符串中的序号
+                deleteFirstLineInFile(SdPath.."AnalysisHistory.txt");--获取文件中最后一行的数据
+            else
+                record_count = file_lines+1;
+            end
+            file_content = record_count..";"..date..time..Sys.logContent..";"..Sys.userName--序号,日期,时间
+            historyFile = io.open(SdPath.."AnalysisHistory.txt", "a+") --以可读可写的方式打开文本,且写入数据为末尾追加模式.
+            if historyFile ~= nil then
+                historyFile:write(file_content.."\n");--添加一行历史记录
+                historyFile:close()                        --关闭文本
+            else
+                ShowSysTips("未检测到SD卡,分析结果未存入文件");
+            end
+        end
+    -------------------添加校准记录-----------------------------------------------
+    elseif screen == HISTORY_CALIBRATION_SCREEN then
         record_count =  record_get_count(screen, HistoryRecordId);
-        record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, 
-            record_count..";"..date..time..--序号,日期,时间
-            Sys.calibrationValue..";"..Sys.signalE1..";"..Sys.signalE2..";".."1");
+        if record_count >= MAX_CALIBRARE_HISTORY_NUM then
+            record_delete(screen, HistoryRecordId, 0);--删除最旧的一条记录
+            record_count = MAX_CALIBRARE_HISTORY_NUM;
+        else
+            record_count = record_count + 1;
+        end
+        history_content = record_count..";"..date..";"..time..";"..--序号,日期,时间
+                          Sys.calibrationValue..";"..Sys.signalE1..";"..Sys.signalE2..";".."1"
+        record_add(screen, HistoryRecordId, history_content);
+        --添加历史记录到文件当中
+        if SdPath ~= nil then
+            file_lines,lastContent = getFileLines(SdPath.."CalibrationHistory.txt");--获取文件行数以及最后一行的数据
+            if file_lines >= MAX_CALIBRARE_FILE_NUM then
+                lastContentTab = split(lastContent, ";");
+                record_count = tonumber(lastContentTab[1])+1;--提取该字符串中的序号
+                deleteFirstLineInFile(SdPath.."CalibrationHistory.txt");--获取文件中最后一行的数据
+            else
+                record_count = file_lines+1;
+            end
+            file_content = record_count..";"..date..time..Sys.logContent..";"..Sys.userName--序号,日期,时间
+            historyFile = io.open(SdPath.."CalibrationHistory.txt", "a+") --以可读可写的方式打开文本,且写入数据为末尾追加模式.
+            if historyFile ~= nil then
+                historyFile:write(file_content.."\n");--添加一行历史记录
+                historyFile:close()                        --关闭文本
+            else
+                ShowSysTips("未检测到SD卡,校正结果未存入文件");
+            end
+        end
+    -------------------添加报警记录-----------------------------------------------
     elseif screen == HISTORY_ALARM_SCREEN then--添加报警记录
+        record_count =  record_get_count(screen, HistoryRecordId);--获取记录个数
+        if record_count >= MAX_ALARM_HISTORY_NUM then
+            record_content = record_read(screen, HistoryRecordId, record_count-1);--读取最后一条记录
+            record_content_tab = split(record_content, ";");--分割字符串,并保存到一个table中
+            record_count = tonumber(record_content_tab[1]) + 1;--提取该字符串中的序号
+            record_delete(screen, HistoryRecordId, 0);--删除最旧的一条记录
+        else
+            record_count = record_count + 1;
+        end
+        history_content = record_count..";"..date..";"..time..";"..Sys.alarmContent.."; "--序号,日期,时间
+        record_add(screen, HistoryRecordId, history_content);
+        --添加历史记录到文件当中
+        if SdPath ~= nil then
+            file_lines,lastContent = getFileLines(SdPath.."AlarmHistory.txt");--获取文件行数以及最后一行的数据
+            if file_lines >= MAX_ALARM_FILE_NUM then
+                lastContentTab = split(lastContent, ";");
+                record_count = tonumber(lastContentTab[1])+1;--提取该字符串中的序号
+                deleteFirstLineInFile(SdPath.."AlarmHistory.txt");--获取文件中最后一行的数据
+            else
+                record_count = file_lines+1;
+            end
+            file_content = record_count..";"..date..";"..time..";"..Sys.alarmContent.."; "--序号,日期,时间
+            historyFile = io.open(SdPath.."AlarmHistory.txt", "a+") --以可读可写的方式打开文本,且写入数据为末尾追加模式.
+            if historyFile ~= nil then
+                historyFile:write(file_content.."\n");--添加一行历史记录
+                historyFile:close()                        --关闭文本
+            else
+                ShowSysTips("未检测到SD卡,报警未存入文件");
+            end
+        end
+    -------------------添加日志记录------------------------------------------------
+    elseif screen == HISTORY_LOG_SCREEN then
         record_count =  record_get_count(screen, HistoryRecordId);
-        record_count = record_count + 1;
-        record_add(screen, HistoryRecordId,
-            record_count..";"..date..time..--序号,日期,时间
-            Sys.alarmContent.."; ");
-    elseif screen == HISTORY_LOG_SCREEN then --添加日志记录
-        record_count =  record_get_count(screen, HistoryRecordId);
-        record_count = record_count + 1;
-        record_add(screen, HistoryRecordId, 
-            record_count..";"..date..time..--序号,日期,时间
-            Sys.logContent..";"..Sys.userName);
+        if record_count >= MAX_LOG_HISTORY_NUM then
+            record_delete(screen, HistoryRecordId, 0);--删除最旧的一条记录
+            record_count = MAX_LOG_HISTORY_NUM;
+        else
+            record_count = record_count + 1;
+        end
+        history_content = record_count..";"..date..";"..time..";"..Sys.logContent..";"..Sys.userName--序号,日期,时间
+        record_add(screen, HistoryRecordId, history_content);
+        --添加历史记录到文件当中
+        if SdPath ~= nil then
+            file_lines,lastContent = getFileLines(SdPath.."LogHistory.txt");--获取文件行数以及最后一行的数据
+            if file_lines >= MAX_LOG_FILE_NUM then
+                lastContentTab = split(lastContent, ";");
+                record_count = tonumber(lastContentTab[1])+1;--提取该字符串中的序号
+                deleteFirstLineInFile(SdPath.."LogHistory.txt");--获取文件中最后一行的数据
+            else
+                record_count = file_lines+1;
+            end
+            file_content = record_count..";"..date..time..Sys.logContent..";"..Sys.userName--序号,日期,时间
+            historyFile = io.open(SdPath.."LogHistory.txt", "a+") --以可读可写的方式打开文本,且写入数据为末尾追加模式.
+            if historyFile ~= nil then
+                historyFile:write(file_content.."\n");--添加一行历史记录
+                historyFile:close()                        --关闭文本
+            else
+                ShowSysTips("未检测到SD卡,日志未存入文件");
+            end
+        end
     end
 end
 
@@ -3874,7 +4010,101 @@ function history_control_notify(screen,control,value)
     end
 end
 
+--***********************************************************************************************
+--跳转到分析历史界面时,调用该函数,显示最新的记录
+--***********************************************************************************************
+function goto_history_analysis(screen)
+    record_count =  record_get_count(screen, HistoryRecordId);
+    record_setoffset(screen, HistoryRecordId, record_count);
+end
 
+--***********************************************************************************************
+--跳转到校正历史界面时,调用该函数,显示最新的记录
+--***********************************************************************************************
+function goto_history_calibration(screen)
+    record_count =  record_get_count(screen, HistoryRecordId);
+    record_setoffset(screen, HistoryRecordId, record_count);
+end
+
+--***********************************************************************************************
+--跳转到报警历史界面时,调用该函数,显示最新的记录
+--***********************************************************************************************
+function goto_history_alarm(screen)
+    record_count =  record_get_count(screen, HistoryRecordId);
+    record_setoffset(screen, HistoryRecordId, record_count);
+end
+
+--***********************************************************************************************
+--跳转到日志历史界面时,调用该函数,显示最新的记录
+--***********************************************************************************************
+function goto_history_log(screen)
+    record_count =  record_get_count(screen, HistoryRecordId);
+    record_setoffset(screen, HistoryRecordId, record_count);
+end
+
+
+--***********************************************************************************************
+--获取文件行数
+--***********************************************************************************************
+function getFileLines(filePath)
+    local lines= 0;
+    local lastLineContent = "";
+    local file = io.open(filePath)
+    if file == nil then
+        return lines,lastLineContent;
+    end
+    
+    local line = file:read();
+    while line do
+        lines = lines + 1;
+        lastLineContent = line;--获取文件中最后一行数据
+        line = file:read();
+    end
+    file:close();
+    print("文件行数为:"..lines);
+    return lines,lastLineContent;
+end
+
+--***********************************************************************************************
+--按行读取文件, 将每一行的数据都放入tab中.
+--***********************************************************************************************
+function readFileToTab(file)
+    local fileTab = {}
+    local line = file:read();
+    while line do
+        table.insert(fileTab, line);
+        line = file:read();
+    end
+    return fileTab;
+end
+
+--***********************************************************************************************
+--将Tab中的数据,按行写入文件当中
+--***********************************************************************************************
+function writeFile(file,fileTab)
+    for i,line in ipairs(fileTab) do
+        file:write(line)
+        file:write("\n")
+    end
+end
+
+--***********************************************************************************************
+--删除文件中的首行数据
+--***********************************************************************************************
+function deleteFirstLineInFile(filePath)
+    local fileRead = io.open(filePath)
+    assert(fileRead, "file open failed")
+    if fileRead then
+        local tab = readFileToTab(fileRead);
+        fileRead:close();
+        table.remove(tab, 1);--删除第一行数据
+        local fileWrite = io.open(filePath, "w")
+        if fileWrite then
+            writeFile(fileWrite,tab)
+            fileWrite:close()
+        end
+    end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     系统信息
@@ -4321,7 +4551,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     配置文件操作相关函数
 --------------------------------------------------------------------------------------------------------------------]]
----
+--
 --***********************************************************************************************
 --从配置文件中加载数据到ConfigStr{}缓存
 --***********************************************************************************************

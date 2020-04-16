@@ -37,6 +37,7 @@
         <page name="自定义全键盘" id="34" />
         <page name="无线连接" id="35" />
         <page name="远程升级" id="36" />
+        <page name="密码对话框" id="37" />
     </pages>
     <images>
         <image id="0" url="e:\ningjw\2300project\Images\菜单按钮一.png" effect_width="106" effect_height="53" />
@@ -107,11 +108,11 @@
         <image id="65" url="e:\ningjw\2300project\Images\按钮按下.JPG" effect_width="70" effect_height="35" />
         <image id="66" url="e:\ningjw\2300project\Images\按钮.JPG" effect_width="99" effect_height="40" />
         <image id="67" url="e:\ningjw\2300project\Images\按钮按下.JPG" effect_width="99" effect_height="40" />
-        <image id="68" url="e:\ningjw\2300project\Images\按钮.JPG" effect_width="229" effect_height="35" />
-        <image id="69" url="e:\ningjw\2300project\Images\按钮.JPG" effect_width="110" effect_height="35" />
-        <image id="70" url="e:\ningjw\2300project\Images\按钮按下.JPG" effect_width="110" effect_height="35" />
-        <image id="71" url="e:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
-        <image id="72" url="e:\ningjw\2300project\Images\长输入框.png" effect_width="312" effect_height="35" />
+        <image id="68" url="e:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
+        <image id="69" url="e:\ningjw\2300project\Images\长输入框.png" effect_width="311" effect_height="35" />
+        <image id="70" url="e:\ningjw\2300project\Images\按钮.JPG" effect_width="229" effect_height="35" />
+        <image id="71" url="e:\ningjw\2300project\Images\按钮.JPG" effect_width="110" effect_height="35" />
+        <image id="72" url="e:\ningjw\2300project\Images\按钮按下.JPG" effect_width="110" effect_height="35" />
         <image id="73" url="e:\ningjw\2300project\Images\长输入框.png" effect_width="160" effect_height="35" />
         <image id="74" url="e:\ningjw\2300project\Images\文字底色.jpg" effect_width="150" effect_height="35" />
         <image id="75" url="e:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="40" />

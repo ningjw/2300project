@@ -50,25 +50,27 @@ LOGIN_SYSTEM_SCREEN = 31;
 DIALOG_SCREEN = 33;
 WIFI_CONNECT_SCREEN = 35;
 REMOTE_UPDATE_SCREEN = 36;
+PASSWORD_DIALOG_SCREEN = 37;
 
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
 PublicTab = {
     [1]  = MAIN_SCREEN,
     [2]  = RUN_CONTROL_SCREEN,
     [3]  = PROCESS_SET1_SCREEN,
-    [4]  = PROCESS_EDIT1_SCREEN,
-    [5]  = PROCESS_EDIT2_SCREEN,
-    [6]  = RANGE_SET_SCREEN,
-    [7]  = HAND_OPERATE1_SCREEN,
-    [8]  = HAND_OPERATE2_SCREEN,
-    [9]  = HAND_OPERATE3_SCREEN,
-    [10] = HAND_OPERATE4_SCREEN,
-    [11] = IN_OUT_SCREEN,
-    [12] = HISTORY_ANALYSIS_SCREEN,
-    [13] = HISTORY_CALIBRATION_SCREEN,
-    [14] = HISTORY_ALARM_SCREEN,
-    [15] = HISTORY_LOG_SCREEN,
-    [16] = SYSTEM_INFO_SCREEN
+    [4]  = PROCESS_SET2_SCREEN,
+    [5]  = PROCESS_EDIT1_SCREEN,
+    [6]  = PROCESS_EDIT2_SCREEN,
+    [7]  = RANGE_SET_SCREEN,
+    [8]  = HAND_OPERATE1_SCREEN,
+    [9]  = HAND_OPERATE2_SCREEN,
+    [10]  = HAND_OPERATE3_SCREEN,
+    [11] = HAND_OPERATE4_SCREEN,
+    [12] = IN_OUT_SCREEN,
+    [13] = HISTORY_ANALYSIS_SCREEN,
+    [14] = HISTORY_CALIBRATION_SCREEN,
+    [15] = HISTORY_ALARM_SCREEN,
+    [16] = HISTORY_LOG_SCREEN,
+    [17] = SYSTEM_INFO_SCREEN,
 };
 
 BLANK_SPACE = " ";
@@ -104,6 +106,9 @@ LOCKED = 1;--串口已上锁
 NO_NEED_REPLY = 0;--串口数据不需要回复
 NEED_REPLY = 1;--串口数据需要回复
 
+CHK_RUN = 1;--检测权限时,只检测是否运行
+CHK_RUN_USER = 2;--检测权限时,除了需要检测是否在运行中, 还需要检测用户是否为管理员或者运维员
+
 --processIdType:
 processId = 0;
 autoRangeProcessId = 1;
@@ -126,8 +131,8 @@ CalcOrder = {
 TipsTab = {
     [CHN] = {
         insertSdUsb = "请插入SD卡",
-        insertSd    = "插入SD卡",
-        insertUsb   = "插入U盘",
+        insertSd    = "插入SD卡,路径:",
+        insertUsb   = "插入U盘,路径:",
         pullOutSd   = "拔出SD卡",
         pullOutUSB  = "拔出U盘",
         importing   = "正在导入配置文件...",
@@ -153,11 +158,22 @@ TipsTab = {
         NoPermission = "当前用户无权限执行该操作",
         stopFirst = "系统运行中,不可执行该操作",
         null  = "无",
+        uartTimeOut = "回复超时",
+        start = "开始",
+        stop = "结束",
+        highDensity = "浓度偏高",
+        lowDensity = "浓度偏低",
+        lack = "缺",
+        autoRangeProcess = "量程自动切换,执行的流程id为",
+        WillRunId = "当前准备运行的流程id=",
+        noSdcard = "未检测到SD卡",
+        resultSaveErr = "未检测到SD卡,分析结果未存入文件",
+        connecting = " 连接中...",
     },
     [ENG] = {
         insertSdUsb = "Please Insert SD Card",
-        insertSd    = "Please Insert SD Card",
-        insertUsb   = "Please Insert U Disk",
+        insertSd    = "Insert SD Card, path is",
+        insertUsb   = "Insert U Disk, path is ",
         pullOutSd   = "Pull Out The SD card",
         pullOutUSB  = "Pull Out The U Disk",
         importing   = "Importing Configuration File...",
@@ -183,26 +199,17 @@ TipsTab = {
         NoPermission = "No Permission to Exceut",
         stopFirst = "System running, stop first",
         null    = "NULL",
-    },
-};
-
---系统日志信息
- SysLog = {
-    [CHN] = {
-        uartTimeOut = "回复超时",
-        start = "开始",
-        stop = "结束",
-        highDensity = "浓度偏高",
-        lowDensity = "浓度偏低",
-        lack = "缺",
-    },
-    [ENG] = {
         uartTimeOut = "Timeout",
         start = "Start",
         stop = "Stop",
         highDensity = "High Density",
         lowDensity = "Ligh Density",
-        lack = "Lack of "
+        lack = "Lack of ",
+        autoRangeProcess = "Automatic range switching, process id=",
+        WillRunId = "Process Id that will run is ",
+        noSdcard = "No sd card detected",
+        resultSaveErr = "No sd card,the result isn't save to the file",
+        connecting = "Connecting"
     },
 };
 
@@ -247,7 +254,6 @@ SysUser = {
         administrator = "Admin",
     },
 }
-
 
 
 --阀状态
@@ -428,7 +434,6 @@ Sys = {
 }
 
 
-
 --[[-----------------------------------------------------------------------------------------------------------------
     入口函数
 --------------------------------------------------------------------------------------------------------------------]]
@@ -444,7 +449,7 @@ function on_init()
     Sys.dateTime.hour,Sys.dateTime.min,Sys.dateTime.sec = get_date_time();--获取当前时间
 
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
-    set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "19121015");--显示触摸屏软件版本号
+    set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "20041616");--显示触摸屏软件版本号
 
     --为了防止报nil错误,将一些必要的文本设置为BLANK_SPACE
     set_text(PROCESS_EDIT1_SCREEN, ProcesstypeId, BLANK_SPACE);
@@ -469,9 +474,12 @@ function on_init()
     
     LoadConfigFile();
     if record_get_count(SYSTEM_INFO_SCREEN,6) == 0 then --表示还未设置初始密码
-        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
-        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员与管理员的默认密码都是171717
+        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "171717");--运维员的默认密码
+        record_add(SYSTEM_INFO_SCREEN, pwdRecordId, "172172");--管理员的默认密码
     end
+    --系统信息界面下的仪器型号与序列号默认不能设置,需要输入密码后才可设置
+    set_enable(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, DISABLE);
+    set_enable(SYSTEM_INFO_SCREEN, SerialNumberTextId, DISABLE);
 
     --反控模式下,隐藏开始按钮
     Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
@@ -494,7 +502,7 @@ function on_init()
     --end  测试自动量程切换功能
 
     --以下代码用于测试当记录满了之后, 是否会删除一条最旧记录的记录(报警记录)
-    -- SdPath = "";
+    SdPath = "";
     -- for i = 1,55,1 do
     --     Sys.alarmContent = i;
     --     add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
@@ -508,6 +516,7 @@ end
 --定时器0: 1ms超时中断, 流程相关函数主要运行在该定时器当中
 --定时器1: 3ms超时中断, 主要用于判断串口数据回复是否超时
 --定时器2: 用于读取E1/E2信号时的超时判断; 用于流程控制中的超时判断
+--定时器3: 调用ShowSysTips显示提示后, 该提示只显示5秒钟
 --***********************************************************************************************
 function on_timer(timer_id)
     if  timer_id == 0 then --定时器0,定时时间到
@@ -520,6 +529,8 @@ function on_timer(timer_id)
         uart_time_out();
     elseif timer_id == 2 then--等待时间完成
         Sys.waitTimeFlag = RESET ;
+    elseif timer_id == 3 then--清除底部tips
+        ShowSysTips("");
     elseif timer_id == 4 then
         Sys.eWaitTimeFlag = RESET ;
     end
@@ -558,6 +569,7 @@ function on_systick()
 end
 
 --***********************************************************************************************
+--[控件回调函数
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
@@ -612,7 +624,7 @@ function on_control_notify(screen,control,value)
 		system_info_control_notify(screen,control,value);	
     elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
         login_system_control_notify(screen,control,value);
-    elseif screen == DIALOG_SCREEN then
+    elseif screen == DIALOG_SCREEN then--对话框界面
         dialog_screen_control_notify(screen,control,value);
 	elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
         password_set_control_notify(screen,control,value);	
@@ -622,6 +634,8 @@ function on_control_notify(screen,control,value)
         remote_update_control_notify(screen,control,value);
     elseif screen == HISTORY_ALARM_SCREEN or screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or screen == HISTORY_LOG_SCREEN then
         history_control_notify(screen,control,value);
+    elseif screen == PASSWORD_DIALOG_SCREEN then--密码对话框界面
+        password_dialog_screen_control_notify(screen,control,value);
     end
 
 end
@@ -652,6 +666,8 @@ function on_screen_change(screen)
         goto_PasswordSet();
     elseif screen== WIFI_CONNECT_SCREEN then--密码设置
         goto_WifiConnect();
+    elseif screen == PASSWORD_DIALOG_SCREEN then --密码对话框
+        goto_dialog_screen();
 	end
 end
 
@@ -659,7 +675,7 @@ end
 --插入 U 盘后，执行此回调函数
 --***********************************************************************************************
 function on_usb_inserted(dir)
-    ShowSysTips(TipsTab[Sys.language].insertUsb..",路径:"..UsbPath);
+    ShowSysTips(TipsTab[Sys.language].insertUsb..UsbPath);
     UsbPath = dir;
 end
 
@@ -668,13 +684,14 @@ end
 --***********************************************************************************************
 function on_usb_removed()
     ShowSysTips(TipsTab[Sys.language].pullOutUSB);
+    UsbPath = nil;
 end
 
 --***********************************************************************************************
 --插入 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_inserted(dir)
-    ShowSysTips(TipsTab[Sys.language].insertSd..",路径:"..SdPath);
+    ShowSysTips(TipsTab[Sys.language].insertSd..SdPath);
     SdPath = dir;
 end
 
@@ -683,6 +700,7 @@ end
 --***********************************************************************************************
 function on_sd_removed()
     ShowSysTips(TipsTab[Sys.language].pullOutSd);
+    SdPath = nil;
 end
 
 
@@ -765,24 +783,24 @@ end
 uart_free_protocol = 1;
 
 uartSendTab = {
-  getSCSoftVer = {[0] = 0xEE, 0x03, 0x10, 0x03, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取软件版本" },
-  getSCHardVer = {[0] = 0xEE, 0x03, 0x10, 0x02, 0x00, 0x03, 0x00, 0x00, len = 6, note = "获取硬件版本" },
-    getTemp    = {[0] = 0xEE, 0x03, 0x10, 0x0A, 0x00, 0x01, 0x00, 0x00, len = 6, note = "测量池温度" },
-    getVoltage = {[0] = 0xEE, 0x03, 0x10, 0x0C, 0x00, 0x01, 0x00, 0x00, len = 6, note = "光电管电压"},
- setLedCurrnet = {[0] = 0xEE, 0x03, 0x10, 0x0D, 0x00, 0x01, 0x00, 0x00, len = 6, note = "设置LED电流"},
-    openLed    = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x01, 0x00, 0x00, len = 6, note = "开LED灯" },
-    closeLed   = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关LED灯" },
-updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6, note = "更新计算板"},
-    getDrvVer  = {[0] = 0xE0, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "驱动版本号"},
-    openValco  = {[0] = 0xE0, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "十通阀"},--开十通阀
-    openV11    = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀11"},
-    closeV11   = {[0] = 0xE0, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀11"},
-    openV12    = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "开阀12"},
-    closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = "关阀12"},
-    enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "使能注射泵"},
-   mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "移动注射泵"},
- setInject1Spd = {[0] = 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "设置注射泵速度"},
-    rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = "复位注射泵"},
+  getSCSoftVer = {[0] = 0xEE, 0x03, 0x10, 0x03, 0x00, 0x03, 0x00, 0x00, len = 6, note = { [CHN] = "获取软件版本", [ENG] = "Get Soft Ver."} },
+  getSCHardVer = {[0] = 0xEE, 0x03, 0x10, 0x02, 0x00, 0x03, 0x00, 0x00, len = 6, note = { [CHN] = "获取硬件版本", [ENG] = "Get Hard Ver."} },
+    getTemp    = {[0] = 0xEE, 0x03, 0x10, 0x0A, 0x00, 0x01, 0x00, 0x00, len = 6, note = { [CHN] = "测量池温度", [ENG] = "Get Temperature"} },
+    getVoltage = {[0] = 0xEE, 0x03, 0x10, 0x0C, 0x00, 0x01, 0x00, 0x00, len = 6, note = { [CHN] = "光电管电压", [ENG] = "Get Voltage"} },
+ setLedCurrnet = {[0] = 0xEE, 0x03, 0x10, 0x0D, 0x00, 0x01, 0x00, 0x00, len = 6, note = { [CHN] = "设置LED电流", [ENG] = "Set Led Current"} },
+    openLed    = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x01, 0x00, 0x00, len = 6, note = { [CHN] = "开LED", [ENG] = "Open Led"} },
+    closeLed   = {[0] = 0xEE, 0x06, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "关LED", [ENG] = "Close Led"} },
+updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "更新计算板", [ENG] = "Update Calc. BD."} },
+    getDrvVer  = {[0] = 0xE0, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "驱动版本号", [ENG] = "Get Drver BD. Ver"} },
+    openValco  = {[0] = 0xE0, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "开十通阀", [ENG] = "Open Valco"} },
+    openV11    = {[0] = 0xE0, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "开阀11", [ENG] = "Open valve 11"} },
+    closeV11   = {[0] = 0xE0, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "关阀11", [ENG] = "Close valve 11"} },
+    openV12    = {[0] = 0xE0, 0x09, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "开阀12", [ENG] = "Open valve 12"} },
+    closeV12   = {[0] = 0xE0, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "关阀12", [ENG] = "Close valve 12"} },
+    enInject1  = {[0] = 0xE0, 0x0F, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "使能注射泵", [ENG] = "Enbale injector"} },
+   mvInject1To = {[0] = 0xE0, 0x0D, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "移动注射泵", [ENG] = "Move injector"} },
+ setInject1Spd = {[0] = 0xE0, 0x0E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "设置注射泵速度", [ENG] = "Set injector speed"} },
+    rstInject1 = {[0] = 0xE0, 0x0D, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, len = 6, note = { [CHN] = "复位注射泵", [ENG] = "Reset injector"} },
     updateDrv  = { },--该变量用于驱动板升级
 }
 
@@ -791,7 +809,7 @@ updateCalcSoft = {[0] = 0xEE, 0x06, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00, len = 6,
 UartArg = {
     repeat_times = 0,--用于记录重发次数
     repeat_data ,--用于保存本次重发数据
-    note = "",--用于保存串口指令说明
+    note ="",--用于保存串口指令说明
     recv_data,--用于保存接收到的数据
     reply_data = {[0] = 0, [1] = 0},--用于保存需要接受到的回复数据
     reply_sta = SEND_OK;--用于指示发送的串口指令是否有正确回复
@@ -852,7 +870,7 @@ function on_uart_send_data(packet, reply)
     end
 
     if reply == NEED_REPLY then --表示需要等待回复
-        start_timer(1, 3000, 1, 0); --开启定时器1，超时时间 3s, 1->使用倒计时方式,0->表示无限重复
+        start_timer(1, 2000, 1, 0); --开启定时器1，超时时间 2s, 1->使用倒计时方式,0->表示无限重复
         UartArg.lock = LOCKED;      --给串口上锁, 收到回复后自动解锁
         UartArg.repeat_data = packet;--设置重发数据
         UartArg.repeat_times = 0;
@@ -862,10 +880,10 @@ function on_uart_send_data(packet, reply)
     
     packet[packet.len], packet[packet.len+1] = CalculateCRC16(packet, packet.len);--计算crc16
     UartArg.reply_sta = SEND_FAIL;
-    print(packet.note);--调试输出,方便电脑端调试时查看串口收发数据
+    print(packet.note[Sys.language]);--调试输出,方便电脑端调试时查看串口收发数据
     uart_send_data(packet) --将数据通过串口发送出去
-
-    UartArg.note = packet.note;--在保存串口回复超时的日志时，需要用到UartArg.note
+    
+    UartArg.note = packet.note[Sys.language];--在保存串口回复超时的日志时，需要用到UartArg.note
 
     --以下代码功能: 每发送一次数据,就将该数据保存在手动操作4的串口收发记录当中,方便从触摸屏查看.
     local UartDateTime =  string.format("%02d-%02d %02d:%02d",Sys.dateTime.mon,Sys.dateTime.day,Sys.dateTime.hour,Sys.dateTime.min);
@@ -883,7 +901,7 @@ function on_uart_send_data(packet, reply)
     end
     --判断是否打开串口通信记录功能
     if Sys.flag_save_uart_log == ENABLE then
-        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note);--添加通信记录
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;"..UartDateTime..";"..UartData..";"..packet.note[Sys.language]);--添加通信记录
     end
     
 end
@@ -896,10 +914,9 @@ end
 --***********************************************************************************************
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times < 4 then
-        UartArg.lock = UNLOCKED;
+    if UartArg.repeat_times <= 3 then
         uart_send_data(UartArg.repeat_data);--数据重发
-    else  --重发2次都没有回复,不再重发
+    else  --重发3次都没有回复,不再重发
         print("串口接受超时");
         --判断为升级驱动板数据,此时升级失败
         if UartArg.repeat_data[0] == 0xD0 and UartArg.repeat_data[1] == 0x10 and UartArg.repeat_data[2] == 0x30 then
@@ -915,7 +932,7 @@ function uart_time_out()
         end
         stop_timer(1)--停止超时定时器
         beep(1000);--串口回复超时，蜂鸣器响1秒钟。
-        Sys.alarmContent = UartArg.note..SysLog[Sys.language].uartTimeOut;--初始化报警内容（串口回复超时）
+        Sys.alarmContent = UartArg.note..TipsTab[Sys.language].uartTimeOut;--初始化报警内容（串口回复超时）
         add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
         ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
     end
@@ -1005,22 +1022,14 @@ end
 
 
 --***********************************************************************************************
---用于调试显示,在tips状态栏
---name : 流程名称
---***********************************************************************************************
-function printf(text)
-    for i = 1,16,1 do
-        set_text(PublicTab[i], SysTipsId, text);
-    end
-end
-
---***********************************************************************************************
 --  在底部的状态栏显示提示信息
 --***********************************************************************************************
 function ShowSysTips(tips)
-    for i = 1,16,1 do
+    for i = 1,#PublicTab,1 do
         set_text(PublicTab[i], SysTipsId, tips);
     end
+    stop_timer(3);
+    start_timer(3, 5000, 1, 0) --开启定时器 3，超时时间 5000ms,1->使用倒计时方式,1->表示只执行一次
 end
 
 --***********************************************************************************************
@@ -1029,7 +1038,7 @@ end
 function SetSysWorkStatus(status)
     Sys.status = status;--设置系统状态为运行
     --在底部的状态栏显示工作状态:停止/运行/待机
-    for i = 1,16,1 do
+    for i = 1,#PublicTab,1 do
         set_text(PublicTab[i], SysWorkStatusId, status);
         if status == WorkStatus[Sys.language].stop or status == WorkStatus[Sys.language].readyRun then
             set_text(PublicTab[i], SysCurrentActionId, TipsTab[Sys.language].null);
@@ -1041,7 +1050,7 @@ end
 --  在底部的状态栏显示当前动作
 --***********************************************************************************************
 function ShowSysCurrentAction(action)
-    for i = 1,16,1 do
+    for i = 1,#PublicTab,1 do
         set_text(PublicTab[i], SysCurrentActionId, action);
     end
 end
@@ -1051,7 +1060,7 @@ end
 --  在底部的状态栏显示告警信息
 --***********************************************************************************************
 function ShowSysAlarm(alarm)
-    for i = 1,16,1 do
+    for i = 1,#PublicTab,1 do
         set_text(PublicTab[i], SysAlarmId, alarm);
     end
 end
@@ -1117,7 +1126,11 @@ end
 --***********************************************************************************************
 function control_valco(channel)
     uartSendTab.openValco[2] = channel;
-    uartSendTab.openValco.note = "开十通阀"..channel;
+    if Sys.language == CHN then
+        uartSendTab.openValco.note[Sys.language] = "开十通阀"..channel;
+    else
+        uartSendTab.openValco.note[Sys.language] = "Open Valco "..channel;
+    end
     on_uart_send_data(uartSendTab.openValco, NEED_REPLY);
 end
 
@@ -1488,7 +1501,6 @@ function set_period_start_date(diffDays)
     while math.modf(diffDays/daysAyear) >= 1 do -- 大于365天或者366天
         diffDays = diffDays - daysAyear;
         year = year + 1;
-        ShowSysTips(year)
         if isLeapYear(year) then
 			daysAyear = 366;
         end
@@ -1624,8 +1636,9 @@ function get_auto_range_process_id()
         end
     end
     --如果满足了自动量程切换的条件, 且找到了可运行的流程,则直接返回
-    ShowSysTips("量程自动切换,执行流程id为"..processId.."的流程");
-
+    Sys.logContent = TipsTab[Sys.language].autoRangeProcess ..processId;
+    ShowSysTips(Sys.logContent);
+    add_history_record(HISTORY_LOG_SCREEN);
     return processId;
 end
 
@@ -1812,10 +1825,9 @@ function LoadActionStr(index)
         --试剂总量不为0,开启检测 ;试剂余量少于报警值
         if tonumber(get_text(HAND_OPERATE3_SCREEN,ReagentTab[i].totalId)) ~= 0 and 
            reagentPreRemain[i] <= tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].alarmId)) then
-            Sys.alarmContent = SysLog[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容（串口回复超时）
+            Sys.alarmContent = TipsTab[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容（串口回复超时）
             add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
             ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
-            print(Sys.alarmContent);
             Sys.reagentStatus = SET;
         end
     end
@@ -1835,16 +1847,23 @@ function process_ready_run(processIdType)
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
         Sys.isAutoRangeProcess = false;
     end
-    ShowSysTips("当前需要运行的流程id="..Sys.currentProcessId);
-    print("当前需要运行的流程id="..Sys.currentProcessId);
+    Sys.logContent = TipsTab[Sys.language].WillRunId..Sys.currentProcessId;
+    ShowSysTips(Sys.logContent);
+    add_history_record(HISTORY_LOG_SCREEN);
     if Sys.currentProcessId ~= 0  then--不等于0,表示有满足条件的流程待执行,
-        set_process_edit_state(DISABLE);           --禁止流程设置相关的操作
+        -- set_process_edit_state(DISABLE);           --禁止流程设置相关的操作
         LoadActionStr(Sys.currentProcessId);       --读取流程配置
         if Sys.reagentStatus == SET then           --当前缺液,不执行流程
             SystemStop(stopByNormal);
-            ShowSysAlarm(Sys.alarmContent);        --在底部状态栏显示报警信息
+            ShowSysAlarm(Sys.alarmContent);        --在底部状态栏显示缺液报警信息, 因为SystemStop会清空报警信息
             return;
         end
+        -- if UsbPath == nil then --未检测到SD卡
+        --     SystemStop(stopByNormal);
+        --     Sys.alarmContent = TipsTab[Sys.language].noSdcard;
+        --     ShowSysAlarm(Sys.alarmContent);
+        --     return;
+        -- end
         Sys.startTime = Sys.dateTime;
         if Sys.isPeriodOrTimed == PERIOD_PROCESS then
             set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
@@ -1977,9 +1996,9 @@ function SystemStop(stopType)
     ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
     ShowSysTips("");
     set_value(RUN_CONTROL_SCREEN, RunStopButtonId, 0.0);--将开始/停止按钮弹出
-    if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管?碓?
-        set_process_edit_state(ENABLE);--允许编辑流程
-    end
+    -- if Sys.userName == SysUser[Sys.language].maintainer or  Sys.userName == SysUser[Sys.language].administrator then--运维员/管?碓?
+    --     set_process_edit_state(ENABLE);--允许编辑流程
+    -- end
     Sys.processStep = 1;
     Sys.isAutoRangeProcess = false;
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
@@ -2122,8 +2141,11 @@ function process_set12_control_notify(screen,control,value)
     --删除按钮----------------------------------------------------------------------
     elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[24].deleteId and value == ENABLE then
         if get_text(screen, control-50) ~= BLANK_SPACE then --名称不为空格
-            process_delete_set(screen, control);
+            if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+                set_dest_screen_control(screen, control);
+            end
         end
+        change_screen(DIALOG_SCREEN);
      --编辑按钮----------------------------------------------------------------------
     elseif control >= ProcessTab[1].editId and control <= ProcessTab[24].editId and 
           get_text(screen, control+250) ~= BLANK_SPACE and value == ENABLE then
@@ -2131,6 +2153,11 @@ function process_set12_control_notify(screen,control,value)
         set_text(PROCESS_EDIT2_SCREEN, AnalyteSetId, get_text(screen, control+150));
         ReadActionTag(0);
         change_screen(PROCESS_EDIT1_SCREEN);
+        if control <= ProcessTab[12].editId then--设置当点击流程编辑1界面中的向前按钮时,需要返回哪一个界面
+            DestProcessSetScreen = PROCESS_SET1_SCREEN;
+        else
+            DestProcessSetScreen = PROCESS_SET2_SCREEN;
+        end
     end
 end
 
@@ -2140,8 +2167,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     流程编辑1/2
 --------------------------------------------------------------------------------------------------------------------]]
-
-ProcessSelectButtonId = 35;--位于流程编辑1
+ReturnProcessSetScreenId = 93;
 ProcesstypeId = 38;      --位于流程编辑1/3都是这个id
 ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程编辑1/3界面中都是这个id
 ProcessSaveId = 19;
@@ -2208,38 +2234,33 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_edit1_control_notify(screen,control,value)
-
-    if control == ProcessSaveBtId and get_value(screen,control) == ENABLE then -- 保存
-        if string.len(get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId)) == 0  then
+    if control == ProcessSaveBtId and value == ENABLE then -- 保存
+        if string.len(get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId)) == 0  then --当前流程为空
             set_visiable(PROCESS_EDIT1_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
             set_visiable(PROCESS_EDIT1_SCREEN, ProcessSelectTipsTextId, 0);--隐藏提示信息
             --手动保存当前正在编辑的流程
             WriteCfgToFlash();
         end
-    elseif control == ProcessSelectButtonId then--当点击流程选择按钮时,
-        if get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId) ~= BLANK_SPACE then
-            process_name_select_set(PROCESS_EDIT1_SCREEN, ProcesstypeId);--设置流程名称选择界面中按确认/返回按钮后,返回流程编辑1界面
-        else
-
+    elseif control == ReturnProcessSetScreenId and value == ENABLE then--回退按钮
+        if DestProcessSetScreen == nil then
+            DestProcessSetScreen = PROCESS_SET1_SCREEN;
         end
-    elseif control == ProcesstypeId then
-
+        change_screen(DestProcessSetScreen);
     elseif (control-100) >= TabAction[1].typeId and (control-100) <= TabAction[12].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_EDIT1_SCREEN, control-100, control-400);
-    elseif control >= TabAction[1].editId and control <= TabAction[12].editId then--当点击"编辑"按钮时
-        if get_value(screen,control) == ENABLE then
-            if get_text(PROCESS_EDIT1_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动作类型,(编辑按钮的id+200等于动作名称id)
-                set_edit_screen(get_text(PROCESS_EDIT1_SCREEN, control+200), PROCESS_EDIT1_SCREEN, control);--control+200表示对应的"动作类型"id
-            end
+    elseif control >= TabAction[1].editId and control <= TabAction[12].editId and value == ENABLE then--当点击"编辑"按钮时
+        if get_text(PROCESS_EDIT1_SCREEN, control+200) ~= BLANK_SPACE then--如果设置了动作类型,(编辑按钮的id+200等于动作名称id)
+            set_edit_screen(get_text(PROCESS_EDIT1_SCREEN, control+200), PROCESS_EDIT1_SCREEN, control);--control+200表示对应的"动作类型"id
         end
-    elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId then--当点击插入按钮时
-        if get_value(screen,control) == ENABLE then
+    elseif control >= TabAction[1].insertId and control <= TabAction[12].insertId and value == ENABLE then--当点击插入按钮时
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             InsertAction(control - 500);
         end
-    elseif control >= TabAction[1].deleteId and control <= TabAction[12].deleteId then--当点击删除按钮时
-        if get_value(screen,control) == ENABLE then
-            DeleteAction(control - 600);
+    elseif control >= TabAction[1].deleteId and control <= TabAction[12].deleteId and value == ENABLE then--当点击删除按钮时
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            set_dest_screen_control(screen,control)
+            change_screen(DIALOG_SCREEN);
         end
     end
 end
@@ -2249,7 +2270,7 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_edit2_control_notify(screen,control,value)
 
-    if control == ProcessSaveBtId and get_value(screen,control) == ENABLE then -- 保存
+    if control == ProcessSaveBtId and value == ENABLE then -- 保存
         if string.len(get_text(PROCESS_EDIT2_SCREEN, ProcesstypeId)) == 0 then
             set_visiable(PROCESS_EDIT2_SCREEN, ProcessSelectTipsTextId, 1);--显示提示信息
         else
@@ -2259,16 +2280,16 @@ function process_edit2_control_notify(screen,control,value)
         end
     elseif (control-100) >= TabAction[13].typeId and (control-100) <= TabAction[24].typeId then--当点击"动作类型"下面的按钮时
         action_select_set(PROCESS_EDIT2_SCREEN, control-100, control-400);
-    elseif control >= TabAction[13].editId and control <= TabAction[24].editId then--当点击"编辑"按钮时
-        if get_text(PROCESS_EDIT2_SCREEN, control+100) ~= BLANK_SPACE and get_value(screen,control) == ENABLE then--如果设置了动?髅???编辑按钮的id+100等于动作名称id)
+    elseif control >= TabAction[13].editId and control <= TabAction[24].editId and value == ENABLE then--当点击"编辑"按钮时
+        if get_text(PROCESS_EDIT2_SCREEN, control+100) ~= BLANK_SPACE  then--如果设置了动作类型,编辑按钮的id+100等于动作名称id)
             set_edit_screen(get_text(PROCESS_EDIT2_SCREEN, control+200), PROCESS_EDIT2_SCREEN, control);--control+200表示对应的"动作类型"id
         end
-    elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId then--当点击插入按钮时
-        if get_value(screen,control) == ENABLE then
+    elseif control >= TabAction[13].insertId and control <= TabAction[24].insertId and value == ENABLE then--当点击插入按钮时
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             InsertAction(control - 500);
         end
-    elseif control >= TabAction[13].deleteId and control <= TabAction[24].deleteId then--当点击删除按钮时
-        if get_value(screen,control) == ENABLE then
+    elseif control >= TabAction[13].deleteId and control <= TabAction[24].deleteId and value == ENABLE then--当点击删除按钮时
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             DeleteAction(control - 600);
         end
     end
@@ -2373,9 +2394,11 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_init_control_notify(screen,control,value)
-    if control == SureButtonId  and get_value(screen,control)==ENABLE then --确认按钮
-        WriteActionFile(DestActionNum);
-        change_screen(DestScreen);
+    if control == SureButtonId  and value==ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            WriteActionFile(DestActionNum);
+            change_screen(DestScreen);
+        end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -2459,8 +2482,8 @@ INJECT_TextEndId = 11; --取样界面中文本结束id
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_control_notify(screen,control,value)
-    if control == SureButtonId  then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -2514,8 +2537,8 @@ INJECT_ADD_TextEndId = 62;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_inject_add_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -2693,8 +2716,8 @@ PERISTALTIC_TextEndId = 39;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_peristaltic_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -2795,8 +2818,8 @@ DISPEL_TextEndId = 5;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_dispel_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -2840,8 +2863,8 @@ ReadSignal_TextEndId = 5;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_read_signal_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -2986,8 +3009,8 @@ CALCULATE_TextEndId = 13;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_calculate_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -3011,9 +3034,9 @@ function excute_calculate_process(paraTab)
         end
         if paraTab[2] == ENABLE_STRING then--是否需要进行报警
             if Sys.result > paraTab[9] then
-                Sys.alarmContent = SysLog[Sys.language].highDensity;
+                Sys.alarmContent = TipsTab[Sys.language].highDensity;
             elseif Sys.result <paraTab[8] then
-                Sys.alarmContent = SysLog[Sys.language].lowDensity;
+                Sys.alarmContent = TipsTab[Sys.language].lowDensity;
             end
             add_history_record(HISTORY_ALARM_SCREEN);
         end
@@ -3295,8 +3318,8 @@ VALVE_TextEndId = 22;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_valve_ctrl_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -3356,8 +3379,8 @@ WAITTIME_TextId = 1;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function process_wait_time_control_notify(screen,control,value)
-    if control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             WriteActionFile(DestActionNum);
             change_screen(DestScreen);
         end
@@ -3404,8 +3427,8 @@ end
 function process_type_select_control_notify(screen, control, value)
 	if control >= AnalysisButtonId and control <= NullButtonId then
 		ProcessTypeSelectItem = control;
-    elseif control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    elseif control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             change_screen(DestScreen);
             if ProcessTypeSelectItem ~= nil then
                 set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessTypeSelectItem]);--DestControl对应流程选择
@@ -3523,8 +3546,8 @@ end
 function action_select_control_notify(screen,control,value)
     if control >= ActionStartButtonId and control <= ActionEndButtonId then --动作类型选择按钮
         ActionSelectItem = control;
-    elseif control == SureButtonId then --确认按钮
-        if get_value(screen,control) == ENABLE then--确认按钮为瞬变按钮,会连续两次调用该函数,增加该判断屏蔽第二次的重复操作
+    elseif control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             change_screen(DestScreen);
             if ActionSelectItem ~= nil then
                 set_text(DestScreen, DestControl, ActionItem[Sys.language][ActionSelectItem]);--动作选择
@@ -3562,7 +3585,7 @@ function set_unit()
     for i = 300,302,1 do 
         set_text(RANGE_SET_SCREEN, i, Unite);
     end
-    --首页中,空间Id= 19 为单位显示
+    --首页中,控件Id= 19 为单位显示
     set_text(MAIN_SCREEN,LastResultUnitId, Unite);
 
     --量程选择界面中,控件Id = 15/20/25为单位显示文本
@@ -3574,7 +3597,7 @@ end
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function range_set_control_notify(screen,control,value)
-    if(control == UniteSetMenuId) and get_value(screen,control) == ENABLE then --设置单位
+    if(control == UniteSetMenuId) then --设置单位
         set_unit();
     elseif control == 50 and get_value(screen,control) == ENABLE then --保存按钮
         WriteProcessFile(3);
@@ -3606,9 +3629,11 @@ function range_select_control_notify(screen, control, value)
 
     if control >= Range1Id and control <= Range3Id then--量程选择按钮
         RangeSelectItem = control;
-    elseif control == SureButtonId then --确认按钮
-        change_screen(DestScreen);
-        set_text(DestScreen, DestControl, RangeSelectItem);
+    elseif control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            change_screen(DestScreen);
+            set_text(DestScreen, DestControl, RangeSelectItem);
+        end
     elseif control == CancelButtonId then--取消按钮
         change_screen(DestScreen);
     end
@@ -3831,7 +3856,7 @@ function hand_operate3_control_notify(screen,control,value)
         ShowSysAlarm("");
         for i=1,6,1 do
             if tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].remainId)) <= tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].alarmId)) then
-                Sys.alarmContent = SysLog[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容
+                Sys.alarmContent = TipsTab[Sys.language].lack..get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId);--初始化报警内容
                 ShowSysAlarm(Sys.alarmContent);--在底部状态栏显示报警信息
             end
         end
@@ -3922,7 +3947,9 @@ function add_history_record(screen)
                 historyFile:write(file_content.."\n");--添加一行历史记录
                 historyFile:close()                        --关闭文本
             else
-                ShowSysTips("未检测到SD卡,分析结果未存入文件");
+                Sys.alarmContent = TipsTab[Sys.language].resultSaveErr;
+                ShowSysTips(Sys.alarmContent);
+                add_history_record(HISTORY_ALARM_SCREEN);
             end
         end
     -------------------添加校准记录-----------------------------------------------
@@ -3954,7 +3981,9 @@ function add_history_record(screen)
                 historyFile:write(file_content.."\n");--添加一行历史记录
                 historyFile:close()                        --关闭文本
             else
-                ShowSysTips("未检测到SD卡,校正结果未存入文件");
+                Sys.alarmContent = TipsTab[Sys.language].resultSaveErr;
+                ShowSysTips(Sys.alarmContent);
+                add_history_record(HISTORY_ALARM_SCREEN);
             end
         end
     -------------------添加报警记录-----------------------------------------------
@@ -3985,8 +4014,6 @@ function add_history_record(screen)
             if historyFile ~= nil then
                 historyFile:write(file_content.."\n");--添加一行历史记录
                 historyFile:close()                        --关闭文本
-            else
-                ShowSysTips("未检测到SD卡,报警未存入文件");
             end
         end
     -------------------添加日志记录------------------------------------------------
@@ -4015,8 +4042,6 @@ function add_history_record(screen)
             if historyFile ~= nil then
                 historyFile:write(file_content.."\n");--添加一行历史记录
                 historyFile:close()                        --关闭文本
-            else
-                ShowSysTips("未检测到SD卡,日志未存入文件");
             end
         end
     end
@@ -4027,12 +4052,9 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function history_control_notify(screen,control,value)
-    if control == HistoryClear and get_value(screen,control) == ENABLE then
-        record_clear(screen, HistoryRecordId);--清除记录
-        print("清除记录");
-    elseif control == HistoryExport and get_value(screen,control) == ENABLE then 
-        print("导出记录");
-        record_export(screen,HistoryRecordId);--导出记录
+    if control == HistoryClear and value == ENABLE then
+        set_dest_screen_control(screen,control);
+        change_screen(PASSWORD_DIALOG_SCREEN);
     end
 end
 
@@ -4135,17 +4157,10 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     系统信息
 --------------------------------------------------------------------------------------------------------------------]]
-maintainerPwdSetId = 14;
-administratorPwdSetId = 15;
-EquipmentTypeSetId = 1;
-EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是900
-OperatorLoginId = 16;
-maintainerLoginId = 17;
-administratorLoginId = 18;
-pwdRecordId = 13;--用于保存密码的记录控件
 
+SetEquipmentTypeTextId = 1;
+SerialNumberTextId = 2;
 TouchScreenHardVerId = 3;
-TouchScreenSoftVerId = 27;
 CtrlBoardHardVerId = 4;
 CtrlBoardSoftVerId = 5;
 DriverBoardHardVerId = 6;
@@ -4154,22 +4169,38 @@ SensorBoardHardVerId = 8;
 SensorBoardSoftVerId = 9;
 CalcBoardHardVerId = 10;
 CalcBoardSoftVerId = 11;
-
+pwdRecordId = 13;--用于保存密码的记录控件
+maintainerPwdSetId = 14;
+administratorPwdSetId = 15;
+OperatorLoginId = 16;
+maintainerLoginId = 17;
+administratorLoginId = 18;
 SetChineseId = 19;
 SetEnglishId = 20;
+TouchScreenSoftVerId = 27;
+SetEquipmentTypeBtId = 119;
+SetSerialNumberBtId = 120;
+EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是900
+
 
 --设置仪器型号
 function set_equipment_type()
-    for i = 1,16,1 do
-        set_text(PublicTab[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN,EquipmentTypeSetId));
+    for i = 1,#PublicTab,1 do
+        set_text(PublicTab[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN,EquipmentTypeTextId));
     end
 end
 
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function system_info_control_notify(screen,control,value)
-    if control == EquipmentTypeSetId then--设置仪器型号
+    if control == SetEquipmentTypeTextId then--设置仪器型号
         set_equipment_type();
+        set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
+    elseif control == SerialNumberTextId then
+        set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
+    elseif control == SetSerialNumberBtId or control == SetEquipmentTypeBtId then--设置仪器序列号
+        set_dest_screen_control(screen,control);
+        change_screen(PASSWORD_DIALOG_SCREEN);
     elseif control == maintainerPwdSetId then--运维员密码设置
         set_user_name(SysUser[Sys.language].maintainer);--设置密码修改界面的用户名
     elseif control == administratorPwdSetId then--管理员密码设置
@@ -4183,13 +4214,33 @@ function system_info_control_notify(screen,control,value)
         set_user_name(SysUser[Sys.language].administrator);--设置登录界面的用户名
         change_screen(LOGIN_SYSTEM_SCREEN);
     elseif control == SetChineseId then--设置为中文
-        Sys.language = CHN;
-        set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);
-        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            Sys.language = CHN;
+            set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);
+            set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);
+            ShowSysCurrentAction(TipsTab[Sys.language].null);
+            ShowSysTips(TipsTab[Sys.language].null);
+            SetSysWorkStatus(WorkStatus[Sys.language].stop);
+            if get_text(SYSTEM_INFO_SCREEN, SysUserNameId) == SysUser[Sys.language].maintainer then
+                SetSysUser(SysUser[Sys.language].maintainer);
+            else
+                SetSysUser(SysUser[Sys.language].administrator);
+            end
+        end
     elseif control == SetEnglishId then--设置为英文
-        Sys.language = ENG;
-        set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);
-        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE );
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            Sys.language = ENG;
+            set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);
+            set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE );
+            ShowSysCurrentAction(TipsTab[Sys.language].null);
+            ShowSysAlarm(TipsTab[Sys.language].null);
+            SetSysWorkStatus(WorkStatus[Sys.language].stop);
+            if get_text(SYSTEM_INFO_SCREEN, SysUserNameId) == SysUser[Sys.language].maintainer then
+                SetSysUser(SysUser[Sys.language].maintainer);
+            else
+                SetSysUser(SysUser[Sys.language].administrator);
+            end
+        end
     end
 end
 
@@ -4201,7 +4252,7 @@ function SetSysUser(user)
     Sys.userName = user;
     
     --在底部的状态用户名
-    for i = 1,16,1 do
+    for i = 1,#PublicTab,1 do
         set_text(PublicTab[i], SysUserNameId, user);
     end
 
@@ -4209,17 +4260,17 @@ function SetSysUser(user)
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
-        set_process_edit_state(DISABLE);--禁止流程设置
+        -- set_process_edit_state(DISABLE);--禁止流程设置
     elseif Sys.userName == SysUser[Sys.language].maintainer then--运维员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
-        set_process_edit_state(ENABLE);--允许编辑流程
+        -- set_process_edit_state(ENABLE);--允许编辑流程
     elseif Sys.userName == SysUser[Sys.language].administrator then--管理员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, ENABLE);
-        set_process_edit_state(ENABLE);--允许编辑流程
+        -- set_process_edit_state(ENABLE);--允许编辑流程
     end
 end
 
@@ -4302,9 +4353,9 @@ function goto_PasswordSet()
     set_text(PASSWORD_SET_SCREEN, OldPwdId, "");
     set_text(PASSWORD_SET_SCREEN, NewPwdId, "");
     set_text(PASSWORD_SET_SCREEN, NewPwdConfirmId, "");
-    if userNameSet == SysUser[Sys.language].maintainer then
+    if userNameSet == SysUser[Sys.language].maintainer then--运维员密码
         PwdRecordPosition = 0;
-    elseif userNameSet == SysUser[Sys.language].administrator then
+    elseif userNameSet == SysUser[Sys.language].administrator then--管理员密码
         PwdRecordPosition = 1;
     end
 end
@@ -4320,7 +4371,7 @@ function login_system_control_notify(screen,control,value)
     local pwdInput = get_text(LOGIN_SYSTEM_SCREEN, PwdId);--获取密码
 
     if control == SureButtonId then--确认按键
-        if pwdInput == record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--运维员密码输入正确
+        if pwdInput == record_read(SYSTEM_INFO_SCREEN, pwdRecordId, PwdRecordPosition) then--检测密码
             SetSysUser(userNameSet);
             change_screen(SYSTEM_INFO_SCREEN);
         else
@@ -4352,18 +4403,20 @@ function goto_LoginSystem()
 end
 
 --***********************************************************************************************
---操作权限检测
---para 1=只检测是否在运行中; 2=同事检测是否在运行中与用户权限
+--[操作权限检测
+--para 1=只检测是否在运行中; 2=同时检测是否在运行中与用户权限
 --***********************************************************************************************
 function operate_permission_detect(para)
     if Sys.status == WorkStatus[Sys.language].run then --系统运行中,不可执行该操作
         ShowSysTips(TipsTab[Sys.language].stopFirst);
         return DISABLE;
     end
+
     --只检测是否在运行中
     if para == 1 then 
         return ENABLE
     end
+
     --检测用户权限
     if Sys.userName == SysUser[Sys.language].operator then
         ShowSysTips(TipsTab[Sys.language].NoPermission);--无权限
@@ -4377,7 +4430,7 @@ end
 对话框
 --------------------------------------------------------------------------------------------------------------------]]
 --当在流程设置1/2/3界面中点击删除按钮时调用
-function process_delete_set(screen,control)
+function set_dest_screen_control(screen,control)
 	DestScreen = screen;
 	DestControl = control;
 end
@@ -4393,6 +4446,9 @@ function dialog_screen_control_notify(screen,control,value)
             set_text(DestScreen, DestControl+100,1);
             WriteProcessFile(1);--保存流程设置1界面中的参数
             os.remove(file);--删除配置文件
+        elseif DestScreen == PROCESS_EDIT1_SCREEN or DestScreen == PROCESS_EDIT2_SCREEN then
+            DeleteAction(DestControl - 600);--DestControl为流程编辑界面的删除按钮的id,其从601开始,而流程序号从1开始;
+            change_screen(DestScreen);
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
@@ -4403,7 +4459,37 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
 密码对话框
 --------------------------------------------------------------------------------------------------------------------]]
+function password_dialog_screen_control_notify(screen,control,value)
+    if control == PwdId then
+        if get_text(PASSWORD_DIALOG_SCREEN,PwdId) ~= record_read(SYSTEM_INFO_SCREEN, pwdRecordId, 1) then--密码输入不正确
+            set_visiable(PASSWORD_DIALOG_SCREEN, PwdTipsId, 1);--显示密码错误提示信息
+        else
+            set_visiable(PASSWORD_DIALOG_SCREEN, PwdTipsId, 0);
+        end
+    elseif control == SureButtonId and value == ENABLE then
+        if get_text(PASSWORD_DIALOG_SCREEN,PwdId) == record_read(SYSTEM_INFO_SCREEN, pwdRecordId, 1) then--检测密码
+            if DestControl == HistoryClear then--清除历史记录 
+                record_clear(DestScreen, HistoryRecordId);--清除记录
+                print("清除记录");
+            elseif DestControl == SetEquipmentTypeBtId then
+                print("可以设置仪器型号了");
+                set_enable(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, ENABLE);
+            elseif DestControl == SetSerialNumberBtId then
+                print("可以设置序列号了");
+                set_enable(SYSTEM_INFO_SCREEN, SerialNumberTextId, ENABLE);
+            end
+            change_screen(DestScreen);
+        end
+    elseif control == CancelButtonId then
+        change_screen(DestScreen);
+    end
+end
 
+--切换到密码对话框
+function goto_dialog_screen()
+    set_visiable(PASSWORD_DIALOG_SCREEN, PwdTipsId, 0);--隐藏密码错误提示信息
+    set_text(PASSWORD_DIALOG_SCREEN, PwdId, "");
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
 连接wifi
@@ -4426,7 +4512,7 @@ function wifi_connect_control_notify(screen,control,value)
             wifiPwd = get_text(WIFI_CONNECT_SCREEN, WifiPwdId);
             set_wifi_cfg(1, 0, Sys.ssid, wifiPwd) --连接 WIFI，1 网卡模式，0 自动识别加密
             save_network_cfg();
-            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId,' 连接中...')
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].connecting)
         end
     end
 end
@@ -4468,34 +4554,19 @@ RemoteStartUpdateDrvBtId = 9;
 function remote_update_control_notify(screen,control,value)
     if control == RemoteGetTsVerBtId then--获取触摸屏版本文件
         http_download(1, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/tsVer.txt', "tsVer.txt");
-    elseif control == RemoteStartUpdateTsBtId then--开始触摸屏升级
+    elseif control == RemoteStartUpdateTsBtId and value == ENABLE then--开始触摸屏升级
         --判断权限
-        if Sys.userName == SysUser[Sys.language].operator then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].NoPermission)
-            return
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            --开始升级触摸屏程序(在on_systick中获取升级状态进行显示)
+            start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
         end
-        --判断系统是否为停止状态
-        if Sys.status ~= WorkStatus[Sys.language].stop then 
-            set_text(REMOTE_UPDATE_SCREEN, RemoteTsVerTextId, TipsTab[Sys.language].stopFirst)
-            return
-        end
-        --开始升级触摸屏程序(在on_systick中获取升级状态进行显示)
-        start_upgrade('ftp://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/DCIOT.PKG');
     elseif control == RemoteGetDrvVerBtId then--获取驱动版本文件
         http_download(2, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/drvVer.txt', "drvVer.txt");
     elseif control == RemoteStartUpdateDrvBtId and Sys.hand_control_func == nil then--获取驱动文件
-        --判断权限
-        if Sys.userName == SysUser[Sys.language].operator then
-            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].NoPermission)
-            return
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            --下载STM.BIN文件,在on_http_download函数中判断下载状态
+            http_download(3, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/STM.BIN', "STM.BIN");
         end
-        --判断系统是否为停止状态
-        if Sys.status ~= TipsTab[Sys.language][Sys.language].stop then 
-            set_text(REMOTE_UPDATE_SCREEN, RemoteDrvTextId, TipsTab[Sys.language].stopFirst)
-            return
-        end
-        --下载STM.BIN文件,在on_http_download函数中判断下载状态
-        http_download(3, 'http://'..get_text(REMOTE_UPDATE_SCREEN,RemoteFtpAddrTextId)..'/STM.BIN', "STM.BIN");
     end
 end
 
@@ -4596,7 +4667,7 @@ function UpdataDriverBoard()
 
     uartSendTab.updateDrv = binCode;
     uartSendTab.updateDrv.len = dataLen;
-    uartSendTab.updateDrv.note = TipsTab[Sys.language].updateDrvBd;
+    uartSendTab.updateDrv.note[Sys.language] = TipsTab[Sys.language].updateDrvBd;
     on_uart_send_data(uartSendTab.updateDrv, NEED_REPLY);--在调试时可以使用NO_NEED_REPLY参数,这样就可以不用等待回复
 
     Sys.binIndex = Sys.binIndex + 1;
@@ -4795,7 +4866,7 @@ function WriteCfgToFlash()
     print("调用 WriteCfgToFlash 函数");
     local processName = get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId);--获取流程名称
     local fileName = 0;
-
+    
     for i=1,12,1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId),processName ,1) ~= nil then--找到当前流程名对应的序号
             fileName = i;
@@ -5041,12 +5112,13 @@ function ReadActionTag(actionNumber)
     end
 
     if fileNumber == 0 then
-        ShowSysTips("没有找到对应的流程配置文件");
+        Sys.logContent = "没有找到"..processName.."流程的配置文件:"
+        ShowSysTips(Sys.logContent);
+        add_history_record(HISTORY_LOG_SCREEN);
         return;
     end
 
     if ConfigStr[fileNumber] == nil then
-        ShowSysTips("没有找到对应的流程配置文件");
         WriteActionFile(0);--添加<action0>标签中的内容
         return;
     end
@@ -5054,7 +5126,9 @@ function ReadActionTag(actionNumber)
     --截取fileString文件中<action?> ~ </action?>标签之间的字符串
     local actionString = GetSubString(ConfigStr[fileNumber], "<action"..actionNumber..">", "</action"..actionNumber..">");
     if actionString == nil then--如果文件中没有该标签,则返回.
-        ShowSysTips("配置文件没有找到<action?>标签");
+        Sys.logContent = fileNumber.."文件中没有找到<action"..actionNumber..">"
+        ShowSysTips(Sys.logContent);
+        add_history_record(HISTORY_LOG_SCREEN);
         return 
     end
     --截取actionString字符串中<type>标签之间的字符串,获取动作类型与动作名称
@@ -5064,7 +5138,9 @@ function ReadActionTag(actionNumber)
     --再截取<content>标签中的内容
     local contentTabStr = GetSubString(actionString,"<content>","</content>");
     if contentTabStr == nil then--如果没有内容,则清空流程编辑1/3界面中的动作选择与动作名称
-        ShowSysTips("配置文件没有找到content标签");
+        Sys.logContent = fileNumber.."文件中没有找到<content>"
+        ShowSysTips(Sys.logContent);
+        add_history_record(HISTORY_LOG_SCREEN);
         return;
     end
 
@@ -5144,9 +5220,6 @@ function ReadActionTag(actionNumber)
         end
     end
 end
-
-
-
 
 
 --***********************************************************************************************

@@ -116,7 +116,7 @@ CHK_RUN_USER = 2;--检测权限时,除了需要检测是否在运行中, 还需要检测用户是否为管理
 --processIdType:
 processId = 0;
 autoRangeProcessId = 1;
-
+periodProcessId = 2;
 --stopType
 stopByNormal = 0;
 stopByClickButton = 1;
@@ -325,9 +325,10 @@ CalcType = {
 };
 
 ProcessItem = {
-    [CHN] = { "水样分析", "校准", "清洗", "管路填充", "零点核查", "标样核查", "量程校正", "加标回收", "平行样", "线性核查", "空白测试", "空白校准","标样校准", BLANK_SPACE },
-    [ENG] = { "Analysis", "Calibration", "Washing", "Fill", "Zero Check", "Std. Check", "Range Cali.", "Std. Recovery", "Parallel Samp.", "Liner Chk.", "Blank Test", "Blank Cali.","Std. Cali.", BLANK_SPACE },
-};
+    [CHN] = { "水样分析", "校准", "清洗", "管路填充", "零点核查", "标样核查", "量程核查", "加标回收", "平行样", "线性核查", "空白测试", "空白校准","标样校准","实际水样比对", BLANK_SPACE },
+    [ENG] = { "Analysis", "Calibration", "Washing", "Fill", "Zero Check", "Std. Check", "Range Chk.", "Std. Recovery", "Parallel Samp.", "Liner Chk.", "Blank Test", "Blank Cali.","Std. Cali.", "",BLANK_SPACE },
+    tag   = {"","",""};
+}
 
 --ActionItem里面的值一定要与动作选择界面按钮中的值一一对应
 ActionItem = {
@@ -356,14 +357,13 @@ Sys = {
     handProcessTotal = 0,--总共有多少个手动流程需要执行
     
     periodStartDateTime = "", --周期流程开始时间
-    periodicIndex = 1, --周期流程id, 周期流程总共有四个, 该变量值的范围为1-4.
+
     
     actionTotal = 0, --所有的动作步数,可以通过统计<action>标签获得
     actionStep = 1, --取值范围为1-24,对应了流程编辑1/3界面中的共24个步骤
     actionSubStep = 1, --该变量用于控制"初始化"注射泵""消解""注射泵加液"等等子动作.
     --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
     actionIdTab = {},
-
     actionNameTab = {},
 
     actionFunction = nil, --用于指向需要执行的动作函数,例如 excute_init_process, excute_get_sample_process等
@@ -379,7 +379,7 @@ Sys = {
     processRange = 1, --流程量程
     processTag = "", --流程类型标识, 
     processStep = 1, --执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
-    isPeriodOrTimed = 0, --使用该变量判断是周期流程还是定时流程
+
 
     startTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --开始时间
     resultTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --结果时间
@@ -458,6 +458,7 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
+    
     for i = 1, MaxAction, 1 do
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
@@ -485,16 +486,20 @@ function on_init()
         set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].typeId, BLANK_SPACE);
         set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].nameId, BLANK_SPACE);
     end
+    for i = 1, #PeriodicTab,1 do
+        set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId, BLANK_SPACE);
+    end
     for i = 1, #TimedProcessTab, 1 do
         set_text(RUN_CONTROL_TIMED_SCREEN, TimedProcessTab[i].textId, BLANK_SPACE);
+        TimedProcessTab[i].isFinished = false;
     end
-    for i = 1, 5, 1 do
+    for i = 1, #HandProcessTab, 1 do
         set_text(RUN_CONTROL_HAND_SCREEN, HandProcessTab[i].textId, BLANK_SPACE);
     end
     -- set_text(RUN_CONTROL_SCREEN, HandProcessTab[1].textId, BLANK_SPACE);
 
     ReadFileToConfigStr();--将配置文件加载到ConfigStr数组
-
+    
     if record_get_count(SYSTEM_INFO_SCREEN, SystemInfoRecordId) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, SystemInfoRecordId, "171717");--运维员的默认密码
         record_add(SYSTEM_INFO_SCREEN, SystemInfoRecordId, "172172");--管理员的默认密码
@@ -521,6 +526,7 @@ function on_init()
     set_unit();--设置单位
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
+    SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000, 1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
@@ -698,6 +704,8 @@ function on_screen_change(screen)
         goto_WifiConnect();
     elseif screen == PASSWORD_DIALOG_SCREEN then --密码对话框
         goto_dialog_screen();
+    elseif screen == RUN_CONTROL_PERIOD_SCREEN then --跳转到周期设置界面
+        goto_period_mode_set_screen();
     end
 end
 
@@ -1041,7 +1049,10 @@ SysCurrentActionId = 902;--当前动作
 SysUserNameId = 903      --显示用户
 SysAlarmId = 904;        --显示当前告警信息
 SysTipsId = 905;         --界面底部用于显示提示信息的文本id
+
 StopSystemDialogMenuId = 3;
+StartTimeId = 4;
+NextStartTimeId = 6;
 
 function main_control_notify(screen, control, value)
     if control == StopSystemDialogMenuId and value == ENABLE then
@@ -1341,6 +1352,8 @@ function run_control_notify(screen, control, value)
             SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             process_ready_run(processId);--开始运行前的一些初始化操作
         else--按钮松开,此时系统状态应变为停止
+            Sys.logContent = WorkStatus[Sys.language].stop .. "\"" .. Sys.processName .. "\"";--“停止”+流程名称
+            add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
             SystemStop(stopByClickButton);
             print("SystemStop");
         end
@@ -1360,8 +1373,6 @@ function run_control_notify(screen, control, value)
             change_screen(RUN_CONTROL_HAND_SCREEN);
         elseif Sys.runType == WorkType[Sys.language].controlled then--判断为反控模式
         end
-    -- elseif control >= PeriodicTab[5].textId and control <= PeriodicTab[10].textId then --更改周期开始时间与频率
-    --     PeriodicTab[control - 27].value = tonumber(get_text(RUN_CONTROL_SCREEN, control));--control-27后,对应了周期流程开始时间与?德?
     end
 end
 
@@ -1392,25 +1403,6 @@ function getProcessIdByName(processName)
         end
     end
     return processId;
-    -- --设置流程id号
-    -- if control == HandProcessTab[1].textId then--手动流程设置
-    --     for i = 1, #HandProcessTab, 1 do
-
-    --     end
-    --     HandProcessTab[1].processId = processId;
-    -- elseif control >= PeriodicTab[1].textId and control <= PeriodicTab[4].textId then--周期流程
-    --     for i = 1, 4, 1 do
-    --         if control == PeriodicTab[i].textId then
-    --             PeriodicTab[i].processId = processId;
-    --         end
-    --     end
-    -- elseif control >= TimedProcessTab[1].textId and control <= TimedProcessTab[24].textId then--定时流程
-    --     for i = 1, #TimedProcessTab, 1 do
-    --         if control == TimedProcessTab[i].textId then --找到当前设置的是定时流程中的哪个
-    --             TimedProcessTab[i].processId = processId;
-    --         end
-    --     end
-    -- end
 end
 
 
@@ -1435,13 +1427,13 @@ end
 function set_period_start_date(diffDays)
     normalMonthDays = {[1] = 31, [2] = 28, [3] = 31, [4] = 30, [5] = 31, [6] = 30, [7] = 31, [8] = 31, [9] = 30, [10] = 31, [11] = 30, [12] = 31 };
 
-    local year = PeriodicTab[5].value;
-    local mon = PeriodicTab[6].value;
-    local day = PeriodicTab[7].value;
+    local year = Sys.startTime.year;
+    local mon = Sys.startTime.mon;
+    local day = Sys.startTime.day;
 
-    PeriodicTab.nextStartTime.year = year;
-    PeriodicTab.nextStartTime.mon = mon;
-    PeriodicTab.nextStartTime.day = day;
+    PeriodicTab.sTime.year = year;
+    PeriodicTab.sTime.mon = mon;
+    PeriodicTab.sTime.day = day;
 
     if diffDays == 0 then
         return
@@ -1491,65 +1483,72 @@ function set_period_start_date(diffDays)
         end
     end
 
-    PeriodicTab[5].value = year;
-    PeriodicTab[6].value = mon;
-    PeriodicTab[7].value = day;
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value);
-    PeriodicTab.nextStartTime.year = year;
-    PeriodicTab.nextStartTime.mon = mon;
-    PeriodicTab.nextStartTime.day = day;
+    PeriodicTab.sTime.year = year;
+    PeriodicTab.sTime.mon = mon;
+    PeriodicTab.sTime.day = day;
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.yearId, PeriodicTab.sTime.year);
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.monId, PeriodicTab.sTime.mon );
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.dayId, PeriodicTab.sTime.day );
+    
 end
 
 --***********************************************************************************************
 --根据频率设置下一次开始的时间, 在自动模式下, 进行一次流程后会调用该函数计算下次流程开始时间.
 --minFreq: 天数
 --***********************************************************************************************
-function set_period_start_date_time(minFreq)
+function setPeriodNextStartTimeByFreq(minFreq)
     local dayHour = 1440;--24 * 60 一天有多少分钟
-    local hour = PeriodicTab[8].value;
-    local min = PeriodicTab[9].value;
-
-    local minTotal = minFreq + hour * 60 + min;--math.fmod(minFreq,dayHour) + ;
+    local hour = Sys.startTime.hour;
+    local min = Sys.startTime.min;
+    
+    local minTotal = minFreq + hour * 60 + min;
 
     local minRemain = math.fmod(minTotal, dayHour);
 
+    PeriodicTab.sTime.hour = math.modf(minRemain / 60);
+    PeriodicTab.sTime.min = math.fmod(minRemain, 60);
 
-    PeriodicTab.nextStartTime.hour = math.modf(minRemain / 60);
-    PeriodicTab.nextStartTime.min = math.fmod(minRemain, 60);
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.hourId, PeriodicTab.sTime.hour);--设置小时
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId, PeriodicTab.sTime.min);--设置分钟
 
-    PeriodicTab[8].value = math.modf(minRemain / 60);
-    PeriodicTab[9].value = math.fmod(minRemain, 60);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[8].textId, PeriodicTab[8].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[9].textId, PeriodicTab[9].value);
+    set_period_start_date(math.modf(minTotal / dayHour));--在该函数中设置年/月日
 
-    set_period_start_date(math.modf(minTotal / dayHour));
+    --显示下次自动运行启动流程的时间
+    set_text(MAIN_SCREEN, NextStartTimeId, string.format("%d-%02d-%02d  %02d:%02d",
+             PeriodicTab.sTime.year,PeriodicTab.sTime.mon,PeriodicTab.sTime.day,
+             PeriodicTab.sTime.hour,PeriodicTab.sTime.min));
 
-    -- --显示下次自动运行启动流程的时间
-    -- set_text(MAIN_SCREEN,NextProcessTimeTextId,string.format("%d-%02d-%02d  %02d:%02d",
-    --          PeriodicTab.nextStartTime.year,PeriodicTab.nextStartTime.mon,PeriodicTab.nextStartTime.day,
-    --          PeriodicTab.nextStartTime.hour,PeriodicTab.nextStartTime.min));
-    WriteParaToConfigStrAndFile(2);
+    WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
 end
 
 --***********************************************************************************************
---将当前时间设置为本次流程开始时间
+--将当前时间设置为周期开始时间
 --***********************************************************************************************
-function set_process_start_date_time(year, mon, day, hour, min)
-    PeriodicTab[5].value = year;
-    PeriodicTab[6].value = mon;
-    PeriodicTab[7].value = day;
-    PeriodicTab[8].value = hour;
-    PeriodicTab[9].value = min;
+function setPeriodStartTime()
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.yearId, Sys.dateTime.year);
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.monId,  Sys.dateTime.mon );
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.dayId,  Sys.dateTime.day);
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.hourId, Sys.dateTime.hour);--设置小时
+    set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId,  Sys.dateTime.min);--设置分钟
+    WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
+end
 
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[5].textId, PeriodicTab[5].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[6].textId, PeriodicTab[6].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[7].textId, PeriodicTab[7].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[8].textId, PeriodicTab[8].value);
-    set_text(RUN_CONTROL_SCREEN, PeriodicTab[9].textId, PeriodicTab[9].value);
-
-    WriteParaToConfigStrAndFile(2);
+--***********************************************************************************************
+--[周期模式下,获取需要运行的流程id
+--***********************************************************************************************
+function get_period_process_id()
+    print("调用get_period_process_id");
+    local processId = 0;
+    --判断本次需要运行哪一类流程
+    for i = 2,#PeriodicTab,1 do
+        if PeriodicTab[i].isReadyRun == true then
+            print("processName="..get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].processNameId ));
+            processId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].processNameId ));
+            break;
+        end
+    end
+    print("processId="..processId);
+    return processId;
 end
 
 --***********************************************************************************************
@@ -1559,6 +1558,11 @@ end
 function get_auto_range_process_id()
     local destRangeId = 0;
     local processId = 0;
+
+    if get_text(RANGE_SET_SCREEN, RANGESET_AutoTextId) == AutoRangeStatus[Sys.language].close then
+        return processId;
+    end
+
     --浓度偏高当前量程为1
     if Sys.rangetypeId == 1 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN, RangeTab[1].HighId)) then
         destRangeId = 2;
@@ -1572,6 +1576,11 @@ function get_auto_range_process_id()
     elseif Sys.rangetypeId == 3 and Sys.result >= tonumber(get_text(RANGE_SET_SCREEN, RangeTab[3].LowId)) then
         destRangeId = 2;
     end
+
+    if destRangeId == 0 then
+        return processId;
+    end
+
     print("量程自动切换,查找量程为" .. destRangeId .. "的流程");
 
     --查找类型为分析且量程为destRangeId的 流程的id
@@ -1582,17 +1591,21 @@ function get_auto_range_process_id()
             break;
         end
     end
-    for i = 13, 24, 1 do
-        if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
-        tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)) == destRangeId then--量程为目的量程
-            processId = i;
-            break;
+    if processId == 0 then--在流程设置1界面未找到符合条件的流程, 则在流程设置2界面继续查找
+        for i = 13, 24, 1 do
+            if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
+            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)) == destRangeId then--量程为目的量程
+                processId = i;
+                break;
+            end
         end
     end
-    --如果满足了自动量程切换的条件, 且找到了可运行的流程,则直接返回
-    Sys.logContent = TipsTab[Sys.language].autoRangeProcess .. processId;
-    ShowSysTips(Sys.logContent);
-    add_history_record(HISTORY_LOG_SCREEN);
+    --如果找到了量程自动切换的流程, 则保存一条log记录
+    if processId ~= 0 then
+        Sys.logContent = TipsTab[Sys.language].autoRangeProcess .. processId;
+        ShowSysTips(Sys.logContent);
+        add_history_record(HISTORY_LOG_SCREEN);
+    end
     return processId;
 end
 
@@ -1609,7 +1622,7 @@ function get_current_process_id()
 
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
     if Sys.runType == WorkType[Sys.language].hand then
-        --手动模式下,计算出设置了几个流程
+        --手动模式下,计算出总共设置了几个流程
         Sys.handProcessTotal = 0;
         for i = 1, #HandProcessTab, 1 do
             if get_text(RUN_CONTROL_HAND_SCREEN,i) ~= BLANK_SPACE then
@@ -1636,29 +1649,32 @@ function get_current_process_id()
         ----------------------自动模式  自动模式中的定时时间错过了会直接跳过该流程--------------------------
     elseif Sys.runType == WorkType[Sys.language].period then
         local currentDateTime = string.format("%d%02d%02d%02d%02d",
-        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
-        Sys.dateTime.hour, Sys.dateTime.min);
+        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min);--将当前时间转换为字符串
 
         Sys.periodStartDateTime = string.format("%d%02d%02d%02d%02d",
-        PeriodicTab[5].value, PeriodicTab[6].value, PeriodicTab[7].value,
-        PeriodicTab[8].value, PeriodicTab[9].value);
-
-        if Sys.periodStartDateTime <= currentDateTime then--设置的周期开始时间到了,查找是否有满足条件的流程
-            set_process_start_date_time(Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);--设置本次流程开始时间
-            -- set_period_start_date_time(PeriodicTab[10].value);--设置下一次周期运行的时间
-            Sys.isPeriodOrTimed = PERIOD_PROCESS;
+                                    tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.yearId)), 
+                                    tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.monId )), 
+                                    tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.dayId )), 
+                                    tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.hourId)), 
+                                    tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId )));
+        
+        local processName = get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[1].processNameId);
+        if Sys.periodStartDateTime <= currentDateTime and processName ~= BLANK_SPACE then
+            --设置的周期开始时间到了,且水样分析流程不为空
+            processId = getProcessIdByName(processName);
+            --在周期模式设置界面,设置当前开始时间
+            setPeriodStartTime();
         end
     ----------------------定时模式 到指定的时间后运行指定的流程--------------------------
     elseif Sys.runType == WorkType[Sys.language].timed then
-        for i = 1, #TimedProcessTab, 1 do
-            if TimedProcessTab[i].startHour == Sys.dateTime.hour and
-            TimedProcessTab[i].startMinute == Sys.dateTime.min and
-            TimedProcessTab[i].processId ~= 0 --序号不为0, 表示该流程有设置
-            then
-                processId = TimedProcessTab[i].processId;
-                Sys.isPeriodOrTimed = TIMED_PROCESS;
-            end
+        local index = Sys.dateTime.hour+1;
+        local processName = get_text(RUN_CONTROL_TIMED_SCREEN, index);
+        if   processName ~= BLANK_SPACE and TimedProcessTab[index].isFinished == false then --是否有设置流程
+            processId = getProcessIdByName(processName);
+            TimedProcessTab[index].isFinished = true;
         end
+
+        TimedProcessTab[index+1].isFinished = false;--将下个小时需要运行的流程标志置清空,保证时间到了之后能够运行
     -------------------------------------------------反控-----------------------------------------------
     elseif Sys.runType == WorkType[Sys.language].controlled then
 
@@ -1806,12 +1822,12 @@ end
 --               参数为 autoRangeProcessId,调用get_auto_range_process_id函数获取id,该参数一般在执行自动量程切换的时候使用
 --***********************************************************************************************
 function process_ready_run(processIdType)
-    if processIdType == autoRangeProcessId then
+    if processIdType == autoRangeProcessId then--自动量程切换获取流程id
         Sys.currentProcessId = get_auto_range_process_id();
-        Sys.isAutoRangeProcess = true;
+    elseif processIdType == periodProcessId then--周期运行获取流程id
+        Sys.currentProcessId = get_period_process_id();
     else
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
-        Sys.isAutoRangeProcess = false;
     end
     if Sys.currentProcessId ~= 0 then--不等于0,表示有满足条件的流程待执行,
         -- set_process_edit_state(DISABLE);           --禁止流程设置相关的操作
@@ -1841,6 +1857,8 @@ function process_ready_run(processIdType)
         ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
         set_text(MAIN_SCREEN, LastResultE1Id, 0);--E1显示清0
         set_text(MAIN_SCREEN, LastResultE2Id, 0);--E2显示清0
+        set_text(MAIN_SCREEN, StartTimeId, string.format("%d-%02d-%02d  %02d:%02d",--显示本次启动流程的时间
+                 Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,Sys.startTime.hour, Sys.startTime.min));
         SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,定时器中断中检测到运行状态后,会跳转到excute_process??数执行流??
     end
 end
@@ -1896,27 +1914,25 @@ function excute_process()
     elseif Sys.processStep == 2 then
         if Sys.actionFunction(Sys.contentTab) == FINISHED then
             Sys.processStep = Sys.processStep + 1;
-            print("单个action执行完成");
+            -- print("单个action执行完成");
         end
         ---------------------------------------------------------------------------------------------------
         --第三步:判断动作是否执行完毕
     elseif Sys.processStep == 3 then
-        print("判断是否还有action未执行?总Action=" .. Sys.actionTotal .. "当前Action=" .. Sys.actionStep);
+        -- print("判断是否还有action未执行?总Action=" .. Sys.actionTotal .. "当前Action=" .. Sys.actionStep);
         set_value(MAIN_SCREEN, ProgressBarId, math.floor(Sys.actionStep / Sys.actionTotal * 100));--更新进度条
         ----------------所有动作执行完毕(流程结束)-------------------------------------------
         if Sys.actionStep >= Sys.actionTotal then
             Sys.actionStep = 1;                       --重新指向第一个动作
             Sys.processStep = 1;                      --重新计算指向第一个动作的第一步
-            ------类型为分析且开启了自动量程切换----------
-            if Sys.processType == ProcessItem[Sys.language][1] and
-            get_text(RANGE_SET_SCREEN, RANGESET_AutoTextId) == AutoRangeStatus[Sys.language].open and
-            Sys.isAutoRangeProcess == true then
-                if get_auto_range_process_id() ~= 0 then
-                    Sys.startTime = Sys.dateTime;
-                    process_ready_run(autoRangeProcessId);--运行自动量程切换流程
-                else
-                    SystemStop(stopByNormal);
-                end
+            Sys.logContent = WorkStatus[Sys.language].stop .. "\"" .. Sys.processName .. "\"";--“停止”+流程名称
+            add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
+            set_text(MAIN_SCREEN, StartTimeId, "0000-00-00  00:00");--将本次启动流程的开始时间清0
+            ------类型为分析且满足自动量程切换条件----------
+            if Sys.processType == ProcessItem[Sys.language][1] and get_auto_range_process_id() ~= 0 then
+                print("执行量程自动切换");
+                process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+
             ----------------手动模式--------------------
             elseif Sys.runType == WorkType[Sys.language].hand then     
                 Sys.handProcessIndex = Sys.handProcessIndex + 1;--指向下一个流程
@@ -1924,18 +1940,50 @@ function excute_process()
                 if tonumber(get_text(RUN_CONTROL_HAND_SCREEN,HandProcessTimesId)) == 0 or
                    Sys.handRunTimes < tonumber(get_text(RUN_CONTROL_HAND_SCREEN, HandProcessTimesId)) * Sys.handProcessTotal then
 
-                    Sys.logContent = WorkStatus[Sys.language].stop .. "\"" .. Sys.processName .. "\"";--“停止”+流程名称
-                    add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
-
-                    
                     SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
                 else
                     SystemStop(stopByNormal);
                 end
-            ----------------自动模式--------------------
+            ----------------周期模式--------------------
             elseif Sys.runType == WorkType[Sys.language].period then
-                WriteParaToConfigStrAndFile(2);
+                if Sys.processType == PeriodicTab[1].processType then--水样分析
+                    --根据水样分析的频率设置下一次周期运行的时间
+                    setPeriodNextStartTimeByFreq(tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].freqId)));
+                    --每运行一次分析流程, 其他流程的频率需要 + 1;
+                    for i = 2,#PeriodicTab,1 do 
+                        PeriodicTab[i].freq = PeriodicTab[i].freq + 1;
+
+                        local freqOfSet = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].freqId));--获取设置的频率
+                        --1.判断频率(次数)是否达到要求; 2.判断该流程前方的复选框是否打钩; 3.判断是否设置了流程(不为空格)
+                         if PeriodicTab[i].freq >= freqOfSet and 
+                            get_value(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].enableId) == ENABLE and
+                            get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId) ~= BLANK_SPACE then
+
+                            PeriodicTab[i].isReadyRun = true;--该标志位赋值true,表示达到该流程运行的条件了.
+                        end
+                    end
+                else
+                    for i = 2,#PeriodicTab,1 do
+                        if Sys.processType == PeriodicTab[i].processType then--判断本次流程的流程类型
+                            PeriodicTab[i].isReadyRun = false;
+                            PeriodicTab[i].freq = 0;
+                            break;
+                        end
+                    end
+                end
+                
+                --判断本次需要运行哪一类流程
+                for i = 2,#PeriodicTab,1 do
+                    if PeriodicTab[i].isReadyRun == true then
+                        process_ready_run(periodProcessId);
+                        return;
+                    end
+                end
+
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次分析
+            ----------------------定时模式------------------
+            elseif Sys.runType == WorkType[Sys.language].timed then
+                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             ----------------反控模式--------------------
             elseif Sys.runType == WorkType[Sys.language].controlled then
                 SystemStop(stopByNormal);
@@ -1960,18 +2008,25 @@ function SystemStop(stopType)
     ShowSysTips("");
     set_value(RUN_CONTROL_SCREEN, RunStopBtId, 0);--将开始/停止按钮弹出
     Sys.processStep = 1;
-    Sys.periodicIndex = 1;
     Sys.handProcessIndex = 1;
     Sys.handRunTimes = 0;
-    Sys.isAutoRangeProcess = false;
+
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
     UartArg.repeat_times = 0;--重发计数请0
+
     UartArg.reply_sta = SEND_OK;
     UartArg.lock = UNLOCKED;
     stop_timer(1)--停止超时定时器
-    Sys.logContent = WorkStatus[Sys.language].stop .. "\"" .. Sys.processName .. "\"";--“停止”+流程名称
-    add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
+    set_text(MAIN_SCREEN, StartTimeId, "0000-00-00  00:00");--将本次启动流程的开始时间清0
+    set_text(MAIN_SCREEN, NextStartTimeId, "0000-00-00  00:00");--将下次启动流程的开始时间清0
+    for i = 1, #TimedProcessTab, 1 do--定时模式下, 要将该标志位置成false
+        TimedProcessTab[i].isFinished = false;
+    end
+    for i = 2, #PeriodicTab, 1 do--周期模式下,频率计数器清0
+        PeriodicTab[i].freq = 0;
+        PeriodicTab[i].isReadyRun = false;
+    end
 end
 
 --***********************************************************************************************
@@ -2011,11 +2066,16 @@ RUNCTRL_PEROID_BtSid = 1;
 RUNCTRL_PEROID_BtEid = 7;
 RUNCTRL_PEROID_TextSid = 8;
 RUNCTRL_PEROID_TextEid = 30;
-PeriodicTab = { [1] = { textId = 1, buttonId = 101, processId = 0 },--分析
-                [2] = { textId = 2, buttonId = 102, processId = 0 },--校正
-                [3] = { textId = 3, buttonId = 103, processId = 0 },
-                [4] = { textId = 4, buttonId = 104, processId = 0 },
-                nextStartTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0 };
+PeriodicTab = { [1] = { processType = ProcessItem[Sys.language][1], enableId = 1, processNameId = 8,  freqId = 9 , },--分析
+                [2] = { processType = ProcessItem[Sys.language][2], enableId = 2, processNameId = 10, freqId = 12, freq = 0, isReadyRun = false, },--校正1
+                [3] = { processType = ProcessItem[Sys.language][2], enableId = 2, processNameId = 11, freqId = 12, freq = 0, isReadyRun = false, },--校正2
+                [4] = { processType = ProcessItem[Sys.language][7], enableId = 3, processNameId = 13, freqId = 14, freq = 0, isReadyRun = false, densityId = 29, errorId = 30 },--量程校正
+                [5] = { processType = ProcessItem[Sys.language][5], enableId = 4, processNameId = 15, freqId = 16, freq = 0, isReadyRun = false, densityId = 17, errorId = 18 },--零点核查
+                [6] = { processType = ProcessItem[Sys.language][6], enableId = 5, processNameId = 19, freqId = 20, freq = 0, isReadyRun = false, densityId = 21, errorId = 22 },--标样核查
+                [7] = { processType = ProcessItem[Sys.language][11],enableId = 6, processNameId = 23, freqId = 24, freq = 0, isReadyRun = false, densityId = 25, errorId = 26 },--空白测试
+                [8] = { processType = ProcessItem[Sys.language][3], enableId = 7, processNameId = 27, freqId = 28, freq = 0, isReadyRun = false},--清洗
+                sTime =  { yearId = 31, monId = 32, dayId = 33, hourId = 34, minId = 35, 
+                           year = 0, mon = 0, day = 0, hour = 0, min = 0 },--流程开始的时间
 };
 
 function run_control_period_notify(screen, control, value)
@@ -2028,6 +2088,27 @@ function run_control_period_notify(screen, control, value)
         process_name_select_set(screen, control-100);
     end
 end
+
+function goto_period_mode_set_screen()
+    
+    local currentDateTime = string.format("%d%02d%02d%02d%02d",
+        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min);--将当前时间转换为字符串
+
+    Sys.periodStartDateTime = string.format("%d%02d%02d%02d%02d",
+                                tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.yearId )), 
+                                tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.monId )), 
+                                tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.dayId )), 
+                                tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.hourId )), 
+                                tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId )));
+                                
+    --判断为停止模式, 且周期设置界面的开始时间比当前时间小
+    print(Sys.status.."?="..WorkStatus[Sys.language].stop);
+    if Sys.status == WorkStatus[Sys.language].stop and Sys.periodStartDateTime <= currentDateTime then--运行
+        --在周期模式设置界面,设置当前开始时间
+        setPeriodStartTime();
+    end
+end
+
 --[[-----------------------------------------------------------------------------------------------------------------
     运行控制-定时设置
 --------------------------------------------------------------------------------------------------------------------]]
@@ -2036,30 +2117,30 @@ RUNCTRL_TIMED_TextEid = 24;
 TimedProcessClear = 410;--一键清空所有的定时设置
 --定时设置  这里注意StartHourId - 37 = 序号; startMinuteId - 61 = 序号
 TimedProcessTab = {
-    [1 ] = { textId = 1 , buttonId = 101, startHourId = 201, startHour = 0 , startMinuteId = 301, startMinute = 0, processId = 0 },
-    [2 ] = { textId = 2 , buttonId = 102, startHourId = 202, startHour = 1 , startMinuteId = 302, startMinute = 0, processId = 0 },
-    [3 ] = { textId = 3 , buttonId = 103, startHourId = 203, startHour = 2 , startMinuteId = 303, startMinute = 0, processId = 0 },
-    [4 ] = { textId = 4 , buttonId = 104, startHourId = 204, startHour = 3 , startMinuteId = 304, startMinute = 0, processId = 0 },
-    [5 ] = { textId = 5 , buttonId = 105, startHourId = 205, startHour = 4 , startMinuteId = 305, startMinute = 0, processId = 0 },
-    [6 ] = { textId = 6 , buttonId = 106, startHourId = 206, startHour = 5 , startMinuteId = 306, startMinute = 0, processId = 0 },
-    [7 ] = { textId = 7 , buttonId = 107, startHourId = 207, startHour = 6 , startMinuteId = 307, startMinute = 0, processId = 0 },
-    [8 ] = { textId = 8 , buttonId = 108, startHourId = 208, startHour = 7 , startMinuteId = 308, startMinute = 0, processId = 0 },
-    [9 ] = { textId = 9 , buttonId = 109, startHourId = 209, startHour = 8 , startMinuteId = 309, startMinute = 0, processId = 0 },
-    [10] = { textId = 10, buttonId = 110, startHourId = 210, startHour = 9 , startMinuteId = 310, startMinute = 0, processId = 0 },
-    [11] = { textId = 11, buttonId = 111, startHourId = 211, startHour = 10, startMinuteId = 311, startMinute = 0, processId = 0 },
-    [12] = { textId = 12, buttonId = 112, startHourId = 212, startHour = 11, startMinuteId = 312, startMinute = 0, processId = 0 },
-    [13] = { textId = 13, buttonId = 113, startHourId = 213, startHour = 12, startMinuteId = 313, startMinute = 0, processId = 0 },
-    [14] = { textId = 14, buttonId = 114, startHourId = 214, startHour = 13, startMinuteId = 314, startMinute = 0, processId = 0 },
-    [15] = { textId = 15, buttonId = 115, startHourId = 215, startHour = 14, startMinuteId = 315, startMinute = 0, processId = 0 },
-    [16] = { textId = 16, buttonId = 116, startHourId = 216, startHour = 15, startMinuteId = 316, startMinute = 0, processId = 0 },
-    [17] = { textId = 17, buttonId = 117, startHourId = 217, startHour = 16, startMinuteId = 317, startMinute = 0, processId = 0 },
-    [18] = { textId = 18, buttonId = 118, startHourId = 218, startHour = 17, startMinuteId = 318, startMinute = 0, processId = 0 },
-    [19] = { textId = 19, buttonId = 119, startHourId = 219, startHour = 18, startMinuteId = 319, startMinute = 0, processId = 0 },
-    [20] = { textId = 20, buttonId = 120, startHourId = 220, startHour = 19, startMinuteId = 320, startMinute = 0, processId = 0 },
-    [21] = { textId = 21, buttonId = 121, startHourId = 221, startHour = 20, startMinuteId = 321, startMinute = 0, processId = 0 },
-    [22] = { textId = 22, buttonId = 122, startHourId = 222, startHour = 21, startMinuteId = 322, startMinute = 0, processId = 0 },
-    [23] = { textId = 23, buttonId = 123, startHourId = 223, startHour = 22, startMinuteId = 323, startMinute = 0, processId = 0 },
-    [24] = { textId = 24, buttonId = 124, startHourId = 224, startHour = 23, startMinuteId = 324, startMinute = 0, processId = 0 },
+    [1 ] = { textId = 1 , buttonId = 101, startHourId = 201, startMinuteId = 301, isFinished = false},
+    [2 ] = { textId = 2 , buttonId = 102, startHourId = 202, startMinuteId = 302, isFinished = false},
+    [3 ] = { textId = 3 , buttonId = 103, startHourId = 203, startMinuteId = 303, isFinished = false},
+    [4 ] = { textId = 4 , buttonId = 104, startHourId = 204, startMinuteId = 304, isFinished = false},
+    [5 ] = { textId = 5 , buttonId = 105, startHourId = 205, startMinuteId = 305, isFinished = false},
+    [6 ] = { textId = 6 , buttonId = 106, startHourId = 206, startMinuteId = 306, isFinished = false},
+    [7 ] = { textId = 7 , buttonId = 107, startHourId = 207, startMinuteId = 307, isFinished = false},
+    [8 ] = { textId = 8 , buttonId = 108, startHourId = 208, startMinuteId = 308, isFinished = false},
+    [9 ] = { textId = 9 , buttonId = 109, startHourId = 209, startMinuteId = 309, isFinished = false},
+    [10] = { textId = 10, buttonId = 110, startHourId = 210, startMinuteId = 310, isFinished = false},
+    [11] = { textId = 11, buttonId = 111, startHourId = 211, startMinuteId = 311, isFinished = false},
+    [12] = { textId = 12, buttonId = 112, startHourId = 212, startMinuteId = 312, isFinished = false},
+    [13] = { textId = 13, buttonId = 113, startHourId = 213, startMinuteId = 313, isFinished = false},
+    [14] = { textId = 14, buttonId = 114, startHourId = 214, startMinuteId = 314, isFinished = false},
+    [15] = { textId = 15, buttonId = 115, startHourId = 215, startMinuteId = 315, isFinished = false},
+    [16] = { textId = 16, buttonId = 116, startHourId = 216, startMinuteId = 316, isFinished = false},
+    [17] = { textId = 17, buttonId = 117, startHourId = 217, startMinuteId = 317, isFinished = false},
+    [18] = { textId = 18, buttonId = 118, startHourId = 218, startMinuteId = 318, isFinished = false},
+    [19] = { textId = 19, buttonId = 119, startHourId = 219, startMinuteId = 319, isFinished = false},
+    [20] = { textId = 20, buttonId = 120, startHourId = 220, startMinuteId = 320, isFinished = false},
+    [21] = { textId = 21, buttonId = 121, startHourId = 221, startMinuteId = 321, isFinished = false},
+    [22] = { textId = 22, buttonId = 122, startHourId = 222, startMinuteId = 322, isFinished = false},
+    [23] = { textId = 23, buttonId = 123, startHourId = 223, startMinuteId = 323, isFinished = false},
+    [24] = { textId = 24, buttonId = 124, startHourId = 224, startMinuteId = 324, isFinished = false},
 };
 
 function run_control_timed_notify(screen, control, value)
@@ -2068,17 +2149,7 @@ function run_control_timed_notify(screen, control, value)
         change_screen(RUN_CONTROL_SCREEN);
     elseif control == CancelButtonId and value == ENABLE then
         change_screen(RUN_CONTROL_SCREEN);
-    
-    -- elseif control == TimedProcessClear then--一键清空所有定时设置
-    --     for i = 1, #TimedProcessTab, 1 do
-    --         set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].textId, BLANK_SPACE);
-    --         set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startHourId, string.format("%02d", i));
-    --         set_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startMinuteId, "00");
-    --         TimedProcessTab[i].processId = 0;
-    --         TimedProcessTab[i].startHour = tonumber(get_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startHourId));
-    --         TimedProcessTab[i].startMinute = tonumber(get_text(RUN_CONTROL_SCREEN, TimedProcessTab[i].startMinuteId));
-    --     end
-    elseif control >= TimedProcessTab[1].buttonId and control <= TimedProcessTab[24].buttonId then
+    elseif control >= TimedProcessTab[1].buttonId and control <= TimedProcessTab[#TimedProcessTab].buttonId then
         process_name_select_set(screen, control-100);
     end
 end
@@ -2941,7 +3012,6 @@ function excute_peristaltic_process(paraTab)
         ----------------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
         if paraTab[3] == ENABLE_STRING then--判断对蠕动泵的操作
-            Sys.periodicIndex = 1;
             Sys.periodicSpeed = tonumber(paraTab[25]);
             Sys.periodicVolume = tonumber(paraTab[26]);
             Sys.periodicDir = paraTab[27];
@@ -2949,7 +3019,6 @@ function excute_peristaltic_process(paraTab)
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[4] == ENABLE_STRING then
-            Sys.periodicIndex = 2;
             Sys.periodicSpeed = tonumber(paraTab[29]);
             Sys.periodicVolume = tonumber(paraTab[30]);
             Sys.periodicDir = paraTab[31];
@@ -2957,7 +3026,6 @@ function excute_peristaltic_process(paraTab)
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         elseif paraTab[5] == ENABLE_STRING then
-            Sys.periodicIndex = 3;
             Sys.periodicSpeed = tonumber(paraTab[33]);
             Sys.periodicVolume = tonumber(paraTab[34]);
             Sys.periodicDir = paraTab[35];
@@ -3216,17 +3284,19 @@ function excute_calculate_process(paraTab)
             Sys.processTag = "dz"
         elseif Sys.processType == ProcessItem[Sys.language][6] then--"标样核查"
             Sys.processTag = "sc"
-        elseif Sys.processType == ProcessItem[Sys.language][7] then--"跨度核查"
+        elseif Sys.processType == ProcessItem[Sys.language][7] then--"量程校正"
             Sys.processTag = "ds"
         elseif Sys.processType == ProcessItem[Sys.language][8] then-- "加标回收"
             Sys.processTag = "ra"
-        elseif Sys.processType == ProcessItem[Sys.language][9] then--"平行样测试"
+        elseif Sys.processType == ProcessItem[Sys.language][9] then--"平行样"
             Sys.processTag = "pt"
-        elseif Sys.processType == ProcessItem[Sys.language][10] then--"实际水样对比"
+        elseif Sys.processType == ProcessItem[Sys.language][10] then--"线性核查"
             Sys.processTag = "ac"
         elseif Sys.processType == ProcessItem[Sys.language][11] then--"空白测试"
             Sys.processTag = "bt"
         elseif Sys.processType == ProcessItem[Sys.language][12] then--"空白校准"
+            Sys.processTag = "bs"
+        elseif Sys.processType == ProcessItem[Sys.language][13] then--"标样校准"
             Sys.processTag = "bs"
         end
 
@@ -3780,6 +3850,9 @@ function set_unit()
     set_text(RANGE_SELECT_SCREEN, 15, Unite);
     set_text(RANGE_SELECT_SCREEN, 20, Unite);
     set_text(RANGE_SELECT_SCREEN, 25, Unite);
+
+    --周期设置界面,零点核查的误差单位
+    set_text(RUN_CONTROL_PERIOD_SCREEN, 36, Unite);
 end
 
 --用户通过触摸修改控件后，执行此回调函数。
@@ -4936,8 +5009,8 @@ function WriteParaToConfigStrAndFile(tagNum)
             get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId) .. ",";  --流程量程
         end
         --保存分析物品与代码;  AnalyteSetId = 38;--分析物选择 CodeSetId = 107;--代码
-        ConfigStr[0] = ConfigStr[0] .. get_text(PROCESS_SET1_SCREEN, AnalyteSetId) .. ",";
-        ConfigStr[0] = ConfigStr[0] .. get_text(PROCESS_SET1_SCREEN, CodeSetId) .. ",";
+        -- ConfigStr[0] = ConfigStr[0] .. get_text(PROCESS_SET1_SCREEN, AnalyteSetId) .. ",";
+        -- ConfigStr[0] = ConfigStr[0] .. get_text(PROCESS_SET1_SCREEN, CodeSetId) .. ",";
     elseif tagNum == 2 then--运行控制界面中的参数
         ConfigStr[0] = ConfigStr[0] .."<common>"
         for i = RUNCTRL_TextSid, RUNCTRL_TextEid, 1 do
@@ -5046,8 +5119,8 @@ function SetConfigParaToScreen(tagNum)
             set_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId, tab[(i - 1) * 3 + 3]);  --把数据显示到文本框中
         end
         --设置分析物品与代码;  AnalyteSetId = 38;--分析物选择 CodeSetId = 107;--代码
-        set_text(PROCESS_SET1_SCREEN, AnalyteSetId, tab[73]);
-        set_text(PROCESS_SET1_SCREEN, CodeSetId, tab[74]);
+        -- set_text(PROCESS_SET1_SCREEN, AnalyteSetId, tab[73]);
+        -- set_text(PROCESS_SET1_SCREEN, CodeSetId, tab[74]);
     elseif tagNum == 2 then--运行控制界面中的参数
         local subTagString = GetSubString(tagString, "<common>", "</common>");--截取标签之间的字符串
         tab = split(subTagString, ",")

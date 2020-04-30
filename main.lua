@@ -77,6 +77,7 @@ PublicTab = {
     [15] = HISTORY_ALARM_SCREEN,
     [16] = HISTORY_LOG_SCREEN,
     [17] = SYSTEM_INFO_SCREEN,
+    [18] = HISTORY_CHECK_SCREEN,
 };
 
 MaxProcess = 24;--最多可以编辑24个流程
@@ -312,26 +313,19 @@ CalcWay = {
     },
 }
 
---计算阶数
-CalcOrder = {
-    [CHN] = { first = "一阶", second = "二阶", Third = "三阶" },
-    [ENG] = { first = "First", second = "Second", Third = "Third" },
-}
-
 AnalysisWay = {
     [CHN] = { colorimetry = "比色法", electrode = "电极法" },
     [ENG] = { colorimetry = "colorimetry", electrode = "electrode" },
 }
 
 CalcType = {
-    [CHN] = { "分析", "校准一", "校准二", "校准三", "校准四" },
-    [ENG] = { "Analysis", "Calibration 1", "Calibration 2", "Calibration 3", "Calibration 4" },
+    [CHN] = { "分析", "校准", "核查",},
+    [ENG] = { "Ana.", "Cali.", "Chk."},
 };
 
 ProcessItem = {
     [CHN] = { "水样分析", "校准", "清洗", "管路填充", "零点核查", "标样核查", "量程核查", "加标回收", "平行样", "线性核查", "空白测试", "空白校准","标样校准","实际水样比对", BLANK_SPACE },
     [ENG] = { "Analysis", "Calibration", "Washing", "Fill", "Zero Check", "Std. Check", "Range Chk.", "Std. Recovery", "Parallel Samp.", "Liner Chk.", "Blank Test", "Blank Cali.","Std. Cali.", "",BLANK_SPACE },
-    tag   = {"","",""};
 }
 
 --ActionItem里面的值一定要与动作选择界面按钮中的值一一对应
@@ -352,6 +346,7 @@ Sys = {
     language = CHN, --系统语言
     userName = "", --用于保存当前用户
     status = 0, --系统状态:对应WorkStatus中的值
+    stateBeforePwrOff = 0,--上一次断电时的状态:对应WorkStatus中的值
     runType = 0, --运行方式: 对应WorkType中的值
     analysisType = COLOR_METHOD, --分析方法
     rangetypeId = 1, --用于记录量程选择
@@ -428,7 +423,8 @@ Sys = {
     signalNumber = 0, --取样数，默认为10
 
     calculateWay = "", --计算方式: 取对数 或者 取差值 方式
-    calculateType = "", --计算类型：有分析，校正一，校正二，校正三，校正四。
+    calculateType = "", --计算类型：有分析，校正,核查。
+    calibratePoint= 1,
     calibrationValue = 0, --校正值
     checkValue = 0, --核查值
     caliE1 = {}, --用于保存校正时的E1
@@ -556,9 +552,16 @@ function on_init()
     set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));--设置分析物
     --获取最后一次分析结果并进行显示
 
+    if Sys.stateBeforePwrOff == WorkStatus[Sys.language].run and --在运行时断电
+       getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then--异常断电流程不为0
+        SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+    else
+        SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
+    end
+
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
-    SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
+    
     SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     uart_set_timeout(2000, 1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
@@ -576,16 +579,16 @@ function on_init()
     --     add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
     -- end
 
-    for i = 1,8,1 do
-        Sys.startTime = Sys.dateTime;
-        Sys.result = 1;
-        Sys.checkValue = 1;
-        Sys.signalE1 = 3000.0
-        Sys.signalE2 = 4000.0
-        Sys.rangetypeId = 1
-        Sys.processTag = "at"
-        add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
-    end
+    -- for i = 1,8,1 do
+    --     Sys.startTime = Sys.dateTime;
+    --     Sys.result = 1;
+    --     Sys.checkValue = 1;
+    --     Sys.signalE1 = 3000.0
+    --     Sys.signalE2 = 4000.0
+    --     Sys.rangetypeId = 1
+    --     Sys.processTag = "at"
+    --     add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
+    -- end
 
 end
 
@@ -714,7 +717,8 @@ function on_control_notify(screen, control, value)
         wifi_connect_control_notify(screen, control, value);
     elseif screen == REMOTE_UPDATE_SCREEN then
         remote_update_control_notify(screen, control, value);
-    elseif screen == HISTORY_ALARM_SCREEN or screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or screen == HISTORY_LOG_SCREEN then
+    elseif  screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or
+           screen == HISTORY_ALARM_SCREEN or screen == HISTORY_LOG_SCREEN then
         history_control_notify(screen, control, value);
     elseif screen == PASSWORD_DIALOG_SCREEN then--密码对话框界面
         password_dialog_screen_control_notify(screen, control, value);
@@ -1076,7 +1080,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
     首页/状态栏显示函数
 --------------------------------------------------------------------------------------------------------------------]]
-LastResultTimeId = 20;   --分析时间
+LastAnalysisTimeId = 20;   --分析时间
 LastAnalyteId = 17;        --分析物
 LastResultId = 18; --分析结果
 LastResultUnitId = 19;   --单位
@@ -1117,6 +1121,11 @@ end
 --  设置工作状态
 --***********************************************************************************************
 function SetSysWorkStatus(status)
+
+    if Sys.status ~= status then
+        WriteParaToConfigStrAndFile(2);--系统状态改变,将其存入flash
+    end
+
     Sys.status = status;--设置系统状态为运行
     --在底部的状态栏显示工作状态:停止/运行/待机
     for i = 1, #PublicTab, 1 do
@@ -1383,13 +1392,15 @@ CodeSetId = 3;--代码
 OfflineModeId = 4;--离线模式
 ReagentRemainChkId = 5;--试剂余量开关
 RangeAutoSwitchId = 6;--量程自动切换
+SuddenPwrOffProcessId = 7;--异常断电执行的流程
+DecimalTextId = 8;--小数位数设置
 SuddenPowerOff = 107;--异常断电流程选择
 
 RunTypeMenuId = 243;--运行方式菜单
 RunStopBtId = 229;--运行状态切换按钮"初始化""停止"按钮
 RunModeSetBtId = 25; --运行模式设置按钮
 RUNCTRL_TextSid = 1;
-RUNCTRL_TextEid = 7;
+RUNCTRL_TextEid = 8;
 
 --***********************************************************************************************
 --用户通过触摸修改控件后，执行此回调函数。
@@ -1593,6 +1604,41 @@ function setPeriodStartTime()
 end
 
 --***********************************************************************************************
+--通过流程类型初始化流程标识
+--***********************************************************************************************
+function getTagByProcessType(type)
+    local tag = "";
+    if type == ProcessItem[Sys.language][1] then--水样分析
+        tag = "at"
+    elseif type == ProcessItem[Sys.language][5] then--"零点核查"
+        tag = "dz"
+        Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 17))
+    elseif type == ProcessItem[Sys.language][6] then--"标样核查"
+        tag = "sc"
+        Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 21))
+    elseif type == ProcessItem[Sys.language][7] then--"量程核查"
+        tag = "ds"
+        Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 29))
+    elseif type == ProcessItem[Sys.language][8] then-- "加标回收"
+        tag = "ra"
+    elseif type == ProcessItem[Sys.language][9] then--"平行样"
+        tag = "pt"
+    elseif type == ProcessItem[Sys.language][10] then--"线性核查"
+        tag = "lc"
+    elseif type == ProcessItem[Sys.language][11] then--"空白测试"
+        tag = "bt"
+        Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 25))
+    elseif type == ProcessItem[Sys.language][12] then--"空白校准"
+        tag = "bs"
+    elseif type == ProcessItem[Sys.language][13] then--"标样校准"
+        tag = "cs"
+    elseif type == ProcessItem[Sys.language][13] then--"实际水样比对"
+        tag = "ac"
+    end
+    return tag;
+end
+
+--***********************************************************************************************
 --[周期模式下,获取需要运行的流程id
 --***********************************************************************************************
 function get_period_process_id()
@@ -1679,6 +1725,10 @@ function get_current_process_id()
         return Sys.currentProcessId;
     end
 
+    if Sys.stateBeforePwrOff == WorkStatus[Sys.language].run then --在运行时断电
+        processId = getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId));--异常断电流程
+        return processId;
+    end
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
     if Sys.runType == WorkType[Sys.language].hand then
         --手动模式下,计算出总共设置了几个流程
@@ -1808,6 +1858,7 @@ function LoadActionStr(index)
     Sys.processType = tab[index * 3 - 2];
     Sys.processName = tab[index * 3 - 1];
     Sys.processRange = tab[index * 3 - 0];
+    Sys.processTag = getTagByProcessType(Sys.processType);
     print("流程Id="..index.."类型="..Sys.processType.." 名称="..Sys.processName.. " 量程="..Sys.processRange);
     --统计action个数,给Sys.actionTotal变量,以及SystemArg.actionTab赋值 ----------------------
     --Sys.actionTab数组长度为36,表示最多可记录36个action, 其值保存的是当前步骤对应的action序号
@@ -2125,7 +2176,7 @@ end
 RUNCTRL_PEROID_BtSid = 1;
 RUNCTRL_PEROID_BtEid = 7;
 RUNCTRL_PEROID_TextSid = 8;
-RUNCTRL_PEROID_TextEid = 30;
+RUNCTRL_PEROID_TextEid = 22;
 PeriodicTab = { [1] = { processType = ProcessItem[Sys.language][1], enableId = 1, processNameId = 8,  freqId = 9 , },--分析
                 [2] = { processType = ProcessItem[Sys.language][2], enableId = 2, processNameId = 10, freqId = 12, freq = 0, isReadyRun = false, },--校正1
                 [3] = { processType = ProcessItem[Sys.language][2], enableId = 2, processNameId = 11, freqId = 12, freq = 0, isReadyRun = false, },--校正2
@@ -3341,9 +3392,8 @@ end
 CALCULATE_BtStartId = 1;
 CALCULATE_BtEndId = 3;
 CALCULATE_TextStartId = 4;
-CALCULATE_TextEndId = 13;
+CALCULATE_TextEndId = 16;
 CALCULATE_CalcWayTextId = 10;
-CALCULATE_CalcOrderTextId = 11;
 CALCULATE_CalcTypeTextId = 12;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -3363,38 +3413,13 @@ end
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
     Sys.calculateWay = paraTab[10];
-    Sys.calculateType = paraTab[12];
-    Sys.calibrationValue = tonumber(paraTab[13]);
-    Sys.resultTime = Sys.dateTime;--获取当前时间
-    -----------------------当前计算为分析/零点核查/标样核查/跨度核查等----------------------------
-    if Sys.calculateType == CalcType[Sys.language][1] then
-        if Sys.processType == ProcessItem[Sys.language][1] then--水样分析
-            Sys.processTag = "At"
-        elseif Sys.processType == ProcessItem[Sys.language][5] then--"零点核查"
-            Sys.processTag = "dz"
-            Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 17))
-        elseif Sys.processType == ProcessItem[Sys.language][6] then--"标样核查"
-            Sys.processTag = "sc"
-            Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 21))
-        elseif Sys.processType == ProcessItem[Sys.language][7] then--"量程核查"
-            Sys.processTag = "ds"
-            Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 29))
-        elseif Sys.processType == ProcessItem[Sys.language][8] then-- "加标回收"
-            Sys.processTag = "ra"
-        elseif Sys.processType == ProcessItem[Sys.language][9] then--"平行样"
-            Sys.processTag = "pt"
-        elseif Sys.processType == ProcessItem[Sys.language][10] then--"线性核查"
-            Sys.processTag = "lc"
-        elseif Sys.processType == ProcessItem[Sys.language][11] then--"空白测试"
-            Sys.processTag = "bt"
-            Sys.checkValue = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN, 25))
-        elseif Sys.processType == ProcessItem[Sys.language][12] then--"空白校准"
-            Sys.processTag = "bs"
-        elseif Sys.processType == ProcessItem[Sys.language][13] then--"标样校准"
-            Sys.processTag = "cs"
-        elseif Sys.processType == ProcessItem[Sys.language][13] then--"实际水样比对"
-            Sys.processTag = "ac"
-        end
+    Sys.calculateType = paraTab[12];--
+    Sys.calibratePoint = tonumber(paraTab[15])--校准点
+    Sys.calibrationValue = tonumber(paraTab[13]);--校准浓度
+    Sys.checkValue = tonumber(paraTab[16]);--核查浓度
+
+    ------当前计算为水样分析或者核查---------------------------------------------------------
+    if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then
 
         calc_analysis_result(Sys.calculateWay);
         if paraTab[1] == ENABLE_STRING then--结果线性补偿
@@ -3406,57 +3431,62 @@ function excute_calculate_process(paraTab)
             elseif Sys.result < paraTab[8] then
                 Sys.alarmContent = TipsTab[Sys.language].lowDensity;
             end
-            add_history_record(HISTORY_ALARM_SCREEN);
         end
         print("分析结果 =", Sys.result);
-    elseif Sys.calculateType == CalcType[Sys.language][2] then--当前计算为校正1
-        Sys.caliE1[1] = Sys.signalE1;
-        Sys.caliE2[1] = Sys.signalE2;
-        Sys.caliValue[1] = Sys.calibrationValue;
-        print("校正1：E1=", Sys.caliE1[1], ",E2=", Sys.caliE2[1]);
-    elseif Sys.calculateType == CalcType[Sys.language][3] then--当前计算为校正2
-        Sys.caliE1[2] = Sys.signalE1;
-        Sys.caliE2[2] = Sys.signalE2;
-        Sys.caliValue[2] = Sys.calibrationValue;
-        print("校正2：E1=", Sys.caliE1[2], ",E2=", Sys.caliE2[2]);
-        if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
-            calc_calibrate_result_by_log();
-        elseif Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].First then
-            calc_calibrate_result_by_diff(2);--通过行列式与克莱姆法则自动算出c,d的值
+    --------当前流程为校准-------------------------------------------------------
+    elseif Sys.calculateType == CalcType[Sys.language][2] then
+        if Sys.calibratePoint == 1 then
+            Sys.caliE1[1] = Sys.signalE1;
+            Sys.caliE2[1] = Sys.signalE2;
+            Sys.caliValue[1] = Sys.calibrationValue;
+            print("校正1：E1=", Sys.caliE1[1], ",E2=", Sys.caliE2[1]);
+        elseif Sys.calibratePoint == 2 then--当前计算为校正2
+            Sys.caliE1[2] = Sys.signalE1;
+            Sys.caliE2[2] = Sys.signalE2;
+            Sys.caliValue[2] = Sys.calibrationValue;
+            print("校正2：E1=", Sys.caliE1[2], ",E2=", Sys.caliE2[2]);
+            if Sys.calculateWay == CalcWay[Sys.language].log then--如果是取对数方式，则在校正2时就计算结果
+                calc_calibrate_result_by_log();
+            elseif Sys.calculateWay == CalcWay[Sys.language].diff and tonumber(paraTab[11]) == 1 then-----判定为1阶方程 y = cx +d
+                calc_calibrate_result_by_diff(2);--通过行列式与克莱姆法则自动算出c,d的值
+            end
+        elseif Sys.calibratePoint == 3 then--当前计算为校正3
+            Sys.caliE1[3] = Sys.signalE1;
+            Sys.caliE2[3] = Sys.signalE2;
+            Sys.caliValue[3] = Sys.calibrationValue;
+            if Sys.calculateWay == CalcWay[Sys.language].diff and tonumber(paraTab[11]) == 2 then-----判定为2阶方程 y = bxx+cx+d 
+                calc_calibrate_result_by_diff(3);--通过行列式与克莱姆法则自动算出b,c,d的值
+            end
+            print("校正3：E1=", Sys.caliE1[3], ",E2=", Sys.caliE2[3]);
+        elseif Sys.calibratePoint == 4 then--当前计算为校正4
+            Sys.caliE1[4] = Sys.signalE1;
+            Sys.caliE2[4] = Sys.signalE2;
+            Sys.caliValue[4] = Sys.calibrationValue;
+            calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
+            print("校正4：E1=", Sys.caliE1[4], ",E2=", Sys.caliE2[4]);
         end
-    elseif Sys.calculateType == CalcType[Sys.language][4] then--当前计算为校正3
-        Sys.caliE1[3] = Sys.signalE1;
-        Sys.caliE2[3] = Sys.signalE2;
-        Sys.caliValue[3] = Sys.calibrationValue;
-        if Sys.calculateWay == CalcWay[Sys.language].diff and paraTab[11] == CalcOrder[Sys.language].Second then
-            calc_calibrate_result_by_diff(3);--通过行列式与克莱姆法则自动算出b,c,d的值
-        end
-        print("校正3：E1=", Sys.caliE1[3], ",E2=", Sys.caliE2[3]);
-    elseif Sys.calculateType == CalcType[Sys.language][5] then--当前计算为校正4
-        Sys.caliE1[4] = Sys.signalE1;
-        Sys.caliE2[4] = Sys.signalE2;
-        Sys.caliValue[4] = Sys.calibrationValue;
-        calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
-        print("校正4：E1=", Sys.caliE1[4], ",E2=", Sys.caliE2[4]);
     end
 
     if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
         if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
-            add_history_record(HISTORY_ANALYSIS_SCREEN);
+            add_history_record(HISTORY_ANALYSIS_SCREEN)
+        elseif Sys.calculateType == CalcType[Sys.language][2] then --当前计算为校准
+            add_history_record(HISTORY_CALIBRATION_SCREEN)
+        -- elseif Sys.calculateType == CalcType[Sys.language][3] then --当前计算为核查
         else
-            add_history_record(HISTORY_CALIBRATION_SCREEN);--当前计算为校准
+            add_history_record(HISTORY_CHECK_SCREEN)
         end
     end
 
     --在主界面进行显示结果与结果时间
-    if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
+    if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then--当前计算为分析或者核查
         set_text(MAIN_SCREEN, LastResultId, Sys.result);
     else
         set_text(MAIN_SCREEN, LastResultId, Sys.calibrationValue);
     end
-    local resultTime = string.format("%d-%02d-%02d %02d:%02d", Sys.resultTime.year, Sys.resultTime.mon, Sys.resultTime.day,
-    Sys.resultTime.hour, Sys.resultTime.min);
-    set_text(MAIN_SCREEN, LastResultTimeId, resultTime);
+    local sTime = string.format("%d-%02d-%02d %02d:%02d", Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,
+    Sys.startTime.hour, Sys.startTime.min);
+    set_text(MAIN_SCREEN, LastAnalysisTimeId, sTime);
     print("执行完成计算流程");
     return FINISHED;
 end
@@ -3647,25 +3677,8 @@ function calc_analysis_result(type)
     d = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
     print(string.format("a=%f,b=%f,c=%f,d=%f", a, b, c, d));
     Sys.result = a * (x ^ 3) + b * (x ^ 2) + c * x + d;
-    Sys.result = GetPreciseDecimal(Sys.result, 4);--保留小数点后四位
+    Sys.result = GetPreciseDecimal(Sys.result, tonumber(get_text(RUN_CONTROL_SCREEN,DecimalTextId)))--保留小数点后四位
     set_text(MAIN_SCREEN, LastResultId, Sys.result);--在主界面显示结果
-end
-
---- nNum 源数字
---- n 小数位数
-function GetPreciseDecimal(nNum, n)
-    if type(nNum) ~= "number" then
-        return nNum;
-    end
-    n = n or 0;
-    n = math.floor(n)
-    if n < 0 then
-        n = 0;
-    end
-    local nDecimal = 10 ^ n
-    local nTemp = math.floor(nNum * nDecimal);
-    local nRet = nTemp / nDecimal;
-    return nRet;
 end
 
 
@@ -4283,6 +4296,11 @@ function add_history_record(screen)
         end
     end
 
+    --最新分析记录
+    if screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN then
+        record_modify(MAIN_SCREEN, HistoryRecordId, 0, date.." "..time..","..Sys.result..","..Sys.signalE1..","..Sys.signalE2);
+    end
+
     if screen == HISTORY_ANALYSIS_SCREEN then--分析历史
         signalHistoryContent = (historyOrder + 1) .. ";" .. date .. ";" .. time .. ";" ..--序号,日期,时间
                     Sys.result .. ";" .. Sys.signalE1 .. ";" .. Sys.signalE2 .. ";" .. Sys.rangetypeId .. ";" .. Sys.processTag;--结果/E2/E2/量程/类型标识
@@ -4340,7 +4358,6 @@ function history_control_notify(screen, control, value)
             set_text(screen, HistoryCurPage, curPage);
             showHistoryByScreenAndPage(screen,curPage);
         end
-        
     elseif control == HistoryPrevPage and value == ENABLE then--上一页
         local curPage = tonumber(get_text(screen,HistoryCurPage));
         if curPage > 1 then--当前页大于1
@@ -4447,6 +4464,16 @@ function checkHistoryFile()
     setHistoryScreen(HISTORY_CALIBRATION_SCREEN);
     setHistoryScreen(HISTORY_ALARM_SCREEN);
     setHistoryScreen(HISTORY_ALARM_SCREEN);
+
+    --在主页面显示最新的分析记录
+    if record_get_count(MAIN_SCREEN, HistoryRecordId) == 0 then --表示还未记录有数据
+        record_add(MAIN_SCREEN,HistoryRecordId,"0000-00-00  00:00,0.000,0,0");
+    end
+    local lastResultTab = split(record_read(MAIN_SCREEN, HistoryRecordId, 0), ",")--读取记录
+    set_text(MAIN_SCREEN, LastAnalysisTimeId, lastResultTab[1]);--开始时间
+    set_text(MAIN_SCREEN, LastResultId, lastResultTab[2]);--分析结果
+    set_text(MAIN_SCREEN, LastResultE1Id, lastResultTab[3]);--E1
+    set_text(MAIN_SCREEN, LastResultE2Id, lastResultTab[4]);--E2
 end
 
 
@@ -4459,7 +4486,7 @@ function setHistoryScreen(screen)
     local index = 0;
     for i= #historyTab, (#historyTab-9), -1 do
         if historyTab[i] ~= nil then
-            local decodeContent = decodeStr();
+            local decodeContent = decodeStr(historyTab[i]);
             record_modify(screen, HistoryRecordId, index, decodeContent);
         end
         index = index + 1;
@@ -4467,7 +4494,7 @@ function setHistoryScreen(screen)
     --显示总页数
     local totalPage = 0;
     local modePage = 0;
-    if math.fmod(#historyTab,10) then
+    if math.fmod(#historyTab,10) > 1 then
         modePage = 1;
     end
     totalPage = math.modf(#historyTab/10) + modePage
@@ -4500,7 +4527,8 @@ function showHistoryByScreenAndPage(screen, page)
     local index = 0;
     for i= si, ei, -1 do
         if historyTab[i] ~= nil then
-            record_modify(screen, HistoryRecordId, index, historyTab[i]);
+            local decodeContent = decodeStr(historyTab[i]);
+            record_modify(screen, HistoryRecordId, index, decodeContent);
         end
         index = index + 1;
     end
@@ -4513,7 +4541,7 @@ function showHistoryByScreenAndPage(screen, page)
     --显示总页数
     totalPage = 0;
     local modePage = 0;
-    if math.fmod(#historyTab,10) then
+    if math.fmod(#historyTab,10) > 1 then
         modePage = 1;
     end
     totalPage = math.modf(#historyTab/10) + modePage
@@ -4542,6 +4570,8 @@ function exportHistory(screen)
         destFilePath = UsbPath .. "log.txt";
     end
 end
+
+
 
 --***********************************************************************************************
 --按行读取文件, 将每一行的数据都放入tab中.
@@ -5189,6 +5219,7 @@ function WriteParaToConfigStrAndFile(tagNum)
         for i = RUNCTRL_TextSid, RUNCTRL_TextEid, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_text(RUN_CONTROL_SCREEN, i) .. ",";
         end
+        ConfigStr[0] = ConfigStr[0]..Sys.status--保存工作状态
         ConfigStr[0] = ConfigStr[0] .."</common>"
 
         ConfigStr[0] = ConfigStr[0] .."<period>"
@@ -5282,57 +5313,91 @@ function SetConfigParaToScreen(tagNum)
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
     if tagNum == 1 then--流程设置界面中的参数
         for i = 1, 12, 1 do
-            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, tab[(i - 1) * 3 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, tab[(i - 1) * 3 + 2]);  --把数据显示到文本框中
-            set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId, tab[(i - 1) * 3 + 3]);  --把数据显示到文本框中
+            if tab[(i - 1) * 3 + 1] ~= nil then
+                set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, tab[(i - 1) * 3 + 1]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 3 + 2] ~= nil then
+                set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, tab[(i - 1) * 3 + 2]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 3 + 3] ~= nil then
+                set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId, tab[(i - 1) * 3 + 3]);  --把数据显示到文本框中
+            end
         end
         for i = 13, 24, 1 do
-            set_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId, tab[(i - 1) * 3 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId, tab[(i - 1) * 3 + 2]);  --把数据显示到文本框中
-            set_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId, tab[(i - 1) * 3 + 3]);  --把数据显示到文本框中
+            if tab[(i - 1) * 3 + 1] ~= nil then
+                set_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId, tab[(i - 1) * 3 + 1]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 3 + 2] ~= nil then
+                set_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId, tab[(i - 1) * 3 + 2]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 3 + 3] ~= nil then
+                set_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId, tab[(i - 1) * 3 + 3]);  --把数据显示到文本框中
+            end
         end
     elseif tagNum == 2 then--运行控制界面中的参数
         local subTagString = GetSubString(tagString, "<common>", "</common>");--截取标签之间的字符串
         tab = split(subTagString, ",")
         for i = RUNCTRL_TextSid, RUNCTRL_TextEid, 1 do
-            set_text(RUN_CONTROL_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(RUN_CONTROL_SCREEN, i, tab[i]);
+            end
+            Sys.stateBeforePwrOff = WorkStatus[Sys.language].stop;--默认: 上一次断电时的状态为停止
+            if tab[RUNCTRL_TextEid + 1] ~= nil then
+                Sys.stateBeforePwrOff = tab[RUNCTRL_TextEid + 1];
+            end
         end
 
         subTagString = GetSubString(tagString, "<period>", "</period>");--截取标签之间的字符串
         tab = split(subTagString, ",")
         for i = RUNCTRL_PEROID_BtSid, RUNCTRL_PEROID_BtEid, 1 do
-            set_value(RUN_CONTROL_PERIOD_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_value(RUN_CONTROL_PERIOD_SCREEN, i, tab[i]);
+            end
         end
         for i = RUNCTRL_PEROID_TextSid, RUNCTRL_PEROID_TextEid, 1 do
-            set_text(RUN_CONTROL_PERIOD_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(RUN_CONTROL_PERIOD_SCREEN, i, tab[i]);
+            end
         end
 
         subTagString = GetSubString(tagString, "<timed>", "</timed>");--截取标签之间的字符串
         tab = split(subTagString, ",")
         for i = RUNCTRL_TIMED_TextSid, RUNCTRL_TIMED_TextEid, 1 do
-            set_text(RUN_CONTROL_TIMED_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(RUN_CONTROL_TIMED_SCREEN, i, tab[i]);
+            end
         end
 
         subTagString = GetSubString(tagString, "<hand>", "</hand>");--截取标签之间的字符串
         tab = split(subTagString, ",")
         for i = RUNCTRL_HAND_TextSid, RUNCTRL_HAND_TextEid, 1 do
-            set_text(RUN_CONTROL_HAND_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(RUN_CONTROL_HAND_SCREEN, i, tab[i]);
+            end
         end
 
     elseif tagNum == 3 then--量程设置界面中的参数
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
-            set_text(RANGE_SET_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(RANGE_SET_SCREEN, i, tab[i]);
+            end
         end
     elseif tagNum == 4 then
         for i = IOSET_TextStartId, IOSET_TextEndId, 1 do
-            set_text(IN_OUT_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(IN_OUT_SCREEN, i, tab[i]);
+            end
         end
     elseif tagNum == 5 then
         for i = REAGENT_BtStartId, REAGENT_BtEndId, 1 do
-            set_value(HAND_OPERATE3_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_value(HAND_OPERATE3_SCREEN, i, tab[i]);
+            end
         end
         for i = REAGENT_TextStartId, REAGENT_TexEndId, 1 do
-            set_text(HAND_OPERATE3_SCREEN, i, tab[i]);
+            if tab[i] ~= nil then
+                set_text(HAND_OPERATE3_SCREEN, i, tab[i]);
+            end
         end
     end
 end
@@ -5482,24 +5547,12 @@ function changeCfgFileLanguage(language)
                             contentTab[CALCULATE_CalcWayTextId] = CalcWay[destLanguage].diff
                         end
 
-                        if contentTab[CALCULATE_CalcOrderTextId] == CalcOrder[srcLanguage].first then
-                            contentTab[CALCULATE_CalcOrderTextId] = CalcOrder[destLanguage].first
-                        elseif contentTab[CALCULATE_CalcOrderTextId] == CalcOrder[srcLanguage].second then
-                            contentTab[CALCULATE_CalcOrderTextId] = CalcOrder[destLanguage].second
-                        elseif contentTab[CALCULATE_CalcOrderTextId] == CalcOrder[srcLanguage].third then
-                            contentTab[CALCULATE_CalcOrderTextId] = CalcOrder[destLanguage].third
-                        end
-
                         if contentTab[CALCULATE_CalcTypeTextId] == CalcType[srcLanguage][1] then
                             contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][1]
                         elseif contentTab[CALCULATE_CalcTypeTextId] == CalcType[srcLanguage][2] then
                             contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][2]
                         elseif contentTab[CALCULATE_CalcTypeTextId] == CalcType[srcLanguage][3] then
                             contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][3]
-                        elseif contentTab[CALCULATE_CalcTypeTextId] == CalcType[srcLanguage][4] then
-                            contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][4]
-                        elseif contentTab[CALCULATE_CalcTypeTextId] == CalcType[srcLanguage][5] then
-                            contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][5]
                         end
                         contentString = "";
                         for k = 1, 13, 1 do
@@ -5824,65 +5877,103 @@ function ReadActionTagOfFile(fileName, actionNumber)
     local tab = split(contentTabStr, ",");--分割字符串
     if actionNumber == 0 then --判定为<action0>标签
         for i = 1, 12, 1 do
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            if tab[(i - 1) * 2 + 1] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 2 + 2] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            end
         end
         for i = 13, 24, 1 do
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            if tab[(i - 1) * 2 + 1] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 2 + 2] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            end
         end
         for i = 25, 36, 1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            if tab[(i - 1) * 2 + 1] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+             end
+            if tab[(i - 1) * 2 + 2] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            end
         end
         for i = 37, 48, 1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            if tab[(i - 1) * 2 + 1] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+            end
+            if tab[(i - 1) * 2 + 2] ~= nil then
+                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+            end
         end
         --------------------------------读-初始化界面参数--------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][1] then
         for i = INIT_BtStartId, INIT_BtEndId, 1 do
-            set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_INIT_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = INIT_TextStartId, INIT_TextEndId, 1 do
-            set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_INIT_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-折射泵界面参数--------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][2] then
         for i = INJECT_BtStartId, INJECT_BtEndId, 1 do
-            set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
+            end
         end
         for i = INJECT_TextStartId, INJECT_TextEndId, 1 do
-            set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
+            if tab[i] ~= nil then
+                set_text(PROCESS_INJECT_SCREEN, i, tab[i]);--tab中前17个位按钮值
+            end
         end
         --------------------------------读-注射泵加液参数-------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][3] then
         for i = INJECT_ADD_BtStartId, INJECT_ADD_BtEndId, 1 do
-            set_value(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = INJECT_ADD_TextStartId, INJECT_ADD_TextEndId, 1 do
-            set_text(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_INJECT_ADD_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-读取信号参数--------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][4] then
         for i = ReadSignal_TextStartId, ReadSignal_TextEndId, 1 do
-            set_text(PROCESS_READ_SIGNAL_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_READ_SIGNAL_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-蠕动泵加液参数------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][5] then
         for i = PERISTALTIC_BtStartId, PERISTALTIC_BtEndId, 1 do
-            set_value(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = PERISTALTIC_TextStartId, PERISTALTIC_TextEndId, 1 do
-            set_text(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_PERISTALTIC_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-计算参数------------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][6] then
         for i = CALCULATE_BtStartId, CALCULATE_BtEndId, 1 do
-            set_value(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = CALCULATE_TextStartId, CALCULATE_TextEndId, 1 do
-            set_text(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_CALCULATE_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-等待时间参数--------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][7] then
@@ -5890,18 +5981,26 @@ function ReadActionTagOfFile(fileName, actionNumber)
         --------------------------------读-消解参数------------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][8] then
         for i = DISPEL_BtStartId, DISPEL_BtEndId, 1 do
-            set_value(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = DISPEL_TextStartId, DISPEL_TextEndId, 1 do
-            set_text(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_DISPEL_SCREEN, i, tab[i]);--写入文本值
+            end
         end
         --------------------------------读-阀操作参数------------------------------------------------------
     elseif actionType[1] == ActionItem[Sys.language][9] then
         for i = VALVE_BtStartId, VALVE_BtEndId, 1 do
-            set_value(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入按钮值
+            if tab[i] ~= nil then
+                set_value(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入按钮值
+            end
         end
         for i = VALVE_TextStartId, VALVE_TextEndId, 1 do
-            set_text(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入文本值
+            if tab[i] ~= nil then
+                set_text(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入文本值
+            end
         end
     end
 end
@@ -6069,9 +6168,9 @@ function FloatToHex(floatNum)
     return Result
 end
 
---[[-----------------------------------------------------------------------------------------------------------------
-    单个字符加密函数
---------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--    单个字符加密函数
+--***********************************************************************************************
 function encryptChar(char)
     local enChar;
     if string.byte(char) < 128 then
@@ -6082,9 +6181,9 @@ function encryptChar(char)
     return enChar;
 end
 
---[[-----------------------------------------------------------------------------------------------------------------
-    单个字符解密函数
---------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--    单个字符解密函数
+--***********************************************************************************************
 function decodeChar(char)
     local deChar;
     if string.byte(char) >= 128 then
@@ -6095,9 +6194,9 @@ function decodeChar(char)
     return deChar
 end
 
---[[-----------------------------------------------------------------------------------------------------------------
-    字符串加密函数
---------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+ --   字符串加密函数
+--***********************************************************************************************
 function encryptStr(str)
     local enStr = ""
     for i=1, #str, 1 do
@@ -6107,9 +6206,9 @@ function encryptStr(str)
     return enStr;
 end
 
---[[-----------------------------------------------------------------------------------------------------------------
-    字符串解密函数
---------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--    字符串解密函数
+--***********************************************************************************************
 function decodeStr(str)
     local deStr = ""
     for i=1, #str, 1 do
@@ -6117,4 +6216,23 @@ function decodeStr(str)
         deStr = deStr..decodeChar(signelChar);
     end
     return deStr;
+end
+
+--***********************************************************************************************
+--- 保留小数点后n位
+--- nNum 源数字, n 小数位数
+-----***********************************************************************************************
+function GetPreciseDecimal(nNum, n)
+    if type(nNum) ~= "number" then
+        return nNum;
+    end
+    n = n or 0;
+    n = math.floor(n)
+    if n < 0 then
+        n = 0;
+    end
+    local nDecimal = 10 ^ n
+    local nTemp = math.floor(nNum * nDecimal);
+    local nRet = nTemp / nDecimal;
+    return nRet;
 end

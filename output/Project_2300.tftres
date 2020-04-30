@@ -67,37 +67,37 @@
         <image id="17" url="d:\ningjw\2300project\Images\input.png" effect_width="50" effect_height="34" />
         <image id="18" url="d:\ningjw\2300project\Images\多选框-否.png" effect_width="30" effect_height="30" />
         <image id="19" url="d:\ningjw\2300project\Images\多选框-是.png" effect_width="30" effect_height="30" />
-        <image id="20" url="d:\ningjw\2300project\Images\input.png" effect_width="110" effect_height="35" />
-        <image id="21" url="d:\ningjw\2300project\Images\time_input.png" effect_width="85" effect_height="35" />
-        <image id="22" url="d:\ningjw\2300project\Images\input.png" effect_width="120" effect_height="33" />
-        <image id="23" url="d:\ningjw\2300project\Images\动作.png" effect_width="550" effect_height="505" />
-        <image id="24" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="55" effect_height="32" />
-        <image id="25" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="55" effect_height="32" />
-        <image id="26" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="80" effect_height="41" />
-        <image id="27" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="41" />
-        <image id="28" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="50" effect_height="30" />
-        <image id="29" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="30" />
-        <image id="30" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="55" effect_height="30" />
-        <image id="31" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="55" effect_height="30" />
-        <image id="32" url="d:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="35" />
-        <image id="33" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="38" effect_height="38" />
-        <image id="34" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="38" effect_height="38" />
-        <image id="35" url="d:\ningjw\2300project\Images\input.png" effect_width="50" effect_height="30" />
-        <image id="36" url="d:\ningjw\2300project\Images\多选框-是.png" effect_width="32" effect_height="30" />
-        <image id="37" url="d:\ningjw\2300project\Images\input.png" effect_width="80" effect_height="30" />
-        <image id="38" url="d:\ningjw\2300project\Images\input.png" effect_width="60" effect_height="30" />
-        <image id="39" url="d:\ningjw\2300project\Images\input.png" effect_width="53" effect_height="30" />
-        <image id="40" url="d:\ningjw\2300project\Images\input.png" effect_width="55" effect_height="30" />
-        <image id="41" url="d:\ningjw\2300project\Images\input.png" effect_width="82" effect_height="31" />
-        <image id="42" url="d:\ningjw\2300project\Images\input.png" effect_width="82" effect_height="30" />
-        <image id="43" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="100" effect_height="35" />
-        <image id="44" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="150" effect_height="30" />
-        <image id="45" url="d:\ningjw\2300project\Images\Bright3 Button.jpg" effect_width="150" effect_height="30" />
-        <image id="46" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="123" effect_height="30" />
-        <image id="47" url="d:\ningjw\2300project\Images\Bright3 Button.jpg" effect_width="123" effect_height="30" />
-        <image id="48" url="d:\ningjw\2300project\Images\input.png" effect_width="83" effect_height="31" />
-        <image id="49" url="d:\ningjw\2300project\Images\input.png" effect_width="84" effect_height="30" />
-        <image id="50" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="100" effect_height="30" />
+        <image id="20" url="d:\ningjw\2300project\Images\time_input.png" effect_width="85" effect_height="35" />
+        <image id="21" url="d:\ningjw\2300project\Images\input.png" effect_width="120" effect_height="33" />
+        <image id="22" url="d:\ningjw\2300project\Images\动作.png" effect_width="550" effect_height="505" />
+        <image id="23" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="55" effect_height="32" />
+        <image id="24" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="55" effect_height="32" />
+        <image id="25" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="80" effect_height="41" />
+        <image id="26" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="41" />
+        <image id="27" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="50" effect_height="30" />
+        <image id="28" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="30" />
+        <image id="29" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="55" effect_height="30" />
+        <image id="30" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="55" effect_height="30" />
+        <image id="31" url="d:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="35" />
+        <image id="32" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="38" effect_height="38" />
+        <image id="33" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="38" effect_height="38" />
+        <image id="34" url="d:\ningjw\2300project\Images\input.png" effect_width="50" effect_height="30" />
+        <image id="35" url="d:\ningjw\2300project\Images\多选框-是.png" effect_width="32" effect_height="30" />
+        <image id="36" url="d:\ningjw\2300project\Images\input.png" effect_width="80" effect_height="30" />
+        <image id="37" url="d:\ningjw\2300project\Images\input.png" effect_width="60" effect_height="30" />
+        <image id="38" url="d:\ningjw\2300project\Images\input.png" effect_width="53" effect_height="30" />
+        <image id="39" url="d:\ningjw\2300project\Images\input.png" effect_width="55" effect_height="30" />
+        <image id="40" url="d:\ningjw\2300project\Images\input.png" effect_width="82" effect_height="31" />
+        <image id="41" url="d:\ningjw\2300project\Images\input.png" effect_width="57" effect_height="30" />
+        <image id="42" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="100" effect_height="35" />
+        <image id="43" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="150" effect_height="30" />
+        <image id="44" url="d:\ningjw\2300project\Images\Bright3 Button.jpg" effect_width="150" effect_height="30" />
+        <image id="45" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="123" effect_height="30" />
+        <image id="46" url="d:\ningjw\2300project\Images\Bright3 Button.jpg" effect_width="123" effect_height="30" />
+        <image id="47" url="d:\ningjw\2300project\Images\input.png" effect_width="83" effect_height="31" />
+        <image id="48" url="d:\ningjw\2300project\Images\input.png" effect_width="84" effect_height="30" />
+        <image id="49" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="100" effect_height="30" />
+        <image id="50" url="d:\ningjw\2300project\Images\input.png" effect_width="82" effect_height="30" />
         <image id="51" url="d:\ningjw\2300project\Images\input.png" effect_width="82" effect_height="35" />
         <image id="52" url="d:\ningjw\2300project\Images\单选框-否.png" effect_width="30" effect_height="30" />
         <image id="53" url="d:\ningjw\2300project\Images\单选框-是.png" effect_width="30" effect_height="30" />
@@ -117,35 +117,37 @@
         <image id="67" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="100" effect_height="35" />
         <image id="68" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="50" effect_height="35" />
         <image id="69" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="50" effect_height="35" />
-        <image id="70" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="90" effect_height="40" />
-        <image id="71" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="90" effect_height="40" />
-        <image id="72" url="d:\ningjw\2300project\Images\input.png" effect_width="60" effect_height="40" />
-        <image id="73" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="60" effect_height="40" />
-        <image id="74" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="60" effect_height="41" />
-        <image id="75" url="d:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
-        <image id="76" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="311" effect_height="35" />
-        <image id="77" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="229" effect_height="35" />
-        <image id="78" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="110" effect_height="35" />
-        <image id="79" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="110" effect_height="35" />
-        <image id="80" url="d:\ningjw\2300project\Images\input.png" effect_width="93" effect_height="35" />
-        <image id="81" url="d:\ningjw\2300project\Images\input.png" effect_width="105" effect_height="35" />
-        <image id="82" url="d:\ningjw\2300project\Images\input.png" effect_width="97" effect_height="35" />
-        <image id="83" url="d:\ningjw\2300project\Images\input.png" effect_width="96" effect_height="35" />
-        <image id="84" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="150" effect_height="35" />
-        <image id="85" url="d:\ningjw\2300project\Images\input.png" effect_width="95" effect_height="35" />
-        <image id="86" url="d:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="40" />
-        <image id="87" url="d:\ningjw\2300project\Images\联系我们.png" effect_width="493" effect_height="276" />
-        <image id="88" url="d:\ningjw\2300project\Images\自定义键盘-弹起.jpg" effect_width="600" effect_height="350" />
-        <image id="89" url="d:\ningjw\2300project\Images\自定义键盘-按下.png" effect_width="600" effect_height="350" />
-        <image id="90" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="318" />
-        <image id="91" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="40" />
-        <image id="92" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="67" effect_height="40" />
-        <image id="93" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="67" effect_height="40" />
-        <image id="94" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="320" />
-        <image id="95" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="80" effect_height="35" />
-        <image id="96" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="35" />
-        <image id="97" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="35" />
-        <image id="98" url="d:\ningjw\2300project\Images\input.png" effect_width="78" effect_height="30" />
+        <image id="70" url="d:\ningjw\2300project\Images\input.png" effect_width="110" effect_height="35" />
+        <image id="71" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="60" effect_height="40" />
+        <image id="72" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="60" effect_height="40" />
+        <image id="73" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="90" effect_height="40" />
+        <image id="74" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="90" effect_height="40" />
+        <image id="75" url="d:\ningjw\2300project\Images\input.png" effect_width="60" effect_height="40" />
+        <image id="76" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="60" effect_height="41" />
+        <image id="77" url="d:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
+        <image id="78" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="311" effect_height="35" />
+        <image id="79" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="229" effect_height="35" />
+        <image id="80" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="110" effect_height="35" />
+        <image id="81" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="110" effect_height="35" />
+        <image id="82" url="d:\ningjw\2300project\Images\input.png" effect_width="93" effect_height="35" />
+        <image id="83" url="d:\ningjw\2300project\Images\input.png" effect_width="105" effect_height="35" />
+        <image id="84" url="d:\ningjw\2300project\Images\input.png" effect_width="97" effect_height="35" />
+        <image id="85" url="d:\ningjw\2300project\Images\input.png" effect_width="96" effect_height="35" />
+        <image id="86" url="d:\ningjw\2300project\Images\文字底色.jpg" effect_width="150" effect_height="35" />
+        <image id="87" url="d:\ningjw\2300project\Images\input.png" effect_width="95" effect_height="35" />
+        <image id="88" url="d:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="40" />
+        <image id="89" url="d:\ningjw\2300project\Images\联系我们.png" effect_width="493" effect_height="276" />
+        <image id="90" url="d:\ningjw\2300project\Images\自定义键盘-弹起.jpg" effect_width="600" effect_height="350" />
+        <image id="91" url="d:\ningjw\2300project\Images\自定义键盘-按下.png" effect_width="600" effect_height="350" />
+        <image id="92" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="318" />
+        <image id="93" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="40" />
+        <image id="94" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="67" effect_height="40" />
+        <image id="95" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="67" effect_height="40" />
+        <image id="96" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="320" />
+        <image id="97" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="80" effect_height="35" />
+        <image id="98" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="35" />
+        <image id="99" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="35" />
+        <image id="100" url="d:\ningjw\2300project\Images\input.png" effect_width="78" effect_height="30" />
     </images>
     <waves />
 </Resource>

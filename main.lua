@@ -141,9 +141,9 @@ TipsTab = {
         pullOutSd = "拔出SD卡",
         pullOutUSB = "拔出U盘",
         importing = "正在导入配置文件...",
-        imported    = "配置文件导入成功",
+        imported    = "导入成功",
         exporting = "正在导出配置文件...",
-        exported    = "配置文件导出成功",
+        exported    = "导出成功",
         exportTips = "请在SD卡创建config文件夹后重试",
         selectProcess = "请选择流程",
         sysInit = "系统初始化",
@@ -456,13 +456,18 @@ Sys = {
 --[[-----------------------------------------------------------------------------------------------------------------
     入口函数
 --------------------------------------------------------------------------------------------------------------------]]
+
+
 --***********************************************************************************************
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
-    print(decodeContent)
     print(_VERSION);
-    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    uart_set_timeout(2000, 1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
+    start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
+    -- SdPath = "C:/";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    -- UsbPath = "";
+
     for i = 1, MaxAction, 1 do
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
@@ -499,14 +504,10 @@ function on_init()
     for i = 1, #HandProcessTab, 1 do
         set_text(RUN_CONTROL_HAND_SCREEN, HandProcessTab[i].textId, BLANK_SPACE);
     end
-
-
-    ReadFileToConfigStr();--将配置文件加载到ConfigStr数组
     
     if record_get_count(SYSTEM_INFO_SCREEN, SysPwdRecordId) == 0 then --表示还未设置初始密码
         record_add(SYSTEM_INFO_SCREEN, SysPwdRecordId, "171717");--运维员的默认密码
         record_add(SYSTEM_INFO_SCREEN, SysPwdRecordId, "172172");--管理员的默认密码
-        -- 
     end
     --系统信息界面下的仪器型号与序列号默认不能设置,需要输入密码后才可设置
     set_enable(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, DISABLE);
@@ -520,10 +521,10 @@ function on_init()
     set_equipment_type();
 
     --表示还未设置仪器序列号-------------------------------------------------------------------------------------------
-    if record_get_count(SYSTEM_INFO_SCREEN, SerialNumberRecordId) == 0 then                                     --
+    if record_get_count(SYSTEM_INFO_SCREEN, SerialNumberRecordId) == 0 then                                     
         record_add(SYSTEM_INFO_SCREEN, SerialNumberRecordId, "0000000000");--
     end
-    set_text(SYSTEM_INFO_SCREEN, SerialNumberTextId, record_read(SYSTEM_INFO_SCREEN, SerialNumberRecordId, 0)); --
+    set_text(SYSTEM_INFO_SCREEN, SerialNumberTextId, record_read(SYSTEM_INFO_SCREEN, SerialNumberRecordId, 0));
 
     --表示还未设置系统语言-----------------------------------------------------------------------------------------
     if record_get_count(SYSTEM_INFO_SCREEN, SysLanguageRecordId) == 0 then             
@@ -538,9 +539,6 @@ function on_init()
         set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE);                           
     end                                                                                
     changeCfgFileLanguage(Sys.language);                                               
-
-    --检测并创建空的历史记录文件-----------------------------------------------------------------
-    checkHistoryFile();
 
     --反控模式下,隐藏开始按钮
     Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
@@ -558,14 +556,14 @@ function on_init()
     else
         SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     end
-
-    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     
-    SetSysUser(SysUser[Sys.language].maintainer);   --开机之后默认为运维员(调试时使用的代码)
+    SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
-    uart_set_timeout(2000, 1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
-    start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
+
+    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
+
+    
 
     --以下代码用于测试自动量程切换功能
     -- Sys.rangetypeId = 1;--预设当前量程id为1
@@ -749,8 +747,6 @@ function on_screen_change(screen)
         goto_dialog_screen();
     elseif screen == RUN_CONTROL_PERIOD_SCREEN then --跳转到周期设置界面
         goto_period_mode_set_screen();
-    elseif screen == PROCESS_COPY_SCREEN then
-        goto_process_copy_screen();
     end
 end
 
@@ -766,7 +762,7 @@ end
 --拔出 U 盘后，执行此回调函数
 --***********************************************************************************************
 function on_usb_removed()
-    ShowSysTips(TipsTab[Sys.language].pullOutUSB);
+    ShowSysTips(TipsTab[Sys.language].pullOutUSB..UsbPath);
     UsbPath = nil;
 end
 
@@ -775,6 +771,8 @@ end
 --***********************************************************************************************
 function on_sd_inserted(dir)
     SdPath = dir;
+    ReadFileToConfigStr();--将配置文件加载到ConfigStr数组
+    checkHistoryFile();--检测并创建空的历史记录文件
     ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
 end
 
@@ -782,7 +780,7 @@ end
 --拔出 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_removed()
-    ShowSysTips(TipsTab[Sys.language].pullOutSd);
+    ShowSysTips(TipsTab[Sys.language].pullOutSd..SdPath);
     SdPath = nil;
 end
 
@@ -1845,13 +1843,13 @@ function LoadActionStr(index)
     local configFile = io.open(SdPath .. "config/" .. index, "r")          --打开文本
     if configFile ~= nil then    
         configFile:seek("set")                  --把文件位置定位到开头
-        ConfigStr[index] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串
+        ConfigStr[index] = configFile:read("a") --从当前位置读取整个文件，并赋值到字符串
         configFile:close()                      --关闭文本
     else
         ShowSysTips("未找到配置文件");
     end
     Sys.processFileStr = ConfigStr[index];
-
+    
     --根据流程id过去流程类型与流程名称-----------------------------------------------
     local tagString = GetSubString(ConfigStr[0], cfgFileTab[1].sTag, cfgFileTab[1].eTag);--截取<ProcessSet>标签之间的字符串
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
@@ -1860,6 +1858,7 @@ function LoadActionStr(index)
     Sys.processRange = tab[index * 3 - 0];
     Sys.processTag = getTagByProcessType(Sys.processType);
     print("流程Id="..index.."类型="..Sys.processType.." 名称="..Sys.processName.. " 量程="..Sys.processRange);
+    
     --统计action个数,给Sys.actionTotal变量,以及SystemArg.actionTab赋值 ----------------------
     --Sys.actionTab数组长度为36,表示最多可记录36个action, 其值保存的是当前步骤对应的action序号
     --假如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
@@ -1881,7 +1880,7 @@ function LoadActionStr(index)
             Sys.actionNameTab[Sys.actionTotal] = tab[i + 1];--i+1对应了(2,4,6...)
         end
     end
-
+    ShowSysTips(" 名称="..Sys.processName.." 步数="..Sys.actionTotal);
     ------------------------试剂余量判断----------------------------------------------------------
     --统计跑完该流程,需要消耗的各试剂多少量
     Sys.reagentStatus = RESET;
@@ -2347,19 +2346,10 @@ function process_set12_control_notify(screen, control, value)
         WriteParaToConfigStrAndFile(1);
         --导入按钮----------------------------------------------------------------------
     elseif control == InportBtId then --
-        if SdPath ~= nil then
+        if UsbPath ~= nil and SdPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0, 24, 1 do--依次导出文件"0"~"24"
-                ConfigFileCopy(SdPath .. "config/" .. i, i);--将Sd卡中的配置文件导入都系统
-            end
-            on_init();
-            Sys.hand_control_func = nil;
-            SystemStop(stopByNormal);
-            ShowSysTips(TipsTab[Sys.language].imported);
-        elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab[Sys.language].importing);
-            for i = 0, 24, 1 do--依次导出文件"0"~"24"
-                ConfigFileCopy(UsbPath .. "config/" .. i, i);--将Sd卡中的配置文件导入都系统
+                ConfigFileCopy(UsbPath .. "config/" .. i, SdPath .. "config/"..i);--将Sd卡中的配置文件导入都系统
             end
             on_init();
             Sys.hand_control_func = nil;
@@ -2367,19 +2357,13 @@ function process_set12_control_notify(screen, control, value)
             ShowSysTips(TipsTab[Sys.language].imported);
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
-        end;
+        end
         --导出按钮----------------------------------------------------------------------
     elseif control == ExportBtId then --(将流程配置导出到SD卡中)
-        if SdPath ~= nil then
+        if UsbPath ~= nil and SdPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].exporting);
             for i = 0, 24, 1 do--依次导出文件"0"~"24"
-                ConfigFileCopy(i, SdPath .. "config/" .. i);--将文件导出到config文件中,配置文件名为0~24
-            end
-            ShowSysTips(TipsTab[Sys.language].exported);
-        elseif UsbPath ~= nil then
-            ShowSysTips(TipsTab[Sys.language].exporting);
-            for i = 0, 24, 1 do--依次导出文件"0"~"24"
-                ConfigFileCopy(i, UsbPath .. "config/" .. i);--将文件导出到config文件中,配置文件名为0~24
+                ConfigFileCopy(SdPath .. "config/" .. i, UsbPath .. "config/"..i);--将文件导出到config文件中,配置文件名为0~24
             end
             ShowSysTips(TipsTab[Sys.language].exported);
         else
@@ -2424,10 +2408,10 @@ function process_set12_control_notify(screen, control, value)
         --查看按钮----------------------------------------------------------------------
     elseif control >= ProcessTab[1].editId and control <= ProcessTab[24].editId and get_text(screen, control + 250) ~= BLANK_SPACE and value == ENABLE then
         local processName = get_text(screen, control + 150);
-        set_text(PROCESS_EDIT1_SCREEN, AnalyteSetId, processName);
-        set_text(PROCESS_EDIT2_SCREEN, AnalyteSetId, processName);
-        set_text(PROCESS_EDIT3_SCREEN, AnalyteSetId, processName);
-        set_text(PROCESS_EDIT4_SCREEN, AnalyteSetId, processName);
+        set_text(PROCESS_EDIT1_SCREEN, ProcessSelectId, processName);--设置流程名称
+        set_text(PROCESS_EDIT2_SCREEN, ProcessSelectId, processName);
+        set_text(PROCESS_EDIT3_SCREEN, ProcessSelectId, processName);
+        set_text(PROCESS_EDIT4_SCREEN, ProcessSelectId, processName);
         ReadActionTagOfFile(control-50, 0);
         change_screen(PROCESS_EDIT1_SCREEN);
         if control <= ProcessTab[12].editId then--设置当点击流程编辑1界面中的向前按钮时,需要返回哪一个界面
@@ -2435,9 +2419,12 @@ function process_set12_control_notify(screen, control, value)
         else
             DestProcessSetScreen = PROCESS_SET2_SCREEN;
         end
+    --复制按钮----------------------------------------------------------------------------
     elseif control == ProcessCopyBtId and value == ENABLE then
         if operate_permission_detect(CHK_USER) == ENABLE then--检测权限
             change_screen(PROCESS_COPY_SCREEN);
+            set_visiable(PROCESS_COPY_SCREEN, 5, 0)
+            set_visiable(PROCESS_COPY_SCREEN, 6, 0)
         end
     end
 end
@@ -2447,14 +2434,14 @@ end
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function process_copy_control_notify(screen, control, value)
-    if control == SureButtonId then
+    if control == SureButtonId and value == ENABLE then
         local srcFile = get_text(PROCESS_COPY_SCREEN,2);
         local destFile = get_text(PROCESS_COPY_SCREEN,4);
         local configFile = io.open(SdPath .. "config/" ..srcFile, "r")          --打开文本
         if configFile ~= nil then
             ConfigFileCopy(SdPath .. "config/" .. srcFile, SdPath .. "config/" .. destFile);--将文件导出到config文件中,配置文件名为0~24
             set_visiable(PROCESS_COPY_SCREEN, 5, 1);
-        else  
+        else
             set_visiable(PROCESS_COPY_SCREEN, 6, 1);
         end
     elseif control == CancelButtonId then
@@ -2462,21 +2449,14 @@ function process_copy_control_notify(screen, control, value)
     end
 end
 
---***********************************************************************************************
---用户通过触摸修改控件后，执行此回调函数。
---点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
---***********************************************************************************************
-function goto_process_copy_screen()
-    set_visiable(PROCESS_COPY_SCREEN, 5, 0);
-    set_visiable(PROCESS_COPY_SCREEN, 6, 0);
-end
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程编辑1/2/3/4
 --------------------------------------------------------------------------------------------------------------------]]
 ReturnProcessSetScreenId = 93;
-ProcesstypeId = 38;      --位于流程编辑1/3都是这个id
+ProcessSelectId = 38;      --位于流程编辑1/3都是这个id
 ProcessSelectTipsTextId = 21;--用于显示提示信息的文本框,流程编辑1/3界面中都是这个id
 ProcessSaveId = 19;
 --这里注意观察动作选择id,动作名称id,编辑id之间的数学转换关系:typeId = nameId + 100; nameId = editId + 100
@@ -2538,7 +2518,7 @@ TabAction = {
 --control:"编辑"按钮的id号
 function set_edit_screen(para, screen, control)
     print("动作类型="..para);
-    local fileName = getFileNameByProcessName(get_text(PROCESS_EDIT1_SCREEN,ProcesstypeId));
+    local fileName = getFileNameByProcessName(get_text(PROCESS_EDIT1_SCREEN,ProcessSelectId));
 
     --在流程编辑1界面, 当编辑按钮时,设置对应界面的参数
     if fileName ~= 0 then
@@ -4262,7 +4242,7 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 HistoryRecordId = 32;--历史记录控件Id号，分析、校准、报警、日志都是这个。
 HistoryClear = 2;
-HistoryExport = 12;
+HistoryExport = 8;
 HistoryNextPage = 128;
 HistoryPrevPage = 129;
 HistoryCurPage = 5;
@@ -4328,11 +4308,7 @@ function add_history_record(screen)
         table.remove(historyTab, 1);--删除第一行数据
     end
     table.insert(historyTab, signalHistoryContent);--添加一条历史记录
-    local fileWrite = io.open(filePath, "w")
-    if fileWrite then
-        writeTabToFile(fileWrite, historyTab)
-        fileWrite:close()
-    end
+    writeTabToFile(filePath, historyTab)--将tab中的数据写入文件当中
 
     --显示最近的10条历史记录
     if screen == get_current_screen() then
@@ -4382,15 +4358,15 @@ end
 function getFilePathByScreen(screen)
     local filePath = "";
     if screen == HISTORY_ANALYSIS_SCREEN then--分析历史
-        filePath = SdPath .. "Analysis";
+        filePath = SdPath .. "record/Analysis";
     elseif screen == HISTORY_CHECK_SCREEN then--核查历史
-        filePath = SdPath.."Check"
+        filePath = SdPath.."record/Check"
     elseif screen == HISTORY_CALIBRATION_SCREEN then--校正历史
-        filePath = SdPath.."Calibration"
+        filePath = SdPath.."record/Calibration"
     elseif screen == HISTORY_ALARM_SCREEN then--报警
-        filePath = SdPath.."Alarm"
+        filePath = SdPath.."record/Alarm"
     elseif screen == HISTORY_LOG_SCREEN then--日志
-        filePath = SdPath.."log"
+        filePath = SdPath.."record/log"
     end
     return filePath;
 end
@@ -4419,33 +4395,33 @@ end
 --***********************************************************************************************
 function checkHistoryFile()
     local file;
-    file = io.open(SdPath .. "Analysis");
+    file = io.open(SdPath .. "record/Analysis");
     if file == nil then
         file = io.open(SdPath .. "Analysis", "w+");--打开并清空该文件
     end
     file:close();
 
-    file = io.open(SdPath.."Check");
+    file = io.open(SdPath.."record/Check");
     if file == nil then
         file = io.open(SdPath.."Check", "w+");--打开并清空该文件
     end
     file:close();
 
-    file = io.open(SdPath.."Calibration");
+    file = io.open(SdPath.."record/Calibration");
     if file == nil then
         file = io.open(SdPath.."Calibration", "w+");--打开并清空该文件
     end
     file:close();
 
-    file = io.open(SdPath.."Alarm");
+    file = io.open(SdPath.."record/Alarm");
     if file == nil then
         file = io.open(SdPath.."Alarm", "w+");--打开并清空该文件
     end
     file:close();
 
-    file = io.open(SdPath..SdPath.."log");
+    file = io.open(SdPath.."record/log");
     if file == nil then
-        file = io.open(SdPath..SdPath.."log", "w+");--打开并清空该文件
+        file = io.open(SdPath.."log", "w+");--打开并清空该文件
     end
     file:close();
 
@@ -4552,25 +4528,31 @@ end
 --将历史记录以明文的方式导出到U盘
 --***********************************************************************************************
 function exportHistory(screen)
-    local srcFilePath,destFilePath
+    local srcFilePath,destFilePath,fileTab
     if screen == HISTORY_ANALYSIS_SCREEN then--分析历史
-        srcFilePath = SdPath .. "Analysis";
+        srcFilePath = SdPath .. "record/Analysis";
         destFilePath = UsbPath .. "Analysis.txt";
     elseif screen == HISTORY_CHECK_SCREEN then--核查历史
-        srcFilePath = SdPath.."Check"
+        srcFilePath = SdPath.."record/Check"
         destFilePath = UsbPath .. "Check.txt";
     elseif screen == HISTORY_CALIBRATION_SCREEN then--校正历史
-        srcFilePath = SdPath.."Calibration"
+        srcFilePath = SdPath.."record/Calibration"
         destFilePath = UsbPath .. "Calibration.txt";
     elseif screen == HISTORY_ALARM_SCREEN then--报警
-        srcFilePath = SdPath.."Alarm"
+        srcFilePath = SdPath.."record/Alarm"
         destFilePath = UsbPath .. "Alarm.txt";
     elseif screen == HISTORY_LOG_SCREEN then--日志
-        srcFilePath = SdPath.."log"
+        srcFilePath = SdPath.."record/log"
         destFilePath = UsbPath .. "log.txt";
     end
-end
 
+    fileTab = readFileToTab(srcFilePath);--将文件中的数据读取到fileTab变量
+    for i=1,#fileTab,1 do--解密每一行文件
+        fileTab[i] = decodeStr(fileTab[i]);
+    end
+    writeTabToFile(destFilePath, fileTab);
+    ShowSysTips(TipsTab[Sys.language].exported);--显示导出成功提示信息
+end
 
 
 --***********************************************************************************************
@@ -4594,30 +4576,17 @@ end
 --***********************************************************************************************
 --将Tab中的数据,按行写入文件当中
 --***********************************************************************************************
-function writeTabToFile(file, fileTab)
-    for i, line in ipairs(fileTab) do
-        file:write(line)
-        file:write("\n")
+function writeTabToFile(filePath, fileTab)
+    local fileWrite = io.open(filePath, "w")
+    if fileWrite then
+        for i, line in ipairs(fileTab) do
+            fileWrite:write(line)
+            fileWrite:write("\n")
+        end
+        fileWrite:close();
     end
 end
 
---***********************************************************************************************
---删除文件中的首行数据
---***********************************************************************************************
-function deleteFirstLineInFile(filePath)
-    local fileRead = io.open(filePath)
-    assert(fileRead, "file open failed")
-    if fileRead then
-        local tab = readFileToTab(fileRead);
-        fileRead:close();
-        table.remove(tab, 1);--删除第一行数据
-        local fileWrite = io.open(filePath, "w")
-        if fileWrite then
-            writeTabToFile(fileWrite, tab)
-            fileWrite:close()
-        end
-    end
-end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     系统信息
@@ -5616,7 +5585,7 @@ end
 --***********************************************************************************************
 function WriteCfgToFlash()
     print("调用 WriteCfgToFlash 函数");
-    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId);--获取流程名称
+    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcessSelectId);--获取流程名称
 
     local fileName = getFileNameByProcessName(processName);
     if fileName ~= 0 then
@@ -5632,7 +5601,7 @@ end
 --***********************************************************************************************
 function WriteDefaultActionTag(actionNumber)
     print("调用 WriteDefaultActionTag 函数");
-    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId);--获取流程名称
+    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcessSelectId);--获取流程名称
     local fileName = getFileNameByProcessName(processName);
     if fileName == 0 then
         return
@@ -5781,8 +5750,8 @@ end
 --***********************************************************************************************
 function WriteActionTagToConfigStr(actionNumber)
     print("调用 WriteActionTagToConfigStr 函数");
-    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId);--获取流程名称
-
+    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcessSelectId);--获取流程名称
+    
     for i = 1, 12, 1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
             WriteActionTagToBuf(i, actionNumber);--保存数据到文件中,文件名为1~24, 保存的内容为action0~action12标签
@@ -5801,7 +5770,7 @@ end
 --***********************************************************************************************
 function ChangeActionFileTag(actionNumber, flag)
     print("调用 ChangeActionFileTag 函数");
-    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcesstypeId);--获取流程名称
+    local processName = get_text(PROCESS_EDIT1_SCREEN, ProcessSelectId);--获取流程名称
     local fileName;
     for i = 1, 12, 1 do
         if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
@@ -5867,6 +5836,7 @@ function ReadActionTagOfFile(fileName, actionNumber)
 
     --再截取<content>标签中的内容
     local contentTabStr = GetSubString(actionString, "<content>", "</content>");
+    print("contentTabStr="..contentTabStr);
     if contentTabStr == nil then--如果没有内容,则清空流程编辑1/3界面中的动作选择与动作名称
         Sys.logContent = fileName .. "文件中没有找到<content>"
         ShowSysTips(Sys.logContent);
@@ -5886,26 +5856,26 @@ function ReadActionTagOfFile(fileName, actionNumber)
         end
         for i = 13, 24, 1 do
             if tab[(i - 1) * 2 + 1] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+                set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
             end
             if tab[(i - 1) * 2 + 2] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+                set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
             end
         end
         for i = 25, 36, 1 do
             if tab[(i - 1) * 2 + 1] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+                set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
              end
             if tab[(i - 1) * 2 + 2] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+                set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
             end
         end
         for i = 37, 48, 1 do
             if tab[(i - 1) * 2 + 1] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
+                set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, tab[(i - 1) * 2 + 1]);  --把数据显示到文本框中
             end
             if tab[(i - 1) * 2 + 2] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
+                set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, tab[(i - 1) * 2 + 2]); --把数据显示到文本框中
             end
         end
         --------------------------------读-初始化界面参数--------------------------------------------------
@@ -6073,7 +6043,20 @@ function DeleteSubString(str, substr1, substr2)
     return str
 end
 
-
+--***********************************************************************************************
+--复制文件操作, 用于配置文件的导入导出
+--***********************************************************************************************
+function ConfigFileCopy(sourcefile, destinationfile)
+    sFile = io.open(sourcefile, "r");
+    if sFile == nil then
+        return false;
+    end
+    destFile = io.open(destinationfile, "w");
+    destFile:write(sFile:read("*all"));
+    sFile:close()
+    destFile:close()
+    return true;
+end
 
 --***********************************************************************************************
 --将BCD转换为字符串，在获取版本信息的时候会使用到。

@@ -9,6 +9,7 @@
 --4724-7498：保存的是报警记录
 --7498-13022：保存的是运行日志
 --13022开始保存的是历史记录。
+
 --[[-----------------------------------------------------------------------------------------------------------------
     宏定义&全局变量
 --------------------------------------------------------------------------------------------------------------------]]
@@ -78,7 +79,20 @@ PublicTab = {
     [16] = HISTORY_LOG_SCREEN,
     [17] = SYSTEM_INFO_SCREEN,
     [18] = HISTORY_CHECK_SCREEN,
-};
+}
+
+AdminPwd = 1;
+MaintainerPwd = 2;
+EquipmentType = 3;
+SerialNumber = 4;
+SysLanguage = 5;
+
+
+lastTime = 1;
+lastResult = 2;
+lastE1 = 3;
+lastE2 = 4;
+lastStatus = 5;--上一次断电时的系统状态
 
 MaxProcess = 24;--最多可以编辑24个流程
 MaxAction = 48;--单个流程可以有48个步骤(动作)
@@ -304,11 +318,11 @@ VariableOnOff = {
 --计算方式
 CalcWay = {
     [CHN] = {
-        log = "取对数",
-        diff = "取差值",
+        log = "对数",
+        diff = "差值",
     },
     [ENG] = {
-        log = "Log10",
+        log = "Log",
         diff = "Diff",
     },
 }
@@ -346,7 +360,6 @@ Sys = {
     language = CHN, --系统语言
     userName = "", --用于保存当前用户
     status = 0, --系统状态:对应WorkStatus中的值
-    stateBeforePwrOff = 0,--上一次断电时的状态:对应WorkStatus中的值
     runType = 0, --运行方式: 对应WorkType中的值
     analysisType = COLOR_METHOD, --分析方法
     rangetypeId = 1, --用于记录量程选择
@@ -421,6 +434,8 @@ Sys = {
     signalMinTime = 0, --读取信号最小时间
     signalMaxTime = 0, --读取信号最大时间
     signalNumber = 0, --取样数，默认为10
+    slop = 0,--斜率
+    y_intercept = 0,--截距
 
     calculateWay = "", --计算方式: 取对数 或者 取差值 方式
     calculateType = "", --计算类型：有分析，校正,核查。
@@ -449,7 +464,9 @@ Sys = {
 
     ReadyToReadConfigFile = false, --导入配置文件后,不能第一时间读取,需要过一段时间,该变量用于指示配置文件已经导入,可以延时读取了
 
-    fileLineTab = {},--读取历史文件时,用于缓存文件数据
+    info = {};
+    lastInfo = {};
+    suddenPwrOff = false;--该变量用于判断是否需要运行"运行控制"界面中的"异常断电"流程
 }
 
 
@@ -463,10 +480,9 @@ Sys = {
 --***********************************************************************************************
 function on_init()
     print(_VERSION);
+    
     uart_set_timeout(2000, 1); --设置串口超时, 接收总超时2000ms, 字节间隔超时1ms
     start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
-    -- SdPath = "C:/";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    -- UsbPath = "";
 
     for i = 1, MaxAction, 1 do
         Sys.actionIdTab[i] = 0;
@@ -479,7 +495,59 @@ function on_init()
     set_text(SYSTEM_INFO_SCREEN, TouchScreenHardVerId, "190311");--显示触摸屏硬件版本号
     set_text(SYSTEM_INFO_SCREEN, TouchScreenSoftVerId, "20042909");--显示触摸屏软件版本号
 
+    --系统信息界面下的仪器型号与序列号默认不能设置,需要输入密码后才可设置
+    set_enable(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, DISABLE);
+    set_enable(SYSTEM_INFO_SCREEN, SerialNumberTextId, DISABLE);
+
     --将需要选择流程的文本框初始化为BLANK_SPACE---------------------------------------------
+    setTextToBlankSpace();
+    
+    record_control_check();--检测历史记录空间中保存的参数
+    
+    SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
+    --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
+
+    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    
+    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    -- UsbPath = "";
+    -- on_sd_inserted(SdPath);
+
+    -- if io.open(SdPath.."DCIOT.PKG") ~= nil then
+    --     os.remove(SdPath.."DCIOT.PKG");--删除SD中的升级文件
+    -- end
+
+    -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
+    --以下代码用于测试自动量程切换功能
+    -- Sys.rangetypeId = 1;--预设当前量程id为1
+    -- Sys.result = 5;--预设当前分析结果为5
+    -- process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+    --end  测试自动量程切换功能
+    --以下代码用于测试当记录满了之后, 是否会删除一条最旧记录的记录(报警记录)
+    
+    -- for i = 1,8,1 do
+    --     Sys.alarmContent = i;
+    --     add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
+    -- end
+
+    -- for i = 1,8,1 do
+    --     Sys.startTime = Sys.dateTime;
+    --     Sys.result = 1;
+    --     Sys.checkValue = 1;
+    --     Sys.signalE1 = 3000.0
+    --     Sys.signalE2 = 4000.0
+    --     Sys.rangetypeId = 1
+    --     Sys.processTag = "at"
+    --     add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
+    -- end
+
+end
+
+
+--***********************************************************************************************
+--将需要选择流程的文本框初始化为BLANK_SPACE
+--***********************************************************************************************
+function setTextToBlankSpace()
     for i = 1, 12, 1 do
         set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, BLANK_SPACE);
         set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, BLANK_SPACE);
@@ -504,90 +572,65 @@ function on_init()
     for i = 1, #HandProcessTab, 1 do
         set_text(RUN_CONTROL_HAND_SCREEN, HandProcessTab[i].textId, BLANK_SPACE);
     end
+end
+
+--***********************************************************************************************
+--历史记录空间检测, 主要检测一些参数的设置.
+--***********************************************************************************************
+function record_control_check()
+    --判断系统是否为首次上电运行-------------------------------------------------------------------------------
+    if record_get_count(SYSTEM_INFO_SCREEN, SysInfoRecordId) == 0 then 
+        Sys.info[AdminPwd] = "172172"--管理员密码
+        Sys.info[MaintainerPwd] = "171717"--运维员密码
+        Sys.info[EquipmentType] = "2300"--仪器型号
+        Sys.info[SerialNumber] = "0000000000"--仪器序列号
+        Sys.info[SysLanguage] = CHN --系统语言
+
+        local record = "";
+        for i=1, #Sys.info, 1 do
+            record = record..Sys.info[i]..","
+        end
+        record_add(SYSTEM_INFO_SCREEN, SysInfoRecordId, record);--初始化默认参数
+    end
+    Sys.info = split(record_read(SYSTEM_INFO_SCREEN, SysInfoRecordId, 0) , ",")
     
-    if record_get_count(SYSTEM_INFO_SCREEN, SysPwdRecordId) == 0 then --表示还未设置初始密码
-        record_add(SYSTEM_INFO_SCREEN, SysPwdRecordId, "171717");--运维员的默认密码
-        record_add(SYSTEM_INFO_SCREEN, SysPwdRecordId, "172172");--管理员的默认密码
-    end
-    --系统信息界面下的仪器型号与序列号默认不能设置,需要输入密码后才可设置
-    set_enable(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, DISABLE);
-    set_enable(SYSTEM_INFO_SCREEN, SerialNumberTextId, DISABLE);
 
-    --表示还未设置仪器型号---------------------------------------------------------------------------------------------
-    if record_get_count(SYSTEM_INFO_SCREEN, EquipmentTypeRecordId) == 0 then 
-        record_add(SYSTEM_INFO_SCREEN, EquipmentTypeRecordId, "2300");
-    end
-    set_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, record_read(SYSTEM_INFO_SCREEN, EquipmentTypeRecordId, 0));
-    set_equipment_type();
+    --设置仪器型号-----------------------------------------------------------------------------------------
+    set_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, Sys.info[EquipmentType])
+    set_equipment_type()
 
-    --表示还未设置仪器序列号-------------------------------------------------------------------------------------------
-    if record_get_count(SYSTEM_INFO_SCREEN, SerialNumberRecordId) == 0 then                                     
-        record_add(SYSTEM_INFO_SCREEN, SerialNumberRecordId, "0000000000");--
-    end
-    set_text(SYSTEM_INFO_SCREEN, SerialNumberTextId, record_read(SYSTEM_INFO_SCREEN, SerialNumberRecordId, 0));
+    --设置仪器序列号---------------------------------------------------------------------------------------
+    set_text(SYSTEM_INFO_SCREEN, SerialNumberTextId, Sys.info[SerialNumber])
 
-    --表示还未设置系统语言-----------------------------------------------------------------------------------------
-    if record_get_count(SYSTEM_INFO_SCREEN, SysLanguageRecordId) == 0 then             
-        record_add(SYSTEM_INFO_SCREEN, SysLanguageRecordId, CHN);                      
-    end                                                                                
-    Sys.language = tonumber(record_read(SYSTEM_INFO_SCREEN, SysLanguageRecordId, 0));  
-    if Sys.language == CHN then                                                        
+    --设置系统语言-----------------------------------------------------------------------------------------                                                                     
+    Sys.language = tonumber(Sys.info[SysLanguage])
+    if Sys.language == CHN then
         set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);                           
         set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);                          
     else                                                                               
         set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);                          
         set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE);                           
-    end                                                                                
-    changeCfgFileLanguage(Sys.language);                                               
-
-    --反控模式下,隐藏开始按钮
-    Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
-    if Sys.runType == WorkType[Sys.language].controlled then
-        set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
     end
 
-    set_unit();--设置单位
-    set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));--设置分析物
-    --获取最后一次分析结果并进行显示
+    --在主页面显示最新的分析记录----------------------------------------------------------------------------
+    if record_get_count(SYSTEM_INFO_SCREEN, LastInfoRecordId) == 0 then 
+        Sys.lastInfo[lastTime] = "0000-00-00  00:00"--时间
+        Sys.lastInfo[lastResult] = "0.0"--结果
+        Sys.lastInfo[lastE1] = "0.0"--E1
+        Sys.lastInfo[lastE2] = "0.0"--E2
+        Sys.lastInfo[lastStatus] = CHN --系统状态
 
-    if Sys.stateBeforePwrOff == WorkStatus[Sys.language].run and --在运行时断电
-       getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then--异常断电流程不为0
-        SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
-    else
-        SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
+        local record = "";
+        for i=1, #Sys.lastInfo, 1 do
+            record = record..Sys.lastInfo[i]..","
+        end
+        record_add(SYSTEM_INFO_SCREEN, LastInfoRecordId, record);--初始化默认参数
     end
-    
-    SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
-    --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
-
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    --   Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
-
-    
-
-    --以下代码用于测试自动量程切换功能
-    -- Sys.rangetypeId = 1;--预设当前量程id为1
-    -- Sys.result = 5;--预设当前分析结果为5
-    -- process_ready_run(autoRangeProcessId);--运行自动量程切换流程
-    --end  测试自动量程切换功能
-    --以下代码用于测试当记录满了之后, 是否会删除一条最旧记录的记录(报警记录)
-    
-    -- for i = 1,8,1 do
-    --     Sys.alarmContent = i;
-    --     add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
-    -- end
-
-    -- for i = 1,8,1 do
-    --     Sys.startTime = Sys.dateTime;
-    --     Sys.result = 1;
-    --     Sys.checkValue = 1;
-    --     Sys.signalE1 = 3000.0
-    --     Sys.signalE2 = 4000.0
-    --     Sys.rangetypeId = 1
-    --     Sys.processTag = "at"
-    --     add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
-    -- end
-
+    Sys.lastInfo = split(record_read(SYSTEM_INFO_SCREEN, LastInfoRecordId, 0) , ",")
+    set_text(MAIN_SCREEN, LastAnalysisTimeId, Sys.lastInfo[lastTime]);--显示时间
+    set_text(MAIN_SCREEN, LastResultId, Sys.lastInfo[lastResult]);--显示结果
+    set_text(MAIN_SCREEN, LastResultE1Id, Sys.lastInfo[lastE1]);--显示E1
+    set_text(MAIN_SCREEN, LastResultE2Id, Sys.lastInfo[lastE2]);--显示E2
 end
 
 --***********************************************************************************************
@@ -770,9 +813,28 @@ end
 --插入 SD 卡后，执行此回调函数
 --***********************************************************************************************
 function on_sd_inserted(dir)
-    SdPath = dir;
-    ReadFileToConfigStr();--将配置文件加载到ConfigStr数组
+    SdPath = dir;--保存SD卡的路径
+
+    changeCfgFileLanguage(Sys.language);--将配置文件进行翻译,然后显示到界面上
+
+    ReadFileToConfigStr();--将配置文件加载到ConfigStr数组与屏幕上
+
     checkHistoryFile();--检测并创建空的历史记录文件
+
+    --反控模式下,隐藏开始按钮
+    if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
+        set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
+    end
+
+    --设置单位
+    set_unit();
+
+    --设置分析物
+    set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));
+
+    --显示最后一次分析结果
+    
+    
     ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
 end
 
@@ -847,11 +909,18 @@ function sys_init()
             set_text(SYSTEM_INFO_SCREEN, CalcBoardSoftVerId, softVer1 .. softVer2);
         end
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 9 then --第九步:初始化结束
+    elseif Sys.processStep == 9 then --第九步:判断是否需要进行排空清洗
         set_enable(RUN_CONTROL_SCREEN, RunStopBtId, ENABLE)--初始化完成，使能开始按钮
         ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
+
+        if Sys.lastInfo[lastStatus] == WorkStatus[Sys.language].run and --上次断电时为运行状态
+           getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then --设置了异常断电流程
+            Sys.suddenPwrOff = true;
+            ShowSysTips("执行异常断电流程-排空清洗");
+            SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+        end
     end
 end
 
@@ -917,7 +986,7 @@ function on_uart_recv_data(packet)
     UartArg.recv_data = packet;
 
     --当前为反控模式
-    if Sys.runType == WorkType[Sys.language].controlled and package[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then
+    if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled and package[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then
         ComputerControl(packet);
         --判断是否为指令数据回复
     elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
@@ -994,7 +1063,7 @@ end
 --***********************************************************************************************
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times <= 3 then
+    if UartArg.repeat_times <= 5 then
         uart_send_data(UartArg.repeat_data);--数据重发
     else  --重发3次都没有回复,不再重发
         print("串口接受超时");
@@ -1100,8 +1169,6 @@ NextStartTimeId = 6;
 function main_control_notify(screen, control, value)
     if control == StopSystemDialogMenuId and value == ENABLE then
         SystemStop(stopByClickButton);
-    elseif control == 110 then
-        ReadFileToConfigStr();
     end
 end
 
@@ -1122,8 +1189,10 @@ end
 --***********************************************************************************************
 function SetSysWorkStatus(status)
 
+    --状态有改变,将当前状态更新到记录控件
     if Sys.status ~= status then
-        WriteParaToConfigStrAndFile(2);--系统状态改变,将其存入flash
+        Sys.lastInfo[lastStatus] = status
+        saveLastInfo()
     end
 
     Sys.status = status;--设置系统状态为运行
@@ -1418,25 +1487,24 @@ function run_control_notify(screen, control, value)
         end
     --运行方式---------------------------------------------------------------------
     elseif control == RunTypeMenuId then
-        Sys.runType = get_text(RUN_CONTROL_SCREEN, RunTypeID);
-        if Sys.runType == WorkType[Sys.language].controlled then--判断为反控, 隐藏运行按钮
+        if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then--判断为反控, 隐藏运行按钮
             set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
         else
             set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 1);
         end
     --设置按钮----------------------------------------------------------------------
     elseif control == RunModeSetBtId and value == ENABLE then
-        if Sys.runType == WorkType[Sys.language].period then--判断为周期模式
+        if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then--判断为周期模式
             change_screen(RUN_CONTROL_PERIOD_SCREEN);
-        elseif Sys.runType == WorkType[Sys.language].timed then--判断为定时模式
+        elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then--判断为定时模式
             change_screen(RUN_CONTROL_TIMED_SCREEN);
-        elseif Sys.runType == WorkType[Sys.language].hand then--判断为手动模式
+        elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then--判断为手动模式
             change_screen(RUN_CONTROL_HAND_SCREEN);
-        elseif Sys.runType == WorkType[Sys.language].controlled then--判断为反控模式
+        elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then--判断为反控模式
         end
     --分析物----------------------------------------------------------------------
     elseif control == AnalyteSetId then
-        set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, control));
+        set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));
     --异常断电流程选择-------------------------------------------------------------
     elseif control == SuddenPowerOff then
         process_name_select_set(screen, control-100);
@@ -1725,12 +1793,14 @@ function get_current_process_id()
         return Sys.currentProcessId;
     end
 
-    if Sys.stateBeforePwrOff == WorkStatus[Sys.language].run then --在运行时断电
-        processId = getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId));--异常断电流程
+    --上一次断电为运行状态,切断电流程Id不为0
+    if Sys.suddenPwrOff == true then
+        Sys.suddenPwrOff = false;
+        processId = getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId))--异常断电流程
         return processId;
     end
     --------------------------手动模式 ,这个比较简单,只有一个流程可设置--------------------------------
-    if Sys.runType == WorkType[Sys.language].hand then
+    if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then
         --手动模式下,计算出总共设置了几个流程
         Sys.handProcessTotal = 0;
         for i = 1, #HandProcessTab, 1 do
@@ -1756,7 +1826,7 @@ function get_current_process_id()
             end
         end
         ----------------------自动模式  自动模式中的定时时间错过了会直接跳过该流程--------------------------
-    elseif Sys.runType == WorkType[Sys.language].period then
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
         local currentDateTime = string.format("%d%02d%02d%02d%02d",
         Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min);--将当前时间转换为字符串
 
@@ -1775,7 +1845,7 @@ function get_current_process_id()
             setPeriodStartTime();
         end
     ----------------------定时模式 到指定的时间后运行指定的流程--------------------------
-    elseif Sys.runType == WorkType[Sys.language].timed then
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then
         local index = Sys.dateTime.hour+1;
         local processName = get_text(RUN_CONTROL_TIMED_SCREEN, index);
         if   processName ~= BLANK_SPACE and TimedProcessTab[index].isFinished == false then --是否有设置流程
@@ -1785,7 +1855,7 @@ function get_current_process_id()
 
         TimedProcessTab[index+1].isFinished = false;--将下个小时需要运行的流程标志置清空,保证时间到了之后能够运行
     -------------------------------------------------反控-----------------------------------------------
-    elseif Sys.runType == WorkType[Sys.language].controlled then
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
 
     end
 
@@ -1950,12 +2020,12 @@ function process_ready_run(processIdType)
             ShowSysAlarm(Sys.alarmContent);        --在底部状态栏显示缺液报警信息, 因为SystemStop会清空报警信息
             return;
         end
-        -- if UsbPath == nil then --未检测到SD卡
-        --     SystemStop(stopByNormal);
-        --     Sys.alarmContent = TipsTab[Sys.language].noSdcard;
-        --     ShowSysAlarm(Sys.alarmContent);
-        --     return;
-        -- end
+        if SdPath == nil then --未检测到SD卡
+            SystemStop(stopByNormal);
+            Sys.alarmContent = TipsTab[Sys.language].noSdcard;
+            ShowSysAlarm(Sys.alarmContent);
+            return;
+        end
         Sys.startTime = Sys.dateTime;
         Sys.driverSubStep = 1; --所有步骤都是从1开始
         Sys.actionStep = 1;
@@ -2046,7 +2116,7 @@ function excute_process()
                 process_ready_run(autoRangeProcessId);--运行自动量程切换流程
 
             ----------------手动模式--------------------
-            elseif Sys.runType == WorkType[Sys.language].hand then     
+            elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then     
                 Sys.handProcessIndex = Sys.handProcessIndex + 1;--指向下一个流程
                 Sys.handRunTimes = Sys.handRunTimes + 1;
                 if tonumber(get_text(RUN_CONTROL_HAND_SCREEN,HandProcessTimesId)) == 0 or
@@ -2057,7 +2127,7 @@ function excute_process()
                     SystemStop(stopByNormal);
                 end
             ----------------周期模式--------------------
-            elseif Sys.runType == WorkType[Sys.language].period then
+            elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
                 if Sys.processType == PeriodicTab[1].processType then--水样分析
                     --根据水样分析的频率设置下一次周期运行的时间
                     setPeriodNextStartTimeByFreq(tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].freqId)));
@@ -2094,10 +2164,10 @@ function excute_process()
 
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态,此时会在系统定时器中不断的判断是否可以进行下一次分析
             ----------------------定时模式------------------
-            elseif Sys.runType == WorkType[Sys.language].timed then
+            elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             ----------------反控模式--------------------
-            elseif Sys.runType == WorkType[Sys.language].controlled then
+            elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
                 SystemStop(stopByNormal);
             end
         ----------------动作未执行完,继续下一个动作-------------------------------------------
@@ -2159,7 +2229,6 @@ function ComputerControl(package)
             end
         elseif package[1] == 6 then--写
             if package[3] == 4 then--开始分析
-                -- Sys.runType = 
                 SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
                 process_ready_run(processId);--开始运行前的一些初始化操作
             elseif package[3] == 6 then--停止分析
@@ -2359,7 +2428,7 @@ function process_set12_control_notify(screen, control, value)
             ShowSysTips(TipsTab[Sys.language].imported);
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
-        end;
+        end
         --导出按钮----------------------------------------------------------------------
     elseif control == ExportBtId then --(将流程配置导出到SD卡中)
         if UsbPath ~= nil and SdPath ~= nil then
@@ -2414,6 +2483,7 @@ function process_set12_control_notify(screen, control, value)
         set_text(PROCESS_EDIT2_SCREEN, ProcessSelectId, processName);
         set_text(PROCESS_EDIT3_SCREEN, ProcessSelectId, processName);
         set_text(PROCESS_EDIT4_SCREEN, ProcessSelectId, processName);
+        
         ReadActionTagOfFile(control-50, 0);
         change_screen(PROCESS_EDIT1_SCREEN);
         if control <= ProcessTab[12].editId then--设置当点击流程编辑1界面中的向前按钮时,需要返回哪一个界面
@@ -2821,6 +2891,13 @@ function excute_init_process(paraTab)
         end
         --------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
+        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位,则先使能注射泵
+            enable_inject1();
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 2;
+        end
+    elseif Sys.actionSubStep == 5 then
         if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位
             start_wait_time(8);
             reset_inject1();
@@ -3394,10 +3471,10 @@ end
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
-    Sys.calculateWay = paraTab[10];
-    Sys.calculateType = paraTab[12];--
-    Sys.calibratePoint = tonumber(paraTab[15])--校准点
+    Sys.calculateWay = paraTab[10];--计算方式
+    Sys.calculateType = paraTab[12];--计算类型
     Sys.calibrationValue = tonumber(paraTab[13]);--校准浓度
+    Sys.calibratePoint = tonumber(paraTab[15])--步骤
     Sys.checkValue = tonumber(paraTab[16]);--核查浓度
 
     ------当前计算为水样分析或者核查---------------------------------------------------------
@@ -3418,6 +3495,8 @@ function excute_calculate_process(paraTab)
     --------当前流程为校准-------------------------------------------------------
     elseif Sys.calculateType == CalcType[Sys.language][2] then
         if Sys.calibratePoint == 1 then
+            Sys.slop = " ";
+            Sys.y_intercept = " ";
             Sys.caliE1[1] = Sys.signalE1;
             Sys.caliE2[1] = Sys.signalE2;
             Sys.caliValue[1] = Sys.calibrationValue;
@@ -3454,8 +3533,7 @@ function excute_calculate_process(paraTab)
             add_history_record(HISTORY_ANALYSIS_SCREEN)
         elseif Sys.calculateType == CalcType[Sys.language][2] then --当前计算为校准
             add_history_record(HISTORY_CALIBRATION_SCREEN)
-        -- elseif Sys.calculateType == CalcType[Sys.language][3] then --当前计算为核查
-        else
+        elseif Sys.calculateType == CalcType[Sys.language][3] then --当前计算为核查
             add_history_record(HISTORY_CHECK_SCREEN)
         end
     end
@@ -3535,13 +3613,6 @@ end
 function calc_calibrate_result_by_log(void)
     local a, b, c, d;
 
-    --以下模拟数据 c = 2706.5566，d = -81.1261； 
-    -- Sys.caliE1[1] = 4351.5;
-    -- Sys.caliE2[1] = 4061.3;
-    -- Sys.caliValue[1] = 0;
-    -- Sys.caliE1[2] = 4345.7;
-    -- Sys.caliE2[2] = 3421.3;
-    -- Sys.caliValue[2] = 200;
     a = 0;
     b = 0;
     print(math.log(Sys.caliE1[1] / Sys.caliE2[1], 10));
@@ -3549,6 +3620,10 @@ function calc_calibrate_result_by_log(void)
     c = (Sys.caliValue[2] - Sys.caliValue[1]) / (math.log(Sys.caliE1[2] / Sys.caliE2[2], 10) - math.log(Sys.caliE1[1] / Sys.caliE2[1], 10));
     d = Sys.caliValue[2] - c * math.log(Sys.caliE1[2] / Sys.caliE2[2], 10);
     print("c=", c, ",d=", d)
+    Sys.slop = c;--斜率
+    Sys.y_intercept = d;--截距
+    Sys.slop = GetPreciseDecimal(Sys.slop, 4)--保留小数点后4位
+    Sys.y_intercept = GetPreciseDecimal(Sys.y_intercept, 4);--保留小数点后4位
     --设置计算出的a,b,c,d结果
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
@@ -3626,7 +3701,10 @@ function calc_calibrate_result_by_diff(n)
         c = detVs[2] / detV;
         d = detVs[3] / detV;
     end
-
+    Sys.slop = c;--斜率
+    Sys.y_intercept = d;--截距
+    Sys.slop = GetPreciseDecimal(Sys.slop, 4)--保留小数点后4位
+    Sys.y_intercept = GetPreciseDecimal(Sys.y_intercept, 4);--保留小数点后4位
     --设置计算出的a,b,c,d结果
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId, a);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
@@ -4278,11 +4356,15 @@ function add_history_record(screen)
         end
     end
 
-    --最新分析记录
+    --首页的记录保存到记录空间当中,断电重启后会读取该记录当中的内容
     if screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN then
-        record_modify(MAIN_SCREEN, HistoryRecordId, 0, date.." "..time..","..Sys.result..","..Sys.signalE1..","..Sys.signalE2);
+        Sys.lastInfo[lastTime] = date.." "..time
+        Sys.lastInfo[lastResult] = Sys.result
+        Sys.lastInfo[lastE1] = Sys.signalE1
+        Sys.lastInfo[lastE2] = Sys.signalE2
+        saveLastInfo()
     end
-
+    
     if screen == HISTORY_ANALYSIS_SCREEN then--分析历史
         signalHistoryContent = (historyOrder + 1) .. ";" .. date .. ";" .. time .. ";" ..--序号,日期,时间
                     Sys.result .. ";" .. Sys.signalE1 .. ";" .. Sys.signalE2 .. ";" .. Sys.rangetypeId .. ";" .. Sys.processTag;--结果/E2/E2/量程/类型标识
@@ -4292,7 +4374,9 @@ function add_history_record(screen)
                     Sys.rangetypeId .. ";" .. Sys.processTag;--结果/E2/E2/量程/类型标识
     elseif screen == HISTORY_CALIBRATION_SCREEN then--校正历史
         signalHistoryContent = (historyOrder + 1) .. ";" .. date .. ";" .. time .. ";" ..--序号,日期,时间
-                    Sys.calibrationValue .. ";" .. Sys.signalE1 .. ";" .. Sys.signalE2 .. ";" .. Sys.rangetypeId;
+                    Sys.calibrationValue .. ";" .. Sys.signalE1 .. ";" .. Sys.signalE2 .. ";" .. 
+                    Sys.slop..";"..Sys.y_intercept..";"..Sys.rangetypeId;
+                    print("添加校正历史:"..signalHistoryContent);
     elseif screen == HISTORY_ALARM_SCREEN then--报警
         date = string.format("%d-%02d-%02d", math.fmod(Sys.dateTime.year,100), Sys.dateTime.mon, Sys.dateTime.day);
         time = string.format("%02d:%02d", Sys.dateTime.hour, Sys.dateTime.min);
@@ -4399,31 +4483,31 @@ function checkHistoryFile()
     local file;
     file = io.open(SdPath .. "record/Analysis");
     if file == nil then
-        file = io.open(SdPath .. "Analysis", "w+");--打开并清空该文件
+        file = io.open(SdPath .. "record/Analysis", "w+");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Check");
     if file == nil then
-        file = io.open(SdPath.."Check", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Check", "w+");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Calibration");
     if file == nil then
-        file = io.open(SdPath.."Calibration", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Calibration", "w+");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Alarm");
     if file == nil then
-        file = io.open(SdPath.."Alarm", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Alarm", "w+");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/log");
     if file == nil then
-        file = io.open(SdPath.."log", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/log", "w+");--打开并清空该文件
     end
     file:close();
 
@@ -4443,15 +4527,7 @@ function checkHistoryFile()
     setHistoryScreen(HISTORY_ALARM_SCREEN);
     setHistoryScreen(HISTORY_ALARM_SCREEN);
 
-    --在主页面显示最新的分析记录
-    if record_get_count(MAIN_SCREEN, HistoryRecordId) == 0 then --表示还未记录有数据
-        record_add(MAIN_SCREEN,HistoryRecordId,"0000-00-00  00:00,0.000,0,0");
-    end
-    local lastResultTab = split(record_read(MAIN_SCREEN, HistoryRecordId, 0), ",")--读取记录
-    set_text(MAIN_SCREEN, LastAnalysisTimeId, lastResultTab[1]);--开始时间
-    set_text(MAIN_SCREEN, LastResultId, lastResultTab[2]);--分析结果
-    set_text(MAIN_SCREEN, LastResultE1Id, lastResultTab[3]);--E1
-    set_text(MAIN_SCREEN, LastResultE2Id, lastResultTab[4]);--E2
+
 end
 
 
@@ -4506,6 +4582,7 @@ function showHistoryByScreenAndPage(screen, page)
     for i= si, ei, -1 do
         if historyTab[i] ~= nil then
             local decodeContent = decodeStr(historyTab[i]);
+            print("显示历史记录:"..decodeContent);
             record_modify(screen, HistoryRecordId, index, decodeContent);
         end
         index = index + 1;
@@ -4604,10 +4681,6 @@ SensorBoardHardVerId = 8;
 SensorBoardSoftVerId = 9;
 CalcBoardHardVerId = 10;
 CalcBoardSoftVerId = 11;
-SysPwdRecordId = 13;--用于保存密码的记录控件
-EquipmentTypeRecordId = 26;--用于保存仪器型号的记录控件
-SerialNumberRecordId = 25;--用于保存仪器序列号的记录控件
-SysLanguageRecordId = 28;
 
 maintainerPwdSetId = 14;
 administratorPwdSetId = 15;
@@ -4616,6 +4689,9 @@ maintainerLoginId = 17;
 administratorLoginId = 18;
 SetChineseId = 19;
 SetEnglishId = 20;
+
+SysInfoRecordId = 25;
+LastInfoRecordId = 26;
 
 TouchScreenSoftVerId = 27;
 SetEquipmentTypeBtId = 119;
@@ -4635,11 +4711,12 @@ end
 function system_info_control_notify(screen, control, value)
     if control == SetEquipmentTypeTextId then--设置仪器型号
         set_equipment_type();
-        print(value);
-        record_modify(SYSTEM_INFO_SCREEN, EquipmentTypeRecordId, 0, get_text(screen, control));--修改记录中的仪器型号
+        Sys.info[EquipmentType] = get_text(screen, control)--修改记录中的仪器型号
+        saveSysInfo()
         set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
     elseif control == SerialNumberTextId then
-        record_modify(SYSTEM_INFO_SCREEN, SerialNumberRecordId, 0, get_text(screen, control));--修改记录中的仪器序号
+        Sys.info[SerialNumber] = get_text(screen, control)--修改记录中的仪器型号
+        saveSysInfo()
         set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
     elseif control == SetSerialNumberBtId or control == SetEquipmentTypeBtId then--设置仪器序列号或者仪器仪器型号
         set_return_screen_control(screen, control);
@@ -4670,7 +4747,8 @@ function system_info_control_notify(screen, control, value)
             else
                 SetSysUser(SysUser[CHN].administrator);
             end
-            record_modify(SYSTEM_INFO_SCREEN, SysLanguageRecordId, 0, CHN);
+            Sys.info[SysLanguage] = CHN
+            saveSysInfo()
             changeCfgFileLanguage(CHN);--将配置文件中的翻译为中文
         end
     elseif control == SetEnglishId then--设置为英文
@@ -4686,7 +4764,8 @@ function system_info_control_notify(screen, control, value)
             else
                 SetSysUser(SysUser[ENG].administrator);
             end
-            record_modify(SYSTEM_INFO_SCREEN, SysLanguageRecordId, 0, ENG);
+            Sys.info[SysLanguage] = ENG
+            saveSysInfo()
             changeCfgFileLanguage(ENG);--将配置文件翻译为英文
         end
     end
@@ -4708,18 +4787,37 @@ function SetSysUser(user)
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
-        -- set_process_edit_state(DISABLE);--禁止流程设置
     elseif Sys.userName == SysUser[Sys.language].maintainer then--运维员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, ENABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, DISABLE);
-        -- set_process_edit_state(ENABLE);--允许编辑流程
     elseif Sys.userName == SysUser[Sys.language].administrator then--管理员
         set_value(SYSTEM_INFO_SCREEN, OperatorLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, maintainerLoginId, DISABLE);
         set_value(SYSTEM_INFO_SCREEN, administratorLoginId, ENABLE);
-        -- set_process_edit_state(ENABLE);--允许编辑流程
     end
+end
+
+--***********************************************************************************************
+--  保存系统信息到记录空间
+--***********************************************************************************************
+function saveSysInfo()
+    local record = "";
+    for i=1, #Sys.info, 1 do
+        record = record..Sys.info[i]..","
+    end
+    record_modify(SYSTEM_INFO_SCREEN, SysInfoRecordId, 0, record);
+end
+
+--***********************************************************************************************
+--  保存上次关机时的信息到记录空间
+--***********************************************************************************************
+function saveLastInfo()
+    local record = "";
+    for i=1, #Sys.lastInfo, 1 do
+        record = record..Sys.lastInfo[i]..","
+    end
+    record_modify(SYSTEM_INFO_SCREEN, LastInfoRecordId, 0, record);
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -4732,7 +4830,7 @@ NewPwdConfirmId = 4;
 OldPwdTipsId = 5;
 NewPwdConfirmTipsId = 6;
 NewPwdLenTipsId = 7;
-PwdRecordPosition = 0;--该变量取值0或者1; 0表示运维密码在历史界面中的位置,1表示管理员密码在记录空间中的位置
+PwdRecordPosition = 0;--该变量取值1或者2; 1表示管理员密码,2表示运维员密码
 --***********************************************************************************************
 --在系统信息界面,点击权限登录或者设置密码时都会调用该函数(权限登录->操作员例外)
 --***********************************************************************************************
@@ -4748,13 +4846,13 @@ function password_set_control_notify(screen, control, value)
 
     ------------------------确认按钮-----------------------------------------------------
     if control == SureButtonId then
-        if oldPwdInput == record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition) and --旧密码输入正确
+        if oldPwdInput == Sys.info[PwdRecordPosition] and --旧密码输入正确
         get_text(PASSWORD_SET_SCREEN, NewPwdId) == get_text(PASSWORD_SET_SCREEN, NewPwdConfirmId) and--新密码两次输入一致
         string.len(get_text(PASSWORD_SET_SCREEN, NewPwdId)) == 6 then
             password = get_text(PASSWORD_SET_SCREEN, NewPwdId);
-            record_modify(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition, password);--修改记录
+            Sys.info[PwdRecordPosition] = password;--修改记录
             change_screen(SYSTEM_INFO_SCREEN);
-        elseif oldPwdInput ~= record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition) then--显示"密码错误"
+        elseif oldPwdInput ~= Sys.info[PwdRecordPosition] then--显示"密码错误"
             set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 1);
         elseif string.len(get_text(PASSWORD_SET_SCREEN, NewPwdId)) ~= 6 then--显示"密码需为6位数字"
             set_visiable(PASSWORD_SET_SCREEN, NewPwdLenTipsId, 1);
@@ -4768,7 +4866,7 @@ function password_set_control_notify(screen, control, value)
         change_screen(SYSTEM_INFO_SCREEN);
         ------------------------旧密码输入完成-------------------------------------------------
     elseif control == OldPwdId then
-        if oldPwdInput ~= record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition) then--密码输入不正确
+        if oldPwdInput ~= Sys.info[PwdRecordPosition] then--密码输入不正确
             set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 1);--显示密码错误提示信息
         else
             set_visiable(PASSWORD_SET_SCREEN, OldPwdTipsId, 0);
@@ -4801,9 +4899,9 @@ function goto_PasswordSet()
     set_text(PASSWORD_SET_SCREEN, NewPwdId, "");
     set_text(PASSWORD_SET_SCREEN, NewPwdConfirmId, "");
     if userNameSet == SysUser[Sys.language].maintainer then--运维员密码
-        PwdRecordPosition = 0;
+        PwdRecordPosition = MaintainerPwd;
     elseif userNameSet == SysUser[Sys.language].administrator then--管理员密码
-        PwdRecordPosition = 1;
+        PwdRecordPosition = AdminPwd;
     end
 end
 
@@ -4818,7 +4916,7 @@ function login_system_control_notify(screen, control, value)
     local pwdInput = get_text(LOGIN_SYSTEM_SCREEN, PwdId);--获取密码
 
     if control == SureButtonId then--确认按键
-        if pwdInput == record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition) then--检测密码
+        if pwdInput == Sys.info[PwdRecordPosition] then--检测密码
             SetSysUser(userNameSet);
             change_screen(SYSTEM_INFO_SCREEN);
         else
@@ -4828,7 +4926,7 @@ function login_system_control_notify(screen, control, value)
         SetSysUser(Sys.userName);
         change_screen(SYSTEM_INFO_SCREEN);
     elseif control == PwdId then --密码输入
-        if pwdInput ~= record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, PwdRecordPosition) then--密码输入不正确
+        if pwdInput ~= Sys.info[PwdRecordPosition] then--密码输入不正确
             set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 1);--显示密码错误提示信息
         else
             set_visiable(LOGIN_SYSTEM_SCREEN, PwdTipsId, 0);
@@ -4843,9 +4941,9 @@ function goto_LoginSystem()
     set_text(LOGIN_SYSTEM_SCREEN, PwdId, "");
 
     if userNameSet == SysUser[Sys.language].maintainer then
-        PwdRecordPosition = 0;
+        PwdRecordPosition = MaintainerPwd;
     elseif userNameSet == SysUser[Sys.language].administrator then
-        PwdRecordPosition = 1;
+        PwdRecordPosition = AdminPwd;
     end
 end
 
@@ -4892,7 +4990,7 @@ function dialog_screen_control_notify(screen, control, value)
             set_text(DestScreen, DestControl - 50, BLANK_SPACE);
             set_text(DestScreen, DestControl + 100, 1);
             WriteParaToConfigStrAndFile(1);--保存流程设置1界面中的参数
-            os.remove(file);--删除配置文件
+            os.remove(SdPath..file);--删除配置文件
         elseif DestScreen == PROCESS_EDIT1_SCREEN or DestScreen == PROCESS_EDIT2_SCREEN or DestScreen == PROCESS_EDIT3_SCREEN or DestScreen == PROCESS_EDIT4_SCREEN then
             DeleteAction(DestControl - 600);--DestControl为流程编辑界面的删除按钮的id,其从601开始,而流程序号从1开始;
             change_screen(DestScreen);
@@ -4908,13 +5006,13 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 function password_dialog_screen_control_notify(screen, control, value)
     if control == PwdId then
-        if get_text(PASSWORD_DIALOG_SCREEN, PwdId) ~= record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, 1) then--密码输入不正确
+        if get_text(PASSWORD_DIALOG_SCREEN, PwdId) ~= Sys.info[AdminPwd] then--密码输入不正确
             set_visiable(PASSWORD_DIALOG_SCREEN, PwdTipsId, 1);--显示密码错误提示信息
         else
             set_visiable(PASSWORD_DIALOG_SCREEN, PwdTipsId, 0);
         end
     elseif control == SureButtonId and value == ENABLE then
-        if get_text(PASSWORD_DIALOG_SCREEN, PwdId) == record_read(SYSTEM_INFO_SCREEN, SysPwdRecordId, 1) then--检测密码
+        if get_text(PASSWORD_DIALOG_SCREEN, PwdId) == Sys.info[AdminPwd] then--检测管理员密码密码
             if DestControl == HistoryClear then--清除历史记录 
                 record_clear(DestScreen, HistoryRecordId);--清除记录
                 clearHistoryFile(DestScreen);
@@ -5143,7 +5241,7 @@ cfgFileTab = {
 --从配置文件中加载数据到ConfigStr{}缓存
 --***********************************************************************************************
 function ReadFileToConfigStr()
-    ReadFile0();--读取"0"文件,并将文件里的参数设置到 流程设置1界面/运行控制界面/量程设置界面/手动操作3界面/输入输出界面
+    ReadFile0ToConfigStrAndScreen();--读取"0"文件,并将文件里的参数设置到 流程设置1界面/运行控制界面/量程设置界面/手动操作3界面/输入输出界面
     for i = 1, 24, 1 do--循环读取文件"1"-"24"
         local configFile = io.open(SdPath .. "config/" ..i, "r")          --打开文本
         if configFile ~= nil then    
@@ -5167,11 +5265,10 @@ end
 --tagNum = 5 : 试剂余量中的参数
 --***********************************************************************************************
 function WriteParaToConfigStrAndFile(tagNum)
-    -- print("保存"..cfgFileTab[tagNum].sTag.."参数")
-    ConfigStr[0] = DeleteSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);
-    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[tagNum].sTag;--添加开始标签
-    if tagNum == 1 then
-        --流程设置1界面中的参数
+    print("调用 WriteParaToConfigStrAndFile 函数");
+    ConfigStr[0] = "";  
+   --流程设置界面中的参数-------------------------------------------------------------------
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[1].sTag;--添加开始标签
         for i = 1, 12, 1 do
             ConfigStr[0] = ConfigStr[0] ..
             get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) .. "," .. --流程类型选择
@@ -5185,7 +5282,10 @@ function WriteParaToConfigStrAndFile(tagNum)
             get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId) .. "," ..   --流程名称
             get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId) .. ",";  --流程量程
         end
-    elseif tagNum == 2 then--运行控制界面中的参数
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[1].eTag;--添加结束标签
+
+    --运行控制界面中的参数--------------------------------------------------------------------
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[2].sTag;--添加开始标签
         ConfigStr[0] = ConfigStr[0] .."<common>"
         for i = RUNCTRL_TextSid, RUNCTRL_TextEid, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_text(RUN_CONTROL_SCREEN, i) .. ",";
@@ -5213,27 +5313,31 @@ function WriteParaToConfigStrAndFile(tagNum)
             ConfigStr[0] = ConfigStr[0] .. get_text(RUN_CONTROL_HAND_SCREEN, i) .. ",";
         end
         ConfigStr[0] = ConfigStr[0] .."</hand>"
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[2].eTag--添加结束标签
 
-    elseif tagNum == 3 then--量程设置界面中的参数
+    --量程设置界面中的参数------------------------------------------------------------------------
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[3].sTag;--添加开始标签
         for i = RANGESET_TextStartId, RANGESET_TextEndId, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_text(RANGE_SET_SCREEN, i) .. ",";
         end
-    elseif tagNum == 4 then
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[3].eTag--添加结束标签
+
+    --输入输出界面中的参数------------------------------------------------------------------------
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[4].sTag;--添加开始标签
         for i = IOSET_TextStartId, IOSET_TextEndId, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_text(IN_OUT_SCREEN, i) .. ",";
         end
-    elseif tagNum == 5 then
+        ConfigStr[0] = ConfigStr[0] .. cfgFileTab[4].eTag--添加结束标签
+
+    --试剂余量界面中的参数------------------------------------------------------------------------
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[5].sTag;--添加开始标签
         for i = REAGENT_BtStartId, REAGENT_BtEndId, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_value(HAND_OPERATE3_SCREEN, i) .. ",";
         end
         for i = REAGENT_TextStartId, REAGENT_TexEndId, 1 do
             ConfigStr[0] = ConfigStr[0] .. get_text(HAND_OPERATE3_SCREEN, i) .. ",";
         end
-    end
-    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[tagNum].eTag;--添加结束标签
-
-    --设置参数,此处调用该函数可以检查保存的数据是否正确
-    SetConfigParaToScreen(tagNum);
+    ConfigStr[0] = ConfigStr[0] .. cfgFileTab[5].eTag;--添加结束标签
 
     local configFile = io.open(SdPath .. "config/"  .. "0", "w+");  --打开并清空该文件
     configFile:write(ConfigStr[0]);         --将处理过的原文件内容重新写入文件
@@ -5243,7 +5347,7 @@ end
 --***********************************************************************************************
 --读取配置文件中的所有数据,并将数据保存到cfgFileStr[0]表当中
 --***********************************************************************************************
-function ReadFile0()
+function ReadFile0ToConfigStrAndScreen()
     local configFile = io.open(SdPath .. "config/" .. "0", "r")      --打开文本
     if configFile == nil then--如果没有该文件则返回
         print("没有找到配置文件:0,创建一个默认的配置文件");
@@ -5256,11 +5360,9 @@ function ReadFile0()
     configFile:seek("set")    --把文件位置定位到开头
     ConfigStr[0] = configFile:read("a")       --从当前位置读取整个文件，并赋值到字符串中
     configFile:close()                            --关闭文本
-
-
-    -- print(ConfigStr[0]);
+    print(ConfigStr[0]);
     for i = 1,5, 1 do
-        SetConfigParaToScreen(i);
+        SetConfigStrToScreen(i);
     end
 
 end
@@ -5274,7 +5376,7 @@ end
 --tagNum = 4 : 输入输出中的参数
 --tagNum = 5 : 试剂余量中的参数
 --***********************************************************************************************
-function SetConfigParaToScreen(tagNum)
+function SetConfigStrToScreen(tagNum)
     -- print("设置"..cfgFileTab[tagNum].sTag.."参数")
     local tagString = GetSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--截取标签之间的字符串
     if tagString == BLANK_SPACE then--如果文件0中缺少哪一个标签, 则创建该标签,然后重新获取该标签的内容
@@ -5311,10 +5413,6 @@ function SetConfigParaToScreen(tagNum)
         for i = RUNCTRL_TextSid, RUNCTRL_TextEid, 1 do
             if tab[i] ~= nil then
                 set_text(RUN_CONTROL_SCREEN, i, tab[i]);
-            end
-            Sys.stateBeforePwrOff = WorkStatus[Sys.language].stop;--默认: 上一次断电时的状态为停止
-            if tab[RUNCTRL_TextEid + 1] ~= nil then
-                Sys.stateBeforePwrOff = tab[RUNCTRL_TextEid + 1];
             end
         end
 
@@ -5392,7 +5490,7 @@ function changeCfgFileLanguage(language)
     if configFile ~= nil then
         configFile:seek("set")    --把文件位置定位到开头
         ConfigStr[0] = configFile:read("a")       --从当前位置读取整个文件，并赋值到字符串中
-        configFile:close()                            --关闭文本
+        configFile:close()                        --关闭文本
         --------运行控制界面的运行方式需要翻译为英文-----------------------------------------
         --截取运<RunControl>标签之间的字符串
         local tagString = GetSubString(ConfigStr[0], cfgFileTab[2].sTag, cfgFileTab[2].eTag);
@@ -5425,9 +5523,7 @@ function changeCfgFileLanguage(language)
         elseif tab[RangeAutoSwitchId] == VariableOnOff[srcLanguage].close then
             tab[RangeAutoSwitchId] = VariableOnOff[srcLanguage].close
         end
-
-        set_text(RUN_CONTROL_SCREEN, RunTypeID, tab[RunTypeID]);
-        WriteParaToConfigStrAndFile(2)
+        
         --------流程设置界面的流程类型需要翻译为英文-----------------------------------------
         tagString = GetSubString(ConfigStr[0], cfgFileTab[1].sTag, cfgFileTab[1].eTag);
         tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
@@ -5448,8 +5544,11 @@ function changeCfgFileLanguage(language)
             ConfigStr[0] = ConfigStr[0] .. tab[i] .. ","
         end
         ConfigStr[0] = ConfigStr[0] .. cfgFileTab[1].eTag;--添加结束标签
-        SetConfigParaToScreen(1);--将配置文件显示到界面上
-        --------翻译完成后,重新保存到"0"文件当中--------------------------------------------
+        
+        --------翻译完成后,重新保存到"0"文件当中并刷新界面显示--------------------------------------------
+        SetConfigStrToScreen(1);--将配置文件显示到流程设置界面上
+        SetConfigStrToScreen(2);--将配置文件显示到运行控制界面上
+
         configFile = io.open(SdPath .. "config/" .. "0", "w+");  --打开并清空该文件
         configFile:write(ConfigStr[0]);         --将处理过的原文件内容重新写入文件
         configFile:close(); --关闭文本
@@ -5497,7 +5596,7 @@ function changeCfgFileLanguage(language)
                             break;
                         end
                     end
-                    ----------判断为初始化或者计算,还需要翻译初始化里的<content>------------
+                    ----------判断为初始化,还需要翻译初始化里的<content>------------
                     contentString = GetSubString(actionString, "<content>", "</content>");
                     contentTab = split(contentString, ",")--将读出的字符串按逗号分割,并以此存入tab表
                     if typeTab[1] == ActionItem[destLanguage][1] then
@@ -5507,7 +5606,7 @@ function changeCfgFileLanguage(language)
                             contentTab[INIT_AnalysisWayTextId] = AnalysisWay[destLanguage].electrode
                         end
                         contentString = "";
-                        for k = 1, 23, 1 do
+                        for k = 1, INIT_TextEndId, 1 do
                             contentString = contentString .. contentTab[k] .. ",";
                         end
                         ----------判断为计算,还需要翻译计算里的<content>----------------
@@ -5526,7 +5625,7 @@ function changeCfgFileLanguage(language)
                             contentTab[CALCULATE_CalcTypeTextId] = CalcType[destLanguage][3]
                         end
                         contentString = "";
-                        for k = 1, 13, 1 do
+                        for k = 1, CALCULATE_TextEndId, 1 do
                             contentString = contentString .. contentTab[k] .. ",";
                         end
                     end
@@ -5806,7 +5905,7 @@ end
 --actionNumber: 当前动作为第几步
 --***********************************************************************************************
 function ReadActionTagOfFile(fileName, actionNumber)
-    print("调用 ReadActionTagOfFile 函数");
+    print("调用 ReadActionTagOfFile 函数"..fileName);
 
     if ConfigStr[fileName] == nil then
         for i = 1, 12, 1 do--清空流程编辑界面1/2/3/4中的内容
@@ -5825,6 +5924,7 @@ function ReadActionTagOfFile(fileName, actionNumber)
 
     --截取fileString文件中<action?> ~ </action?>标签之间的字符串
     local actionString = GetSubString(ConfigStr[fileName], "<action" .. actionNumber .. ">", "</action" .. actionNumber .. ">");
+    print(actionString);
     if actionString == nil then--如果文件中没有该标签,则返回.
         Sys.logContent = fileName .. "文件中没有找到<action" .. actionNumber .. ">"
         ShowSysTips(Sys.logContent);

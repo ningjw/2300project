@@ -94,6 +94,9 @@ lastE1 = 3;
 lastE2 = 4;
 lastStatus = 5;--上一次断电时的系统状态
 
+RED = 0xF800
+BLACK = 0x0000
+
 MaxProcess = 24;--最多可以编辑24个流程
 MaxAction = 48;--单个流程可以有48个步骤(动作)
 
@@ -189,6 +192,7 @@ TipsTab = {
         resultSaveErr = "未检测到SD卡,分析结果未存入文件",
         connecting = " 连接中...",
         stopByHand = "手动停止系统",
+        qualified = "不合格"
     },
     [ENG] = {
         insertSdUsb = "Please Insert SD Card",
@@ -231,6 +235,7 @@ TipsTab = {
         resultSaveErr = "No sd card,the result isn't save to the file",
         connecting = "Connecting",
         stopByHand = "Stop system by hand",
+        qualified = " below standard"
     },
 };
 
@@ -370,7 +375,6 @@ Sys = {
     
     periodStartDateTime = "", --周期流程开始时间
 
-    
     actionTotal = 0, --所有的动作步数,可以通过统计<action>标签获得
     actionStep = 1, --取值范围为1-24,对应了流程编辑1/3界面中的共24个步骤
     actionSubStep = 1, --该变量用于控制"初始化"注射泵""消解""注射泵加液"等等子动作.
@@ -392,10 +396,9 @@ Sys = {
     processTag = "", --流程类型标识, 
     processStep = 1, --执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
 
-
+    checkEndTime = "",--"标样核查"开始时间,字符串格式
     startTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --开始时间
-    resultTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --结果时间
-    dateTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --系统日期时间,在1S定时器中不断刷新
+    dateTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 },  --系统日期时间,在1S定时器中不断刷新
 
     driverStep = 1, --用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
     driverStep1Func = nil, --当step=driverStep时,需要执行的函数,比如调用开阀函数/关阀函数/操作注射泵函数/等等
@@ -446,6 +449,7 @@ Sys = {
     caliE2 = {}, --用于保存校正时的E2
     caliValue = {}, --用于保存校正浓度值
     result = 0, --进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
+    isCheckOk = true;--用于判断核查结果是否合格
 
     hand_control_func = nil;
 
@@ -467,6 +471,7 @@ Sys = {
     info = {};
     lastInfo = {};
     suddenPwrOff = false;--该变量用于判断是否需要运行"运行控制"界面中的"异常断电"流程
+    sdInsertCnt = 0;
 }
 
 
@@ -507,11 +512,11 @@ function on_init()
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
 
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     
-    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    -- UsbPath = "";
-    -- on_sd_inserted(SdPath);
+    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    UsbPath = "";
+    on_sd_inserted(SdPath);
 
     -- if io.open(SdPath.."DCIOT.PKG") ~= nil then
     --     os.remove(SdPath.."DCIOT.PKG");--删除SD中的升级文件
@@ -537,7 +542,7 @@ function on_init()
     --     Sys.signalE1 = 3000.0
     --     Sys.signalE2 = 4000.0
     --     Sys.rangetypeId = 1
-    --     Sys.processTag = "at"
+    --     Sys.processTag = ""
     --     add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
     -- end
 
@@ -593,7 +598,6 @@ function record_control_check()
         record_add(SYSTEM_INFO_SCREEN, SysInfoRecordId, record);--初始化默认参数
     end
     Sys.info = split(record_read(SYSTEM_INFO_SCREEN, SysInfoRecordId, 0) , ",")
-    
 
     --设置仪器型号-----------------------------------------------------------------------------------------
     set_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId, Sys.info[EquipmentType])
@@ -832,10 +836,11 @@ function on_sd_inserted(dir)
     --设置分析物
     set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));
 
-    --显示最后一次分析结果
-    
-    
-    ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
+    Sys.sdInsertCnt = Sys.sdInsertCnt + 1;
+    if Sys.sdInsertCnt >= 2 then
+
+    end
+    ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath..Sys.sdInsertCnt);
 end
 
 --***********************************************************************************************
@@ -1221,6 +1226,11 @@ end
 function ShowSysAlarm(alarm)
     for i = 1, #PublicTab, 1 do
         set_text(PublicTab[i], SysAlarmId, alarm);
+        if alarm == TipsTab[Sys.language].null then
+            set_fore_color(PublicTab[i], SysAlarmId, BLACK);--黑色
+        else
+            set_fore_color(PublicTab[i], SysAlarmId, RED);--红色
+        end
     end
 end
 
@@ -1632,7 +1642,8 @@ end
 
 --***********************************************************************************************
 --根据频率设置下一次开始的时间, 在自动模式下, 进行一次流程后会调用该函数计算下次流程开始时间.
---minFreq: 天数
+--minFreq: 分钟
+--return : 加上固定分钟后的时间
 --***********************************************************************************************
 function setPeriodNextStartTimeByFreq(minFreq)
     local dayHour = 1440;--24 * 60 一天有多少分钟
@@ -1657,6 +1668,11 @@ function setPeriodNextStartTimeByFreq(minFreq)
              PeriodicTab.sTime.hour,PeriodicTab.sTime.min));
 
     WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
+
+    local timeStr = string.format("%d%02d%02d%02d%02d",
+                    PeriodicTab.sTime.year, PeriodicTab.sTime.mon, PeriodicTab.sTime.day,PeriodicTab.sTime.hour, PeriodicTab.sTime.min);
+
+    return timeStr;
 end
 
 --***********************************************************************************************
@@ -1717,11 +1733,35 @@ function get_period_process_id()
         if PeriodicTab[i].isReadyRun == true then
             print("processName="..get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].processNameId ));
             processId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].processNameId ));
+            --判断为标样核查
+            if get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].processNameId ) == ProcessItem[Sys.language][6] then
+                --记录标样核查结束时间,该时间用于判断是否满6小时
+                Sys.checkEndTime = setPeriodNextStartTimeByFreq(6*60);--当前时间加上6小时后的时间
+            end
             break;
         end
     end
     print("processId="..processId);
     return processId;
+end
+--***********************************************************************************************
+--周期模式下,自动标样核查不合格时获取需要运行的流程id
+--***********************************************************************************************
+function get_auto_check_process_id()
+    --当前为周期设置-标样核查-------------------------------------------
+    if Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[6].processNameId) then
+        --获取"周期设置-校准1"的流程id
+        Sys.currentProcessId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[2].processNameId));
+    --当前为周期设置-校准1----------------------------------------------
+    elseif Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[2].processNameId) then
+        Sys.currentProcessId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId));
+        if Sys.currentProcessId == 0 then
+            Sys.currentProcessId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[6].processNameId));
+        end
+    --当前为周期设置-校准2----------------------------------------------
+    elseif Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId) then
+        Sys.currentProcessId = getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[6].processNameId));
+    end
 end
 
 --***********************************************************************************************
@@ -2008,6 +2048,8 @@ function process_ready_run(processIdType)
         Sys.currentProcessId = get_auto_range_process_id();
     elseif processIdType == periodProcessId then--周期运行获取流程id
         Sys.currentProcessId = get_period_process_id();
+    elseif processIdType == autoStdCheck then--自动标样核查逻辑获取流程id
+        Sys.currentProcessId = get_auto_check_process_id();
     else
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     end
@@ -2128,6 +2170,23 @@ function excute_process()
                 end
             ----------------周期模式--------------------
             elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
+                --1.当前流程为"标样核查"  2.标样核查不合格  3.设置有校准流程
+                if Sys.processType == ProcessItem[Sys.language][6] and Sys.isCheckOk == false and
+                    getProcessIdByName(get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[6].processNameId)) then
+                    --将当前时间转换为字符串
+                    local currentDateTime = string.format("%d%02d%02d%02d%02d",
+                          Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min);
+                    
+                    --自第一次自动标样核查开始,已经6小时了
+                    if currentDateTime >= Sys.checkEndTime then
+                        SystemStop(stopByNormal);--结束周期模式
+                    else
+                        process_ready_run(autoStdCheck);--根据自动标样核查来获取流程id
+                    end
+                    
+                    return
+                end
+                
                 if Sys.processType == PeriodicTab[1].processType then--水样分析
                     --根据水样分析的频率设置下一次周期运行的时间
                     setPeriodNextStartTimeByFreq(tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].freqId)));
@@ -2196,7 +2255,7 @@ function SystemStop(stopType)
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
     UartArg.repeat_times = 0;--重发计数请0
-
+    Sys.isCheckOk = true;--核查结果默认合格
     UartArg.reply_sta = SEND_OK;
     UartArg.lock = UNLOCKED;
     stop_timer(1)--停止超时定时器
@@ -2259,6 +2318,9 @@ PeriodicTab = { [1] = { processType = ProcessItem[Sys.language][1], enableId = 1
                            year = 0, mon = 0, day = 0, hour = 0, min = 0 },--流程开始的时间
 };
 
+--***********************************************************************************************
+--  
+--***********************************************************************************************
 function run_control_period_notify(screen, control, value)
     if control == SureButtonId then
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
@@ -2272,6 +2334,9 @@ function run_control_period_notify(screen, control, value)
     end
 end
 
+--***********************************************************************************************
+--  
+--***********************************************************************************************
 function goto_period_mode_set_screen()
     
     local currentDateTime = string.format("%d%02d%02d%02d%02d",
@@ -2289,7 +2354,17 @@ function goto_period_mode_set_screen()
         --在周期模式设置界面,设置当前开始时间
         setPeriodStartTime();
     end
+
+    --周期流程设置界面中,保证校准流程中,先设置第一个流程,再设置第二个流程
+    if get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[2].processNameId) == BLANK_SPACE and
+        get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId) ~= BLANK_SPACE then
+
+        set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[2].processNameId, get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId));
+        set_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId, BLANK_SPACE);
+        WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
+    end
 end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     运行控制-定时设置
@@ -2512,7 +2587,13 @@ function process_copy_control_notify(screen, control, value)
         local configFile = io.open(SdPath .. "config/" ..srcFile, "r")          --打开文本
         if configFile ~= nil then
             ConfigFileCopy(SdPath .. "config/" .. srcFile, SdPath .. "config/" .. destFile);--将文件导出到config文件中,配置文件名为0~24
-            set_visiable(PROCESS_COPY_SCREEN, 5, 1);
+            local configFile = io.open(SdPath .. "config/" .. destFile)          --打开文本
+            if configFile ~= nil then    
+                configFile:seek("set")                  --把文件位置定位到开头
+                ConfigStr[tonumber(destFile)] = configFile:read("a")     --从当前位置读取整个文件，并赋值到字符串
+                configFile:close()                      --关闭文本
+                set_visiable(PROCESS_COPY_SCREEN, 5, 1);
+            end
         else
             set_visiable(PROCESS_COPY_SCREEN, 6, 1);
         end
@@ -3476,21 +3557,59 @@ function excute_calculate_process(paraTab)
     Sys.calibrationValue = tonumber(paraTab[13]);--校准浓度
     Sys.calibratePoint = tonumber(paraTab[15])--步骤
     Sys.checkValue = tonumber(paraTab[16]);--核查浓度
-
+    set_fore_color(MAIN_SCREEN, LastResultId, BLACK);--黑色
     ------当前计算为水样分析或者核查---------------------------------------------------------
     if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then
 
+        --根据公式计算结果
         calc_analysis_result(Sys.calculateWay);
-        if paraTab[1] == ENABLE_STRING then--结果线性补偿
+
+        --结果线性补偿
+        if paraTab[1] == ENABLE_STRING then
             Sys.result = tonumber(paraTab[4]) * Sys.result + tonumber(paraTab[5]);
         end
-        if paraTab[2] == ENABLE_STRING then--是否需要进行报警
-            if Sys.result > paraTab[9] then
+
+        --是否需要进行报警
+        if paraTab[2] == ENABLE_STRING then
+            if Sys.result > paraTab[9] then--结果高于报警值
                 Sys.alarmContent = TipsTab[Sys.language].highDensity;
-            elseif Sys.result < paraTab[8] then
+                add_history_record(HISTORY_ALARM_SCREEN);
+                set_fore_color(MAIN_SCREEN, LastResultId, RED);--红色
+                beep(2000);
+            elseif Sys.result < paraTab[8] then--结果低于报警值
                 Sys.alarmContent = TipsTab[Sys.language].lowDensity;
+                add_history_record(HISTORY_ALARM_SCREEN);
+                set_fore_color(MAIN_SCREEN, LastResultId, RED);--红色
+                beep(2000);
+            else
+                set_fore_color(MAIN_SCREEN, LastResultId, BLACK);--黑色
             end
         end
+
+        --流程为核查,则需要判断核查结果
+        if Sys.calculateType == CalcType[Sys.language][3] then
+            local needCheck = false;
+            Sys.isCheckOk = true;--默认核查结果合格
+            local DNL_Value = tonumber(paraTab[14])--核查误差
+            if Sys.processType == ProcessItem[Sys.language][5] then--"零点核查":单位为mg/L
+                DNL_Value = DNL_Value;
+                needCheck = true;
+            elseif Sys.processType == ProcessItem[Sys.language][6] or --"标样核查"
+                 Sys.processType == ProcessItem[Sys.language][7] or --"量程核查"
+                 Sys.processType == ProcessItem[Sys.language][11] then --"空白测试"：单位为百分比
+                DNL_Value = Sys.checkValue * DNL_Value / 100;
+                needCheck = true;
+            end
+            --1.判断是否需要核查; 2.核查结果是否合格
+            if needCheck == true and math.abs(Sys.result - Sys.checkValue) > DNL_Value then
+                Sys.isCheckOk = false;--核查结果不合格
+                Sys.alarmContent = Sys.processType..TipsTab[Sys.language].qualified--"标样核查不合格"
+                add_history_record(HISTORY_ALARM_SCREEN);
+                set_fore_color(MAIN_SCREEN, LastResultId, RED);--红色
+                beep(2000);
+            end
+        end
+
         print("分析结果 =", Sys.result);
     --------当前流程为校准-------------------------------------------------------
     elseif Sys.calculateType == CalcType[Sys.language][2] then
@@ -3538,7 +3657,7 @@ function excute_calculate_process(paraTab)
         end
     end
 
-    --在主界面进行显示结果与结果时间
+    --在主界面进行显示结果与时间
     if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then--当前计算为分析或者核查
         set_text(MAIN_SCREEN, LastResultId, Sys.result);
     else
@@ -3738,7 +3857,6 @@ function calc_analysis_result(type)
     print(string.format("a=%f,b=%f,c=%f,d=%f", a, b, c, d));
     Sys.result = a * (x ^ 3) + b * (x ^ 2) + c * x + d;
     Sys.result = GetPreciseDecimal(Sys.result, tonumber(get_text(RUN_CONTROL_SCREEN,DecimalTextId)))--保留小数点后四位
-    set_text(MAIN_SCREEN, LastResultId, Sys.result);--在主界面显示结果
 end
 
 
@@ -3895,11 +4013,11 @@ function process_name_select_control_notify(screen, control, value)
     if control >= FirstButtonId and control <= LastButtonId then
         ProcessNameSelecItem = control - 100;--control-100 = 与该按钮重合的文本框id
     elseif control == SureButtonId and value == ENABLE then --确认按钮,返回之前的界面
-        change_screen(DestScreen);
         if ProcessNameSelecItem ~= nil then --ProcessNameSelecItem默认为nil,如果选择了某个流程则该值不为nil
             set_text(DestScreen, DestControl, get_text(PROCESS_NAME_SELECT_SCREEN, ProcessNameSelecItem));--DestControl对应动作?≡?
             WriteParaToConfigStrAndFile(2);--2对应<RunCtrl>标签
         end
+        change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
     end
@@ -4400,6 +4518,13 @@ function add_history_record(screen)
     if screen == get_current_screen() then
         showHistoryByScreenAndPage(screen, 1);
     end
+
+    --如果是报警,则还需要将该报警保存到日志当中
+    if screen == HISTORY_ALARM_SCREEN then
+        Sys.logContent = Sys.alarmContent
+        add_history_record(HISTORY_LOG_SCREEN);
+    end
+
 end
 
 --***********************************************************************************************
@@ -4702,7 +4827,7 @@ EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是900
 --设置仪器型号
 function set_equipment_type()
     for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN, EquipmentTypeTextId));
+        set_text(PublicTab[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId));
     end
 end
 
@@ -5577,6 +5702,7 @@ function changeCfgFileLanguage(language)
             ---------------删除<action0>标签---------------------------------------
             ConfigStr[i] = DeleteSubString(ConfigStr[i], "<action0>", "</action0>");
             ---------------添加<action0>标签---------------------------------------
+            print("i="..i)
             ConfigStr[i] = ConfigStr[i] .. "<action0>";
             ConfigStr[i] = ConfigStr[i] .. "<content>";
             for j = 1, 96, 1 do

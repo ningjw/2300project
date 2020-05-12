@@ -4825,9 +4825,6 @@
 //画面流程设置-读取信号中文本显示Text_Display1的背景图片
 #define  _IMG_流程设置-读取信号_TEXT_DISPLAY1                                         36
 
-//画面流程设置-计算中图片Image14使用的图片
-#define  _IMG_流程设置-计算_IMAGE14                                                 37
-
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      7
 
 //画面流程设置-计算中图片Image13使用的图片
@@ -4859,7 +4856,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       5
 
 //画面流程设置-计算中文本显示Text_Display7的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY7                                           37
+#define  _IMG_流程设置-计算_TEXT_DISPLAY7                                           41
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      8
 
@@ -4869,7 +4866,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                      9
 
 //画面流程设置-计算中文本显示Text_Display14的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY14                                          37
+#define  _IMG_流程设置-计算_TEXT_DISPLAY14                                          41
 
 //画面流程设置-计算中按钮Button4弹起时的图片
 #define  _IMG_流程设置-计算_BUTTON4_UP                                              18
@@ -4925,6 +4922,9 @@
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY4                                      11
 
+//画面流程设置-计算中文本显示Text_Display4的背景图片
+#define  _IMG_流程设置-计算_TEXT_DISPLAY4                                           41
+
 #define  _MENU_流程设置-计算_MENU2                                                 122
 
 //画面流程设置-计算中按钮Button6按下时的图片
@@ -4935,7 +4935,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY5                                      15
 
 //画面流程设置-计算中文本显示Text_Display5的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY5                                           37
+#define  _IMG_流程设置-计算_TEXT_DISPLAY5                                           41
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY6                                      14
 
@@ -4947,7 +4947,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY8                                      16
 
 //画面流程设置-计算中文本显示Text_Display8的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY8                                           37
+#define  _IMG_流程设置-计算_TEXT_DISPLAY8                                           41
 
 //画面流程设置-阀操作中图片Image14使用的图片
 #define  _IMG_流程设置-阀操作_IMAGE14                                                37

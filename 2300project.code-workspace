@@ -3,5 +3,8 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"inline-bookmarks.view.showVisibleFilesOnly": true
+	}
 }

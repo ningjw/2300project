@@ -83,6 +83,11 @@ PublicTab = {
     [18] = HISTORY_CHECK_SCREEN,
 }
 
+--ModeBus寄存器定义
+ModeBus = {
+
+}
+
 AdminPwd = 1;
 MaintainerPwd = 2;
 EquipmentType = 3;
@@ -475,7 +480,8 @@ Sys = {
     caliE2 = {}, --用于保存校正时的E2
     caliValue = {}, --用于保存校正浓度值
     result = 0, --进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
-    isCheckOk = true;--用于判断核查结果是否合格
+    isCheckOk = true,--用于判断核查结果是否合格
+    absorbancy = 0,--吸光度
 
     hand_control_func = nil;
 
@@ -521,7 +527,7 @@ Sys = {
 function on_init()
     print(_VERSION);
     uart_set_timeout(2000, 500); --设置串口超时, 接收总超时2000ms, 字节间隔超时200ms
-    start_timer(0, 100, 1, 0) --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
+    start_timer(0, 100, 1, 0); --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
 
     for i = 1, MaxAction, 1 do
         Sys.actionIdTab[i] = 0;
@@ -546,11 +552,11 @@ function on_init()
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
 
-    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    UsbPath = "";
-    on_sd_inserted(SdPath);
-
+    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    -- UsbPath = "";
+    -- on_sd_inserted(SdPath);
+    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     --以下代码用于测试自动量程切换功能
     -- Sys.rangetypeId = 1;--预设当前量程id为1
@@ -577,6 +583,59 @@ function on_init()
 
 end
 
+--***********************************************************************************************
+--初始化ModeBus寄存器区域
+--***********************************************************************************************
+function modebus_regester_init()
+    --测量数据区
+    for i = 0x1000,0x107F,1 do
+        ModeBus[i] = 0
+    end
+    --状态告警区
+    for i = 0x1080,0x109F,1 do
+        ModeBus[i] = 0
+    end
+    --关键参数区
+    for i = 0x10A0,0x10FF,1 do
+        ModeBus[i] = 0
+    end
+    --控制命令区
+    for i = 0x1200,0x12FF,1 do
+        ModeBus[i] = 0
+    end
+
+    --编码因子
+    local value = tonumber(get_text(RUN_CONTROL_SCREEN,CodeSetId));
+    ModeBus[0x1000] = math.fmod(value, 65536);
+    ModeBus[0x1001] = math.modf(value/65536);
+    ModeBus[0x1002] = 2;--单位默认mg/L
+    ModeBus[0x100A] = string.byte('a') * 256 + string.byte('t')--水样数据标识
+    ModeBus[0x1015] = string.byte('s') * 256 + string.byte('c')--标样数据标识
+    ModeBus[0x1020] = string.byte('b') * 256 + string.byte('t')--空白数据标识
+    ModeBus[0x102B] = string.byte('d') * 256 + string.byte('z')--零点核查数据标识
+    ModeBus[0x1036] = string.byte('l') * 256 + string.byte('c')--跨度核查数据标识
+    ModeBus[0x1041] = string.byte('r') * 256 + string.byte('a')--加标回收数据标识
+    ModeBus[0x104C] = string.byte('p') * 256 + string.byte('t')--平行样数据标识
+    ModeBus[0x1089] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,9))--水样分析频率
+    ModeBus[0x108A] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,16))--零点核查频率
+    ModeBus[0x108B] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,14))--量程核查频率
+    ModeBus[0x108C] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,18))--标样核查频率
+    ModeBus[0x10A0] = tonumber(get_text(RUN_CONTROL_SCREEN,8))--小数点位数
+    value  = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,1)));
+    Modebus[0x10A3] = math.fmod(value, 65536);--量程1下限
+    Modebus[0x10A4] = math.modf(value/65536);--量程1下限
+    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,2)))
+    Modebus[0x10A5] = math.fmod(value, 65536);--量程1上限
+    Modebus[0x10A6] = math.modf(value/65536);--量程1上限
+    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,5)))
+    Modebus[0x10A7] = math.fmod(value, 65536);--曲线斜率
+    Modebus[0x10A8] = math.modf(value/65536);--曲线斜率
+    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,6)))
+    Modebus[0x10A9] = math.fmod(value, 65536);--曲线截距
+    Modebus[0x10AA] = math.modf(value/65536);--曲线截距
+    value = get_text(SYSTEM_INFO_SCREEN,2);
+    -- Modebus[0x10D2] = --设备序列号
+end
 
 --***********************************************************************************************
 --将需要选择流程的文本框初始化为BLANK_SPACE
@@ -700,6 +759,10 @@ function on_systick()
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
+    ModeBus[0x1080] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+    ModeBus[0x1081] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+    ModeBus[0x1082] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+    
     if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
         process_ready_run(processId);
     end
@@ -865,6 +928,9 @@ function on_sd_inserted(dir)
     --设置分析物
     set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));
 
+    --初始化Modebus寄存器
+    modebus_regester_init();
+
     ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
 end
 
@@ -901,8 +967,8 @@ function sys_init()
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 3 then--第三步：显示驱动版本版本号 并 获取传感版与计算卡硬件版本号
         if UartArg.reply_sta == SEND_OK then
-            softVer1 = bcd_to_string(UartArg.recv_data[10]) .. "." .. bcd_to_string(UartArg.recv_data[11]);
-            hardVer1 = bcd_to_string(UartArg.recv_data[12]) .. "." .. bcd_to_string(UartArg.recv_data[13]);
+            softVer1 = bcd_to_string(UartArg.recv_data[10])..bcd_to_string(UartArg.recv_data[11]);
+            hardVer1 = bcd_to_string(UartArg.recv_data[12])..bcd_to_string(UartArg.recv_data[13]);
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId, softVer1);--显示软件版本号
             set_text(SYSTEM_INFO_SCREEN, DriverBoardHardVerId, hardVer1);--显示硬件版本号
         end
@@ -920,7 +986,7 @@ function sys_init()
         start_wait_time(1);
         on_uart_send_data(uartSendTab.getSCSoftVer, NEED_REPLY);--获取传感版与计算卡软件版本号
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 5 then--第五步：显示感版与计算卡软件版本号
+    elseif Sys.processStep == 5 then--第五步：显示传感板与计算卡软件版本号 并获取输入输出板的硬件版本号与软件版本号
         if UartArg.reply_sta == SEND_OK then
             softVer1 = bcd_to_string(UartArg.recv_data[3]) .. bcd_to_string(UartArg.recv_data[4]);
             set_text(SYSTEM_INFO_SCREEN, SensorBoardSoftVerId, softVer1);
@@ -928,8 +994,18 @@ function sys_init()
             softVer2 = bcd_to_string(UartArg.recv_data[7]) .. bcd_to_string(UartArg.recv_data[8]);
             set_text(SYSTEM_INFO_SCREEN, CalcBoardSoftVerId, softVer1 .. softVer2);
         end
+        start_wait_time(1);
+        on_uart_send_data(uartSendTab.getIOVer, NEED_REPLY);--获取传感版与计算卡软件版本号
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 6 then --第六步:判断是否需要进行排空清洗
+    elseif Sys.processStep == 6 then--第六步:显示输入输出板的版本号
+        if UartArg.reply_sta == SEND_OK then
+            softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4])..bcd_to_string(UartArg.recv_data[5]);
+            hardVer1 = bcd_to_string(UartArg.recv_data[6])..bcd_to_string(UartArg.recv_data[7])..bcd_to_string(UartArg.recv_data[8]);
+            set_text(SYSTEM_INFO_SCREEN, CtrlBoardSoftVerId, softVer1);
+            set_text(SYSTEM_INFO_SCREEN, CtrlBoardHardVerId, hardVer1);
+        end
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 7 then --第七步:判断是否需要进行排空清洗
         set_enable(RUN_CONTROL_SCREEN, RunStopBtId, ENABLE)--初始化完成，使能开始按钮
         ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
@@ -943,6 +1019,140 @@ function sys_init()
         end
     end
 end
+--[[-----------------------------------------------------------------------------------------------------------------
+    Modebus寄存器设置
+--------------------------------------------------------------------------------------------------------------------]]
+--***********************************************************************************************
+--设置测量数据区
+--***********************************************************************************************
+function SetModebusResultArea()
+    local hexResult = FloatToHex(Sys.result);
+    local value
+    --水样分析,设置Modebus水样数据时间,水样实测值
+    if Sys.processType == ProcessItem[Sys.language][1] then
+        ModeBus[0x1005] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x1006] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x1007] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1008] = math.fmod(hexResult,65536);
+        ModeBus[0x1009] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][6] then--标样核查
+        ModeBus[0x1010] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x1011] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x1012] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1013] = math.fmod(hexResult,65536);
+        ModeBus[0x1014] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][11] then--空白测试
+        ModeBus[0x101B] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x101C] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x101D] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x101E] = math.fmod(hexResult,65536);
+        ModeBus[0x101F] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][5] then--零点核查
+        ModeBus[0x1026] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x1027] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x1028] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1029] = math.fmod(hexResult,65536);
+        ModeBus[0x102A] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][7] then--跨度核查(量程核查)
+        ModeBus[0x1031] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x1032] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x1033] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1034] = math.fmod(hexResult,65536);
+        ModeBus[0x1035] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][8] then--加标回收
+        ModeBus[0x103C] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x103D] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x103E] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x103F] = math.fmod(hexResult,65536);
+        ModeBus[0x1040] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][9] then--平行样
+        ModeBus[0x1047] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x1048] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x1049] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x104A] = math.fmod(hexResult,65536);
+        ModeBus[0x104B] = math.modf(hexResult/65536);
+    elseif Sys.processType == ProcessItem[Sys.language][2] then--校准(标定)
+        ModeBus[0x10AB] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x10AC] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x10AD] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,5)))
+        Modebus[0x10A7] = math.fmod(value, 65536);--曲线斜率
+        Modebus[0x10A8] = math.modf(value/65536);--曲线斜率
+        value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,6)))
+        Modebus[0x10A9] = math.fmod(value, 65536);--曲线截距
+        Modebus[0x10AA] = math.modf(value/65536);--曲线截距
+    elseif Sys.processType == ProcessItem[Sys.language][10] then--线性核查
+        value = FloatToHex(Sys.linearCorrelation);
+        Modebus[0x10C2] = math.fmod(value, 65536);--线性相关系数
+        Modebus[0x10C3] = math.modf(value/65536);--线性相关系数
+    elseif Sys.processType == ProcessItem[Sys.language][12] then--空白校准
+        ModeBus[0x10C8] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x10C9] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x10CA] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+    elseif Sys.processType == ProcessItem[Sys.language][13] then--标样校准
+        ModeBus[0x10CB] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
+        ModeBus[0x10CC] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
+        ModeBus[0x10CD] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+    end
+
+    value = Sys.absorbancy;
+    Modebus[0x10C6] = math.fmod(value, 65536);--吸光度
+    Modebus[0x10C7] = math.modf(value/65536);--吸光度
+
+end
+
+--***********************************************************************************************
+--设置系统状态寄存器
+--***********************************************************************************************
+function SetModebusSysStatus()
+
+    if Sys.processType == ProcessItem[Sys.language][1] then--水样分析
+        Modebus[0x1083] = 1;
+    elseif Sys.processType == ProcessItem[Sys.language][6] then --标样核查
+        Modebus[0x1083] = 2;
+    elseif Sys.processType == ProcessItem[Sys.language][5] then --零点核查
+        Modebus[0x1083] = 3;
+    elseif Sys.processType == ProcessItem[Sys.language][10] then --跨度核查
+        Modebus[0x1083] = 4;
+    elseif Sys.processType == ProcessItem[Sys.language][11] then --空白测试
+        Modebus[0x1083] = 5;
+    elseif Sys.processType == ProcessItem[Sys.language][9] then --平行样测试
+        Modebus[0x1083] = 6;
+    elseif Sys.processType == ProcessItem[Sys.language][8] then --加标回收
+        Modebus[0x1083] = 7;
+    elseif Sys.processType == ProcessItem[Sys.language][12] then --空白校准
+        Modebus[0x1083] = 8;
+    elseif Sys.processType == ProcessItem[Sys.language][13] then --标样校准
+        Modebus[0x1083] = 9;
+    elseif Sys.processType == ProcessItem[Sys.language][3] then --清洗
+        Modebus[0x1083] = 10;
+    elseif Sys.processType == ProcessItem[Sys.language][2] then --标定(校准)
+        Modebus[0x1083] = 19;
+    end
+end
+
+--***********************************************************************************************
+--设置测量模式寄存器
+--***********************************************************************************************
+function setModebusRunMode()
+    if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then
+        ModeBus[0x1084] = 1;
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
+        ModeBus[0x1084] = 2;
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then
+        ModeBus[0x1084] = 3;
+    elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
+        ModeBus[0x1084] = 4;
+    end
+end
+
+--***********************************************************************************************
+--设置告警代码寄存器
+--***********************************************************************************************
+function setModebusRunMode(alarm)
+    ModeBus[0x1085] = alarm;
+end
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -960,6 +1170,7 @@ uartSendTab = {
     openLed      = {[0] = 238, 6, 16, 14, 0, 1, 0, 0, len = 6, note = {[CHN] = "开LED", [ENG] = "Open Led" } },
     closeLed     = {[0] = 238, 6, 16, 14, 0, 0, 0, 0, len = 6, note = {[CHN] = "关LED", [ENG] = "Close Led" } },
     updateCalcSoft={[0] = 238, 6, 16, 4, 0, 0, 0, 0, len = 6, note = {[CHN] = "更新计算板", [ENG] = "Update Calc. BD." } },
+    
     getDrvVer    = {[0] = 224, 7, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "驱动版本号", [ENG] = "Get Drver BD. Ver" } },
     openValco    = {[0] = 224, 39, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "开十通阀", [ENG] = "Open Valco" } },
     openV11      = {[0] = 224, 8, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "开阀11", [ENG] = "Open valve 11" } },
@@ -970,7 +1181,11 @@ uartSendTab = {
     mvInject1To  = {[0] = 224, 13, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "移动注射泵", [ENG] = "Move injector" } },
     setInject1Spd= {[0] = 224, 14, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "设置注射泵速度", [ENG] = "Set injector speed" } },
     rstInject1   = {[0] = 224, 13, 1, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "复位注射泵", [ENG] = "Reset injector" } },
-    setPwm      = {[0] = 226, 01, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "设置4-20mA输出",[ENG] = "Set Output "}},
+    
+    setPwm       = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "设置4-20mA输出",[ENG] = "Set Output "}},
+    setPwm4mA    = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正4mA输出",[ENG] = "Set 4mA Adj. "}},
+    setPwm20mA   = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正20mA输出",[ENG] = "Set 20mA Adj. "}},
+    getIOVer = {[0] = 226, 7, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "输入输出板版本",[ENG] = "Get I/O Bd. Ver."}},
     updateDrv = {}, --该变量用于驱动板升级
 }
 
@@ -986,6 +1201,56 @@ UartArg = {
     lock = UNLOCKED, --用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
 };
 
+--***********************************************************************************************
+--  通过电脑控制仪器的运转
+--***********************************************************************************************
+function ComputerControl(package)
+    local replayData = {note = {[CHN] = "",[ENG] = ""}}
+    local crcL,crcH;
+
+    crcL,crcH = CalculateCRC16(package, #package-1);--计算crc16
+    replayData[0] = package[0];--地址
+    replayData[1] = package[1];--功能码
+    if crcL == package[#package-1] and crcH == package[#package] then
+        --判断第1个字节(读或写)
+        if package[1] == 3 then----读单个寄存器地址
+            local register = package[2] * 256 + package[3]--寄存器地址
+            local number   = package[4] * 256 + package[5]--寄存器个数
+            
+            replayData[2] = number * 2;
+            for i = register, register+number-1, 1 do
+                replayData[#replayData +1] = math.modf( ModeBus[i]/256)
+                replayData[#replayData +1] = math.fmod(ModeBus[i],256)
+            end
+            print("register="..string.format("0x%02X",register))
+        elseif package[1] == 6 then--写单个寄存器地址
+            -- if package[3] == 4 then--开始分析
+            --     SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+            --     process_ready_run(processId);--开始运行前的一些初始化操作
+            -- elseif package[3] == 6 then--停止分析
+            --     SystemStop(stopByClickButton);
+            -- end
+            --当前为反控模式,接受写寄存器指令
+            if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then 
+            
+                
+            end
+        elseif package[1] == 0x10 then--写多个寄存器
+            --当前为反控模式,接受写寄存器指令
+            if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then 
+                        
+                            
+            end
+        end
+    else--crc错误
+        replayData[1] = package[1] + 0x80;--出错功能码
+    end
+    replayData.note[CHN] = "回复上位机"..string.format("0x%02X",package[1]).."指令"
+    replayData.note[ENG] = "reply computer's "..string.format("0x%02X",package[1]).."cmd"
+    replayData.len = #replayData+1;--减去两字节的crc
+    on_uart_send_data(replayData, NO_NEED_REPLY) --回复
+end
+
 
 --***********************************************************************************************
 --[串口接受函数 
@@ -993,39 +1258,28 @@ UartArg = {
 --***********************************************************************************************
 function on_uart_recv_data(packet)
 
-    local rev_len = 0;
-
-    --获取数据长度
-    for i = 0, 50, 1 do
-        rev_len = i;
-        if packet[i] == nil then
-            break;
-        end
-    end
-
     --将接受到的数据保存到全局变量
     UartArg.recv_data = packet;
-
-    --当前为反控模式
-    if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled and package[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then
-        ComputerControl(packet);
-        --判断是否为指令数据回复
-    elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then
-        UartArg.repeat_times = 0;--重发计数请0
-        UartArg.reply_sta = SEND_OK;
-        UartArg.lock = UNLOCKED;
-        stop_timer(1)--停止超时定时器
-    end
 
     --添加通信记录
     local UartDateTime = string.format("%02d-%02d %02d:%02d", Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);
     local UartData = "";--将需要发送的数据保存到该字符串中
-    for i = 0, rev_len - 1, 1 do
-        UartData = UartData .. string.format("%02x ", packet[i]);
+    for i = 1, #packet, 1 do
+        UartData = UartData .. string.format("%02X ", packet[i]);
     end
-    --判断是否打开串口通信记录功能
     if Sys.flag_save_uart_log == ENABLE then
-        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;" .. UartDateTime .. ";" .. UartData .. ";" .. TipsTab[Sys.language].reply);
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "RX;" .. UartDateTime .. ";" .. UartData .. "; ")-- .. TipsTab[Sys.language].reply);
+    end
+
+    --判断第0个字节(地址)
+    print(packet[0].."?="..tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)))
+    if packet[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then--上位机发送的串口数据
+        ComputerControl(packet)
+    elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then --仪器各模块返回的数据
+        UartArg.repeat_times = 0;--重发计数请0
+        UartArg.reply_sta = SEND_OK;
+        UartArg.lock = UNLOCKED;
+        stop_timer(1)--停止超时定时器
     end
 end
 
@@ -1050,9 +1304,7 @@ function on_uart_send_data(packet, reply)
 
     packet[packet.len], packet[packet.len + 1] = CalculateCRC16(packet, packet.len);--计算crc16
     UartArg.reply_sta = SEND_FAIL;
-    print(packet.note[Sys.language]);--调试输出,方便电脑端调试时查看串口收发数据
     uart_send_data(packet) --将数据通过串口发送出去
-
     UartArg.note = packet.note[Sys.language];--在保存串口回复超时的日志时，需要用到UartArg.note
 
     --以下代码功能: 每发送一次数据,就将该数据保存在手动操作4的串口收发记录当中,方便从触摸屏查看.
@@ -1071,7 +1323,7 @@ function on_uart_send_data(packet, reply)
     end
     --判断是否打开串口通信记录功能
     if Sys.flag_save_uart_log == ENABLE then
-        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;" .. UartDateTime .. ";" .. UartData .. ";" .. packet.note[Sys.language]);--添?油ㄐ偶锹?
+        record_add(HAND_OPERATE4_SCREEN, UartRecordId, "TX;" .. UartDateTime .. ";" .. UartData .. ";" .. packet.note[Sys.language]);--
     end
 
 end
@@ -1517,6 +1769,7 @@ RUNCTRL_TextEid = 8;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function run_control_notify(screen, control, value)
+    print("control="..control)
     if control == RunStopBtId then--运行与停止按钮
         if get_value(RUN_CONTROL_SCREEN, control) == ENABLE then --按钮按下,此时系统状态变为待机运行
             if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then--
@@ -1531,6 +1784,7 @@ function run_control_notify(screen, control, value)
         end
     --运行方式---------------------------------------------------------------------
     elseif control == RunTypeMenuId then
+        setModebusRunMode();
         if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then--判断为反控, 隐藏运行按钮
             set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
         else
@@ -1549,6 +1803,10 @@ function run_control_notify(screen, control, value)
     --分析物----------------------------------------------------------------------
     elseif control == AnalyteSetId then
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, AnalyteSetId));
+    elseif control == CodeSetId then --因子编码
+        local code = tonumber(value);
+        ModeBus[0x1000] = right_shift(code,16);
+        ModeBus[0x1001] = math.fmod(code, 65536);
     --异常断电流程选择-------------------------------------------------------------
     elseif control == SuddenPowerOff then
         process_name_select_set(screen, control-100);
@@ -2122,6 +2380,7 @@ function process_ready_run(processIdType)
         set_text(MAIN_SCREEN, StartTimeId, string.format("%d-%02d-%02d  %02d:%02d",--显示本次启动流程的时间
                  Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,Sys.startTime.hour, Sys.startTime.min));
         SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,定时器中断中检测到运行状态后,会跳转到excute_process??数执行流??
+        SetModebusSysStatus();--设置Modebus
     end
 end
 
@@ -2300,7 +2559,7 @@ function SystemStop(stopType)
         PeriodicTab[i].freq = 0;
         PeriodicTab[i].isReadyRun = false;
     end
-
+    Modebus[0x1083] = 0;--设置工作状态为空闲
     -- --手动停止,执行排空清洗函数
     -- if stopType == stopByClickButton and getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then
     --     Sys.suddenPwrOff = true;
@@ -2308,34 +2567,7 @@ function SystemStop(stopType)
     -- end
 end
 
---***********************************************************************************************
---  通过电脑控制仪器的运转
---***********************************************************************************************
-function ComputerControl(package)
-    local replayData = {};
-    --判断第0个字节(地址)
-    if package[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then
 
-        --判断第1个字节(读或写)
-        if package[1] == 3 then----读
-            replayData[0] = package[0];--地址
-            replayData[1] = package[1];
-            if package[3] == 2 then--读单位
-            elseif package[3] == 0 then--读分析结果
-            elseif package[3] == 2 then--读校正结果
-            end
-        elseif package[1] == 6 then--写
-            if package[3] == 4 then--开始分析
-                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
-                process_ready_run(processId);--开始运行前的一些初始化操作
-            elseif package[3] == 6 then--停止分析
-                SystemStop(stopByClickButton);
-            end
-            uart_send_data(package) --回复
-        end
-
-    end
-end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     运行控制-周期设置
@@ -2370,6 +2602,8 @@ function run_control_period_notify(screen, control, value)
         change_screen(RUN_CONTROL_SCREEN);
     elseif control >= RUNCTRL_PEROID_TextSid+100 and control <= RUNCTRL_PEROID_TextEid+100 then
         process_name_select_set(screen, control-100);
+    elseif control == 9 then
+        ModeBus[0x1085] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,9))
     end
 end
 
@@ -3749,6 +3983,9 @@ function excute_calculate_process(paraTab)
         end
     end
 
+    --设置Modebus测量数据区
+    SetModebusResultArea();
+
     --在主界面进行显示结果与时间
     if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then--当前计算为分析或者核查
         set_text(MAIN_SCREEN, LastResultId, Sys.result);
@@ -3995,7 +4232,7 @@ function calc_analysis_result(type)
     else
         x = Sys.signalE1 - Sys.signalE2;
     end
-
+    Sys.absorbancy = x;
     a = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].aId));
     b = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId));
     c = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId));
@@ -4270,6 +4507,16 @@ RangeTab = {
 --设置单位
 function set_unit()
     local Unite = get_text(RANGE_SET_SCREEN, UniteSetTextId);
+
+    if Unite == "mg/L" then
+        ModeBus[0x1002] = 1
+    elseif Unite == "ug/L" then
+        ModeBus[0x1002] = 0
+    elseif Unite == "PPM" then
+        ModeBus[0x1002] = 2
+    elseif Unite == "PPB" then
+        ModeBus[0x1002] = 5
+    end
     --量程设置界面中,控件Id = 300 ~ 302为单位显示文本
     for i = 300, 302, 1 do
         set_text(RANGE_SET_SCREEN, i, Unite);
@@ -4570,7 +4817,7 @@ UartRecordId = 1--串口通讯记录空间id
     输入输出
 --------------------------------------------------------------------------------------------------------------------]]
 IOSET_TextStartId = 1;
-IOSET_TextEndId = 8;
+IOSET_TextEndId = 12;
 IOSET_ComputerAddr = 1;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
@@ -4582,18 +4829,42 @@ function in_out_control_notify(screen, control, value)
         local a = 16/(v20-v4);
         local b = 4 - (a *v4);
         local result = tonumber( get_text(MAIN_SCREEN,LastResultId) );
-        set_text(IN_OUT_SCREEN,3, result * a + b);
+        local out = result * a + b;
+        if out < 4 then
+            out = 4;
+        elseif out > 20 then
+            out = 20
+        end
+        set_text(IN_OUT_SCREEN,3, out);
     elseif control == 6 or control == 7 or control == 8 then--修改输出2设置
         local v4 = tonumber(get_text(IN_OUT_SCREEN,7))--4mA对应值
         local v20 = tonumber(get_text(IN_OUT_SCREEN,8))--20mA对应值
         local a = 16/(v20-v4);
         local b = 4 - a *v4;
         local result = tonumber( get_text(MAIN_SCREEN,LastResultId) );
-        set_text(IN_OUT_SCREEN,6, result * a + b);
-    elseif control == 25 and value == ENABLE then--输出1按钮
+        local out = result * a + b;
+        if out < 4 then
+            out = 4;
+        elseif out > 20 then
+            out = 20
+        end
+        set_text(IN_OUT_SCREEN,6, out);
+    elseif control == 25 and value == ENABLE then--输出1测试按钮
         setPwmOutput(1, tonumber(get_text(IN_OUT_SCREEN,3)))
-    elseif control == 14 and value == ENABLE then--输出2按钮
+    elseif control == 14 and value == ENABLE then--输出2测试按钮
         setPwmOutput(2, tonumber(get_text(IN_OUT_SCREEN,6)))
+    elseif control == 24 and value == ENABLE then--输出1 4mA校正值
+        -- print(tonumber(get_text(IN_OUT_SCREEN,9)));
+        setPwmAdjust(3, tonumber(get_text(IN_OUT_SCREEN,9)))
+    elseif control == 26 and value == ENABLE then--输出1 20mA校正值
+        -- print(tonumber(get_text(IN_OUT_SCREEN,10)));
+        setPwmAdjust(5, tonumber(get_text(IN_OUT_SCREEN,10)))
+    elseif control == 27 and value == ENABLE then--输出2 4mA校正值
+        -- print(tonumber(get_text(IN_OUT_SCREEN,11)));
+        setPwmAdjust(4, tonumber(get_text(IN_OUT_SCREEN,11)))
+    elseif control == 28 and value == ENABLE then--输出2 20mA校正值
+        -- print(tonumber(get_text(IN_OUT_SCREEN,12)))
+        setPwmAdjust(6, tonumber(get_text(IN_OUT_SCREEN,12)))
     end
 
     if control >= IOSET_TextStartId and control <= IOSET_TextEndId then
@@ -4602,24 +4873,38 @@ function in_out_control_notify(screen, control, value)
 end
 
 
-
 --***********************************************************************************************
 --设置pwm输出
 --***********************************************************************************************
-function setPwmOutput(channel, floatValue)
-    local value = FloatToHex(floatValue);
-
-    uartSendTab.setPwm[3] = math.fmod( value, 256)
-    uartSendTab.setPwm[4] = math.fmod( right_shift(value,8), 256)
-    uartSendTab.setPwm[5] = math.fmod( right_shift(value,16), 256)
-    uartSendTab.setPwm[6] = math.fmod( right_shift(value,24), 256)
-    if channel == 1 then
-        uartSendTab.setPwm[2] = 1;
-        on_uart_send_data(uartSendTab.setPwm, NO_NEED_REPLY);
-    else
-        uartSendTab.setPwm[2] = 2;
-        on_uart_send_data(uartSendTab.setPwm, NO_NEED_REPLY);
+function setPwmOutput(flag, floatValue)
+    if floatValue < 4 then
+        floatValue = 4;
+    elseif floatValue > 20 then
+        floatValue = 20;
     end
+    local value = FloatToHex(floatValue);
+    -- print(string.format("%08X", value));
+    uartSendTab.setPwm[2] = math.fmod( value, 256)
+    uartSendTab.setPwm[3] = math.fmod( right_shift(value,8), 256)
+    uartSendTab.setPwm[4] = math.fmod( right_shift(value,16), 256)
+    uartSendTab.setPwm[5] = math.fmod( right_shift(value,24), 256)
+
+    uartSendTab.setPwm[1] = flag;
+    on_uart_send_data(uartSendTab.setPwm, NO_NEED_REPLY);
+end
+
+--***********************************************************************************************
+--设置pwm的4mA与20mA校正值
+--***********************************************************************************************
+function setPwmAdjust(flag, value)
+
+    uartSendTab.setPwm[2] = math.fmod( value, 256)
+    uartSendTab.setPwm[3] = math.fmod( right_shift(value,8), 256)
+    uartSendTab.setPwm[4] = math.fmod( right_shift(value,16), 256)
+    uartSendTab.setPwm[5] = math.fmod( right_shift(value,24), 256)
+
+    uartSendTab.setPwm[1] = flag;
+    on_uart_send_data(uartSendTab.setPwm, NO_NEED_REPLY);
 end
 
 --[[-----------------------------------------------------------------------------------------------------------------

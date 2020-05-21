@@ -6979,6 +6979,9 @@
 
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY15                                         2
 
+//画面输入输出中文本显示Text_Display15的背景图片
+#define  _IMG_输入输出_TEXT_DISPLAY15                                              9
+
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY3                                          3
 
 //画面输入输出中文本显示Text_Display3的背景图片
@@ -7101,6 +7104,62 @@
 #define  _BTN_输入输出_BUTTON8                                                    66
 
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY89                                       905
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY1                                          9
+
+//画面输入输出中文本显示Text_Display1的背景图片
+#define  _IMG_输入输出_TEXT_DISPLAY1                                               9
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY12                                        10
+
+//画面输入输出中文本显示Text_Display12的背景图片
+#define  _IMG_输入输出_TEXT_DISPLAY12                                              9
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY13                                        11
+
+//画面输入输出中文本显示Text_Display13的背景图片
+#define  _IMG_输入输出_TEXT_DISPLAY13                                              9
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY14                                        12
+
+//画面输入输出中文本显示Text_Display14的背景图片
+#define  _IMG_输入输出_TEXT_DISPLAY14                                              9
+
+//画面输入输出中按钮Button9弹起时的图片
+#define  _IMG_输入输出_BUTTON9_UP                                                  5
+
+//画面输入输出中按钮Button9按下时的图片
+#define  _IMG_输入输出_BUTTON9_DOWN                                                6
+
+#define  _BTN_输入输出_BUTTON9                                                    24
+
+//画面输入输出中按钮Button10弹起时的图片
+#define  _IMG_输入输出_BUTTON10_UP                                                 5
+
+//画面输入输出中按钮Button10按下时的图片
+#define  _IMG_输入输出_BUTTON10_DOWN                                               6
+
+#define  _BTN_输入输出_BUTTON10                                                   26
+
+//画面输入输出中按钮Button11弹起时的图片
+#define  _IMG_输入输出_BUTTON11_UP                                                 5
+
+//画面输入输出中按钮Button11按下时的图片
+#define  _IMG_输入输出_BUTTON11_DOWN                                               6
+
+#define  _BTN_输入输出_BUTTON11                                                   27
+
+//画面输入输出中按钮Button12弹起时的图片
+#define  _IMG_输入输出_BUTTON12_UP                                                 5
+
+//画面输入输出中按钮Button12按下时的图片
+#define  _IMG_输入输出_BUTTON12_DOWN                                               6
+
+#define  _BTN_输入输出_BUTTON12                                                   28
+
+#define  _MENU_输入输出_MENU1                                                     18
+
+#define  _BTN_输入输出_BUTTON15                                                   20
 
 #define  _RECORD_历史记录-分析记录_RECORD1                                            32
 
@@ -8620,7 +8679,7 @@
 #define  _BTN_系统信息_BUTTON6                                                   205
 
 //画面系统信息中按钮Button7弹起时的图片
-#define  _IMG_系统信息_BUTTON7_UP                                                 12
+#define  _IMG_系统信息_BUTTON7_UP                                                 13
 
 //画面系统信息中按钮Button7按下时的图片
 #define  _IMG_系统信息_BUTTON7_DOWN                                               12
@@ -8628,7 +8687,7 @@
 #define  _BTN_系统信息_BUTTON7                                                   206
 
 //画面系统信息中按钮Button8弹起时的图片
-#define  _IMG_系统信息_BUTTON8_UP                                                 13
+#define  _IMG_系统信息_BUTTON8_UP                                                 12
 
 //画面系统信息中按钮Button8按下时的图片
 #define  _IMG_系统信息_BUTTON8_DOWN                                               12

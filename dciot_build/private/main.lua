@@ -2,13 +2,7 @@
 --更多功能请阅读<<物联型LUA脚本API.pdf>>
 --建议使用visual code studio 并安装Bookmarks与luaide-lite(或者LuaCoderAssist)插件,
 --通过打开同目录下的2300project.code-workspace工作空间查看main.lua文件,该文件使用Bookmarks插件插入了很多标签,方便跳转
---内存地址分配：
---0-35：保存的是操作员与管理员的密码，通过“系统信息”界面的Id为13的历史记录控件进行配置。
---36-199：预留空间
---200-4724：保存的是校正历史记录
---4724-7498：保存的是报警记录
---7498-13022：保存的是运行日志
---13022开始保存的是历史记录。
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     宏定义&全局变量
@@ -144,6 +138,8 @@ CHK_RUN_USER = 2;--检测权限时,除了需要检测是否在运行中, 还需要检测用户是否为管理
 processId = 0;
 autoRangeProcessId = 1;
 periodProcessId = 2;
+controledProcessId = 3;
+
 --stopType
 stopByNormal = 0;
 stopByClickButton = 1;
@@ -260,6 +256,129 @@ Alarm = {
     autoRange = {id=15},--量程切换告警
 }
 
+
+Sys = {
+    language = CHN, --系统语言
+    userName = "", --用于保存当前用户
+    status = 0, --系统状态:对应WorkStatus中的值
+    runType = 0, --运行方式: 对应WorkType中的值
+    analysisType = COLOR_METHOD, --分析方法
+    rangetypeId = 1, --用于记录量程选择
+
+    handRunTimes = 0;--记录了手动运行次数
+    handProcessIndex = 1,--手动流程id,手动流程共有五个, 该变量值的范围为1-5.
+    handProcessTotal = 0,--总共有多少个手动流程需要执行
+    
+    periodStartDateTime = "", --周期流程开始时间
+
+    actionTotal = 0, --所有的动作步数,可以通过统计<action>标签获得
+    actionStep = 1, --取值范围为1-24,对应了流程编辑1/3界面中的共24个步骤
+    actionSubStep = 1, --该变量用于控制"初始化"注射泵""消解""注射泵加液"等等子动作.
+    --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
+    actionIdTab = {},
+    actionNameTab = {},
+
+    actionFunction = nil, --用于指向需要执行的动作函数,例如 excute_init_process, excute_get_sample_process等
+    actionString, --截取流程配置文件中的action标签后, 内容保存到该变量
+    actionType = "", --用于保存type标签中的内容, 表示该动作是""初始化""注射泵""注射泵加液"等等
+    contentTabStr = "", --用于保存content标签中的内容
+    contentTab = {}, --用于保存content标签中的内容,此时已经调用split对contentTabStr中的内容进行了分割
+
+    currentProcessId = 0, --当前正在执行的流程,所对应的的序号.
+    processActionTab = {}, --读出取流程相关的配置文件后,保存到该变量当中
+    processName = "", --流程名称
+    processType = "", --流程类型, 通过该变量判断是校正 还是 非校正. 校正使用一种算法, 非校正使用另一种算法
+    processRange = 1, --流程量程
+    processTag = "", --流程类型标识, "at""sc""dz"等
+    processResultTag = ":N",--流程结果标识,"N"-真诚;"T"-超上限;"L"-超下限
+    processStep = 1, --执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
+
+    checkEndTime = "",--"标样核查"开始时间,字符串格式
+    startTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --开始时间
+    dateTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 },  --系统日期时间,在1S定时器中不断刷新
+
+    driverStep = 1, --用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
+    driverStep1Func = nil, --当step=driverStep时,需要执行的函数,比如调用开阀函数/关阀函数/操作注射泵函数/等等
+    driverSubStep = 1, --用于driverSubStep用于控制driverStep1Func指向的函数,例如在运行流程时,运行到了注射泵加液,
+    --此时:第一步需要设置注射泵速度, 第二步需要设置注射泵方向
+    waitTimeFlag = RESET, --用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
+    waitTime = 0, --用于保存需要等待的时间
+    eWaitTimeFlag = RESET, --在测量E1,E2时的定时器
+
+    valcoChannel = 0, --用于保存在运行流程时的十通阀通道号
+    valveOperate, --用于指示关阀还是开阀
+    --valveIdTab 保存16个阀是否选中
+    valveIdTab = {[1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0 },
+
+    injectId = 1, --取值1或者2 表示注射泵1或者注射泵2
+    injectSpeed = 0,
+    injectScale = 0,
+    injectCurrentSpd = 0,
+
+    peristalticId = 1, --取值1/2/3
+    peristalticSpeed = 0,
+    peristalticVolume = 0,
+    peristalticDir = "";
+    peristalticCurrentSpd = 0,
+    peristalticCurrentDir = 0,
+
+    signalTab = {}, --用于保存多个连续的电位信号
+    signalCount = 0, --用于统计当前信号个数
+    signalE1 = 0, --用于保存信号E1的值
+    signalE2 = 0, --用于保存信号E2的值
+    signalDrift = 0, --信号漂移
+    signalMinTime = 0, --读取信号最小时间
+    signalMaxTime = 0, --读取信号最大时间
+    signalNumber = 0, --取样数，默认为10
+    slop = 0,--斜率
+    y_intercept = 0,--截距
+
+    calculateWay = "", --计算方式: 取对数 或者 取差值 方式
+    calculateType = "", --计算类型：有分析，校正,核查。
+    CalcStep= 1,
+    CalibrationDensity = 0, --校正值
+    checkValue = 0, --核查值
+    caliE1 = {}, --用于保存校正时的E1
+    caliE2 = {}, --用于保存校正时的E2
+    caliValue = {}, --用于保存校正浓度值
+    result = 0, --进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
+    isCheckOk = true,--用于判断核查结果是否合格
+    absorbancy = 0,--吸光度
+
+    hand_control_func = nil;
+
+    alarmCode = 0;--报警编码
+    alarmContent = "", --用于保存当前报警信息
+    logContent = "", --用于保存当前日志信息
+
+    reagentStatus = RESET;
+    
+    ssid = 0,
+    wifi_connect = 0,
+    binIndex = 0, --用于驱动板升级时,控制数据包位置
+
+    flag_save_uart_log = ENABLE, --该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
+    isAutoRangeProcess = false, --用于指示当前流程是否为自动量程切换流程,该变量用于保证只运行一次量程切换流程
+
+    ReadyToReadConfigFile = false, --导入配置文件后,不能第一时间读取,需要过一段时间,该变量用于指示配置文件已经导入,可以延时读取了
+
+    info = {},--用于记录密码,一起序列号,一起型号等系统信息
+    lastInfo = {},--用于记录上次结果,在开机的时候进行显示
+    suddenPwrOff = false,--该变量用于判断是否需要运行"运行控制"界面中的"异常断电"流程
+
+    recoveryM1 = 0,--加标回收第一次结果
+    recoveryM2 = 0,--加标回收第二次结果
+    recoveryVa = 0,--加标回收第二次流程中 需要加入的标准溶液体积
+    recoveryRate = 0,--加标回收率
+
+    linearY = {},--线性核查结果
+    linearX = {},--线性核查标准浓度
+    linearCorrelation = 0,--线性相关系数
+    linearRatioDensity = {0, 0.2, 0.4, 0.6, 0.8},
+
+    controledRangeId,--反控模式下设置的量程
+    controledProcessTypeId,--反控模式设置的流程在ProcessItem表中对应的下标
+}
 
 --工作状态
 WorkStatus = {
@@ -391,129 +510,7 @@ ConfigStr = {};
 --保存的是配置文件"1"-"24"中的某个配置文件,每个元素保存该文件中的一行,每一行表示的是一个动作
 ActionStrTab = {};
 
-Sys = {
-    language = CHN, --系统语言
-    userName = "", --用于保存当前用户
-    status = 0, --系统状态:对应WorkStatus中的值
-    runType = 0, --运行方式: 对应WorkType中的值
-    analysisType = COLOR_METHOD, --分析方法
-    rangetypeId = 1, --用于记录量程选择
 
-    handRunTimes = 0;--记录了手动运行次数
-    handProcessIndex = 1,--手动流程id,手动流程共有五个, 该变量值的范围为1-5.
-    handProcessTotal = 0,--总共有多少个手动流程需要执行
-    
-    periodStartDateTime = "", --周期流程开始时间
-
-    actionTotal = 0, --所有的动作步数,可以通过统计<action>标签获得
-    actionStep = 1, --取值范围为1-24,对应了流程编辑1/3界面中的共24个步骤
-    actionSubStep = 1, --该变量用于控制"初始化"注射泵""消解""注射泵加液"等等子动作.
-    --actionIdTab保存了各个动作的序号,例如SystemArg.actionIdTab[1] = 3, 表示第一步就执行序号为3的action, 也意味着序号为1/2的action为空格(没有设置)
-    actionIdTab = {},
-    actionNameTab = {},
-
-    actionFunction = nil, --用于指向需要执行的动作函数,例如 excute_init_process, excute_get_sample_process等
-    actionString, --截取流程配置文件中的action标签后, 内容保存到该变量
-    actionType = "", --用于保存type标签中的内容, 表示该动作是""初始化""注射泵""注射泵加液"等等
-    contentTabStr = "", --用于保存content标签中的内容
-    contentTab = {}, --用于保存content标签中的内容,此时已经调用split对contentTabStr中的内容进行了分割
-
-    currentProcessId = 0, --当前正在执行的流程,所对应的的序号.
-    processActionTab = {}, --读出取流程相关的配置文件后,保存到该变量当中
-    processName = "", --流程名称
-    processType = "", --流程类型, 通过该变量判断是校正 还是 非校正. 校正使用一种算法, 非校正使用另一种算法
-    processRange = 1, --流程量程
-    processTag = "", --流程类型标识, "at""sc""dz"等
-    processResultTag = ":N",--流程结果标识,"N"-真诚;"T"-超上限;"L"-超下限
-    processStep = 1, --执行流程时,会分步骤, 比如第一步读取action内容,解析动作类型,确定执行的动作函数, 第二步就可以执行动作函数了
-
-    checkEndTime = "",--"标样核查"开始时间,字符串格式
-    startTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 }, --开始时间
-    dateTime = { year = 0, mon = 0, day = 0, hour = 0, min = 0, sec = 0 },  --系统日期时间,在1S定时器中不断刷新
-
-    driverStep = 1, --用于控制所有最子层的动作,例如在开阀时: 第一步需要通过串口发送开阀指令, 第二步需要等待回复成功, 第三步需要等待一定的时间.这个就是由该变量控制
-    driverStep1Func = nil, --当step=driverStep时,需要执行的函数,比如调用开阀函数/关阀函数/操作注射泵函数/等等
-    driverSubStep = 1, --用于driverSubStep用于控制driverStep1Func指向的函数,例如在运行流程时,运行到了注射泵加液,
-    --此时:第一步需要设置注射泵速度, 第二步需要设置注射泵方向
-    waitTimeFlag = RESET, --用于标志是否正在等待超时时间到; 取值0或者1; 1(SET)= 当前正在等待超时, 0(RESET)表示等待超时完成
-    waitTime = 0, --用于保存需要等待的时间
-    eWaitTimeFlag = RESET, --在测量E1,E2时的定时器
-
-    valcoChannel = 0, --用于保存在运行流程时的十通阀通道号
-    valveOperate, --用于指示关阀还是开阀
-    --valveIdTab 保存16个阀是否选中
-    valveIdTab = {[1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0 },
-
-    injectId = 1, --取值1或者2 表示注射泵1或者注射泵2
-    injectSpeed = 0,
-    injectScale = 0,
-    injectCurrentSpd = 0,
-
-    peristalticId = 1, --取值1/2/3
-    peristalticSpeed = 0,
-    peristalticVolume = 0,
-    peristalticDir = "";
-    peristalticCurrentSpd = 0,
-    peristalticCurrentDir = 0,
-
-    dispelTemp, --消解温度
-    dispelTime, --消解时间
-    dispelEmptyTemp, --消解排空温度
-
-    signalTab = {}, --用于保存多个连续的电位信号
-    signalCount = 0, --用于统计当前信号个数
-    signalE1 = 0, --用于保存信号E1的值
-    signalE2 = 0, --用于保存信号E2的值
-    signalDrift = 0, --信号漂移
-    signalMinTime = 0, --读取信号最小时间
-    signalMaxTime = 0, --读取信号最大时间
-    signalNumber = 0, --取样数，默认为10
-    slop = 0,--斜率
-    y_intercept = 0,--截距
-
-    calculateWay = "", --计算方式: 取对数 或者 取差值 方式
-    calculateType = "", --计算类型：有分析，校正,核查。
-    CalcStep= 1,
-    CalibrationDensity = 0, --校正值
-    checkValue = 0, --核查值
-    caliE1 = {}, --用于保存校正时的E1
-    caliE2 = {}, --用于保存校正时的E2
-    caliValue = {}, --用于保存校正浓度值
-    result = 0, --进行一次流程运行后得到的结果,该结果可能是分析结果/校正结果/...
-    isCheckOk = true,--用于判断核查结果是否合格
-    absorbancy = 0,--吸光度
-
-    hand_control_func = nil;
-
-    alarmCode = 0;--报警编码
-    alarmContent = "", --用于保存当前报警信息
-    logContent = "", --用于保存当前日志信息
-
-    reagentStatus = RESET;
-    
-    ssid = 0,
-    wifi_connect = 0,
-    binIndex = 0, --用于驱动板升级时,控制数据包位置
-
-    flag_save_uart_log = ENABLE, --该变量用于是否保存串口通信log(获取电极电位的时候,会不断的获取,为了减少log,增加该变量进行控制)
-    isAutoRangeProcess = false, --用于指示当前流程是否为自动量程切换流程,该变量用于保证只运行一次量程切换流程
-
-    ReadyToReadConfigFile = false, --导入配置文件后,不能第一时间读取,需要过一段时间,该变量用于指示配置文件已经导入,可以延时读取了
-
-    info = {},--用于记录密码,一起序列号,一起型号等系统信息
-    lastInfo = {},--用于记录上次结果,在开机的时候进行显示
-    suddenPwrOff = false,--该变量用于判断是否需要运行"运行控制"界面中的"异常断电"流程
-
-    recoveryM1 = 0,--加标回收第一次结果
-    recoveryM2 = 0,--加标回收第二次结果
-    recoveryVa = 0,--加标回收第二次流程中 需要加入的标准溶液体积
-    recoveryRate = 0,--加标回收率
-
-    linearY = {},--线性核查结果
-    linearX = {},--线性核查标准浓度
-    linearCorrelation = 0,--线性相关系数
-    linearRatioDensity = {0, 0.2, 0.4, 0.6, 0.8}
-}
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -528,12 +525,14 @@ function on_init()
     print(_VERSION);
     uart_set_timeout(2000, 500); --设置串口超时, 接收总超时2000ms, 字节间隔超时200ms
     start_timer(0, 100, 1, 0); --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
-
     for i = 1, MaxAction, 1 do
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-    
+    Sys.actionFunction = excute_wait_time_process;
+    if Sys.actionFunction == excute_wait_time_process then
+        print("两者相等");
+    end
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
@@ -552,10 +551,10 @@ function on_init()
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
 
-    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    -- UsbPath = "";
-    -- on_sd_inserted(SdPath);
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    UsbPath = "";
+    on_sd_inserted(SdPath);
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
     --以下代码用于测试自动量程切换功能
@@ -583,59 +582,7 @@ function on_init()
 
 end
 
---***********************************************************************************************
---初始化ModeBus寄存器区域
---***********************************************************************************************
-function modebus_regester_init()
-    --测量数据区
-    for i = 0x1000,0x107F,1 do
-        ModeBus[i] = 0
-    end
-    --状态告警区
-    for i = 0x1080,0x109F,1 do
-        ModeBus[i] = 0
-    end
-    --关键参数区
-    for i = 0x10A0,0x10FF,1 do
-        ModeBus[i] = 0
-    end
-    --控制命令区
-    for i = 0x1200,0x12FF,1 do
-        ModeBus[i] = 0
-    end
 
-    --编码因子
-    local value = tonumber(get_text(RUN_CONTROL_SCREEN,CodeSetId));
-    ModeBus[0x1000] = math.fmod(value, 65536);
-    ModeBus[0x1001] = math.modf(value/65536);
-    ModeBus[0x1002] = 2;--单位默认mg/L
-    ModeBus[0x100A] = string.byte('a') * 256 + string.byte('t')--水样数据标识
-    ModeBus[0x1015] = string.byte('s') * 256 + string.byte('c')--标样数据标识
-    ModeBus[0x1020] = string.byte('b') * 256 + string.byte('t')--空白数据标识
-    ModeBus[0x102B] = string.byte('d') * 256 + string.byte('z')--零点核查数据标识
-    ModeBus[0x1036] = string.byte('l') * 256 + string.byte('c')--跨度核查数据标识
-    ModeBus[0x1041] = string.byte('r') * 256 + string.byte('a')--加标回收数据标识
-    ModeBus[0x104C] = string.byte('p') * 256 + string.byte('t')--平行样数据标识
-    ModeBus[0x1089] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,9))--水样分析频率
-    ModeBus[0x108A] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,16))--零点核查频率
-    ModeBus[0x108B] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,14))--量程核查频率
-    ModeBus[0x108C] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,18))--标样核查频率
-    ModeBus[0x10A0] = tonumber(get_text(RUN_CONTROL_SCREEN,8))--小数点位数
-    value  = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,1)));
-    Modebus[0x10A3] = math.fmod(value, 65536);--量程1下限
-    Modebus[0x10A4] = math.modf(value/65536);--量程1下限
-    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,2)))
-    Modebus[0x10A5] = math.fmod(value, 65536);--量程1上限
-    Modebus[0x10A6] = math.modf(value/65536);--量程1上限
-    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,5)))
-    Modebus[0x10A7] = math.fmod(value, 65536);--曲线斜率
-    Modebus[0x10A8] = math.modf(value/65536);--曲线斜率
-    value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,6)))
-    Modebus[0x10A9] = math.fmod(value, 65536);--曲线截距
-    Modebus[0x10AA] = math.modf(value/65536);--曲线截距
-    value = get_text(SYSTEM_INFO_SCREEN,2);
-    -- Modebus[0x10D2] = --设备序列号
-end
 
 --***********************************************************************************************
 --将需要选择流程的文本框初始化为BLANK_SPACE
@@ -759,9 +706,13 @@ function on_systick()
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
-    ModeBus[0x1080] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-    ModeBus[0x1081] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-    ModeBus[0x1082] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+    local value,yearMon,dayHour,minSec;
+    yearMon = Decimal_BCD(Sys.dateTime.year%100) *256 + Decimal_BCD(Sys.dateTime.mon)
+    dayHour = Decimal_BCD(Sys.dateTime.day) * 256 + Decimal_BCD(Sys.dateTime.hour)
+    minSec  = Decimal_BCD(Sys.dateTime.min) * 256 + Decimal_BCD(Sys.dateTime.sec)
+    ModeBus[0x1080] = yearMon--年月
+    ModeBus[0x1081] = dayHour--日时
+    ModeBus[0x1082] = minSec--分秒
     
     if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
         process_ready_run(processId);
@@ -910,18 +861,13 @@ end
 --***********************************************************************************************
 function on_sd_inserted(dir)
     SdPath = dir;--保存SD卡的路径
-    ShowSysTips("1")
     changeCfgFileLanguage(Sys.language);--将配置文件进行翻译,然后显示到界面上
-    ShowSysTips("2")
     ReadFile0ToConfigStrAndScreen();--读取"0"文件,并将文件里的参数设置到 流程设置1界面/运行控制界面/量程设置界面/手动操作3界面/输入输出界面
-    ShowSysTips("3")
     checkHistoryFile();--检测并创建空的历史记录文件
-    ShowSysTips("4")
     --反控模式下,隐藏开始按钮
     if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
         set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
     end
-    ShowSysTips("5")
     --设置单位
     set_unit();
 
@@ -967,8 +913,8 @@ function sys_init()
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 3 then--第三步：显示驱动版本版本号 并 获取传感版与计算卡硬件版本号
         if UartArg.reply_sta == SEND_OK then
-            softVer1 = bcd_to_string(UartArg.recv_data[10]) .. "." .. bcd_to_string(UartArg.recv_data[11]);
-            hardVer1 = bcd_to_string(UartArg.recv_data[12]) .. "." .. bcd_to_string(UartArg.recv_data[13]);
+            softVer1 = bcd_to_string(UartArg.recv_data[10])..bcd_to_string(UartArg.recv_data[11]);
+            hardVer1 = bcd_to_string(UartArg.recv_data[12])..bcd_to_string(UartArg.recv_data[13]);
             set_text(SYSTEM_INFO_SCREEN, DriverBoardSoftVerId, softVer1);--显示软件版本号
             set_text(SYSTEM_INFO_SCREEN, DriverBoardHardVerId, hardVer1);--显示硬件版本号
         end
@@ -995,17 +941,34 @@ function sys_init()
             set_text(SYSTEM_INFO_SCREEN, CalcBoardSoftVerId, softVer1 .. softVer2);
         end
         start_wait_time(1);
-        on_uart_send_data(uartSendTab.getIOVer, NEED_REPLY);--获取传感版与计算卡软件版本号
+        on_uart_send_data(uartSendTab.getIOVer, NEED_REPLY);--获取
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 6 then--第六步:显示输入输出板的版本号
+    elseif Sys.processStep == 6 then--第六步:显示输入输出板的版本号,并获取消解软件版本号
         if UartArg.reply_sta == SEND_OK then
             softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4])..bcd_to_string(UartArg.recv_data[5]);
             hardVer1 = bcd_to_string(UartArg.recv_data[6])..bcd_to_string(UartArg.recv_data[7])..bcd_to_string(UartArg.recv_data[8]);
             set_text(SYSTEM_INFO_SCREEN, CtrlBoardSoftVerId, softVer1);
             set_text(SYSTEM_INFO_SCREEN, CtrlBoardHardVerId, hardVer1);
         end
+        start_wait_time(1);
+        on_uart_send_data(uartSendTab.getDsHardVer, NEED_REPLY);--获取消解板硬件版本号
         Sys.processStep = Sys.processStep + 1;
-    elseif Sys.processStep == 7 then --第七步:判断是否需要进行排空清洗
+    elseif Sys.processStep == 7 then--第七步:显示消解板硬件版本号并获取消解板软件版本号
+        if UartArg.reply_sta == SEND_OK then
+            hardVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4])..
+                       bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
+
+        end
+        start_wait_time(1);
+        on_uart_send_data(uartSendTab.getDsHardVer, NEED_REPLY);--获取消解板软件版本号
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 8 then--第八步:显示消解板软件版本号
+        if UartArg.reply_sta == SEND_OK then
+            softVer1 = bcd_to_string(UartArg.recv_data[3])..bcd_to_string(UartArg.recv_data[4])..
+                       bcd_to_string(UartArg.recv_data[5])..bcd_to_string(UartArg.recv_data[6]);
+        end
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 9 then --第九步:判断是否需要进行排空清洗
         set_enable(RUN_CONTROL_SCREEN, RunStopBtId, ENABLE)--初始化完成，使能开始按钮
         ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
@@ -1020,85 +983,178 @@ function sys_init()
     end
 end
 --[[-----------------------------------------------------------------------------------------------------------------
-    Modebus寄存器设置
+    ModeBus寄存器设置
 --------------------------------------------------------------------------------------------------------------------]]
+
+--***********************************************************************************************
+--初始化ModeBus寄存器区域
+--***********************************************************************************************
+function modebus_regester_init()
+    --测量数据区
+    for i = 0x1000,0x107F,1 do
+        ModeBus[i] = 0
+    end
+    --状态告警区
+    for i = 0x1080,0x109F,1 do
+        ModeBus[i] = 0
+    end
+    --关键参数区
+    for i = 0x10A0,0x10FF,1 do
+        ModeBus[i] = 0
+    end
+    --控制命令区
+    for i = 0x1200,0x12FF,1 do
+        ModeBus[i] = 0
+    end
+
+    local file;
+    file = io.open(SdPath .. "record/ModeBus");
+    if file == nil then
+        file = io.open(SdPath .. "record/ModeBus", "w+");--打开并清空该文件
+        --编码因子
+        local value = tonumber(get_text(RUN_CONTROL_SCREEN,CodeSetId));
+        ModeBus[0x1000] = math.fmod(value, 65536);
+        ModeBus[0x1001] = math.modf(value/65536);
+        ModeBus[0x1002] = 2;--单位默认mg/L
+        ModeBus[0x100A] = string.byte('a') * 256 + string.byte('t')--水样数据标识
+        ModeBus[0x1015] = string.byte('s') * 256 + string.byte('c')--标样数据标识
+        ModeBus[0x1020] = string.byte('b') * 256 + string.byte('t')--空白数据标识
+        ModeBus[0x102B] = string.byte('d') * 256 + string.byte('z')--零点核查数据标识
+        ModeBus[0x1036] = string.byte('l') * 256 + string.byte('c')--跨度核查数据标识
+        ModeBus[0x1041] = string.byte('r') * 256 + string.byte('a')--加标回收数据标识
+        ModeBus[0x104C] = string.byte('p') * 256 + string.byte('t')--平行样数据标识
+        ModeBus[0x1089] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,9))--水样分析频率
+        ModeBus[0x108A] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,16))--零点核查频率
+        ModeBus[0x108B] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,14))--量程核查频率
+        ModeBus[0x108C] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,18))--标样核查频率
+        ModeBus[0x10A0] = tonumber(get_text(RUN_CONTROL_SCREEN,8))--小数点位数
+        value  = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,1)));
+        ModeBus[0x10A3] = math.fmod(value, 65536);--量程1下限
+        ModeBus[0x10A4] = math.modf(value/65536);--量程1下限
+        value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,2)))
+        ModeBus[0x10A5] = math.fmod(value, 65536);--量程1上限
+        ModeBus[0x10A6] = math.modf(value/65536);--量程1上限
+        value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,5)))
+        ModeBus[0x10A7] = math.fmod(value, 65536);--曲线斜率
+        ModeBus[0x10A8] = math.modf(value/65536);--曲线斜率
+        value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,6)))
+        ModeBus[0x10A9] = math.fmod(value, 65536);--曲线截距
+        ModeBus[0x10AA] = math.modf(value/65536);--曲线截距
+        value = get_text(SYSTEM_INFO_SCREEN,2);
+        -- ModeBus[0x10D2] = --设备序列号
+        print("创建默认的ModeBus文件");
+        --将ModeBus的测量数据区/状态告警区/关键参数区保持到ModeBus文件当中
+        for i = 0x1000, 0x10FF, 1 do
+            file:write(ModeBus[i]);
+            file:write(",")
+        end
+    else
+        print("读取ModeBus文件")
+        file:seek("set")                   --把文件位置定位到开头
+        local  fileStr = file:read("a")    --从当前位置读取整个文件，并赋值到字符串中
+        local fileTab = split(fileStr,",");
+        local j = 1
+        for i = 0x1000, 0x10FF, 1 do
+            ModeBus[i] = fileTab[j]
+            j = j+1;
+        end
+    end
+    file:close();
+end
+
+--***********************************************************************************************
+--保存ModeBus文件
+--***********************************************************************************************
+function SaveModeBusToFile()
+    local file = io.open(SdPath .. "record/ModeBus", "w+");--打开并清空该文件
+    --将ModeBus的测量数据区/状态告警区/关键参数区保持到ModeBus文件当中
+    for i = 0x1000, 0x10FF, 1 do
+        file:write(ModeBus[i]);
+        file:write(",")
+    end
+    file:close();
+end
+
 --***********************************************************************************************
 --设置测量数据区
 --***********************************************************************************************
 function SetModebusResultArea()
     local hexResult = FloatToHex(Sys.result);
-    local value
+    local value,yearMon,dayHour,minSec;
+    yearMon = Decimal_BCD(Sys.dateTime.year%100) *256 + Decimal_BCD(Sys.dateTime.mon)
+    dayHour = Decimal_BCD(Sys.dateTime.day) * 256 + Decimal_BCD(Sys.dateTime.hour)
+    minSec  = Decimal_BCD(Sys.dateTime.min) * 256 + Decimal_BCD(Sys.dateTime.sec)
     --水样分析,设置Modebus水样数据时间,水样实测值
     if Sys.processType == ProcessItem[Sys.language][1] then
-        ModeBus[0x1005] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x1006] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x1007] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1005] = yearMon--年月
+        ModeBus[0x1006] = dayHour--日时
+        ModeBus[0x1007] = minSec--分秒
         ModeBus[0x1008] = math.fmod(hexResult,65536);
         ModeBus[0x1009] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][6] then--标样核查
-        ModeBus[0x1010] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x1011] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x1012] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1010] = yearMon--年月
+        ModeBus[0x1011] = dayHour--日时
+        ModeBus[0x1012] = minSec--分秒
         ModeBus[0x1013] = math.fmod(hexResult,65536);
         ModeBus[0x1014] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][11] then--空白测试
-        ModeBus[0x101B] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x101C] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x101D] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x101B] = yearMon--年月
+        ModeBus[0x101C] = dayHour--日时
+        ModeBus[0x101D] = minSec--分秒
         ModeBus[0x101E] = math.fmod(hexResult,65536);
         ModeBus[0x101F] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][5] then--零点核查
-        ModeBus[0x1026] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x1027] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x1028] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1026] = yearMon--年月
+        ModeBus[0x1027] = dayHour--日时
+        ModeBus[0x1028] = minSec--分秒
         ModeBus[0x1029] = math.fmod(hexResult,65536);
         ModeBus[0x102A] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][7] then--跨度核查(量程核查)
-        ModeBus[0x1031] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x1032] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x1033] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1031] = yearMon--年月
+        ModeBus[0x1032] = dayHour--日时
+        ModeBus[0x1033] = minSec--分秒
         ModeBus[0x1034] = math.fmod(hexResult,65536);
         ModeBus[0x1035] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][8] then--加标回收
-        ModeBus[0x103C] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x103D] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x103E] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x103C] = yearMon--年月
+        ModeBus[0x103D] = dayHour--日时
+        ModeBus[0x103E] = minSec--分秒
         ModeBus[0x103F] = math.fmod(hexResult,65536);
         ModeBus[0x1040] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][9] then--平行样
-        ModeBus[0x1047] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x1048] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x1049] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x1047] = yearMon--年月
+        ModeBus[0x1048] = dayHour--日时
+        ModeBus[0x1049] = minSec--分秒
         ModeBus[0x104A] = math.fmod(hexResult,65536);
         ModeBus[0x104B] = math.modf(hexResult/65536);
     elseif Sys.processType == ProcessItem[Sys.language][2] then--校准(标定)
-        ModeBus[0x10AB] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x10AC] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x10AD] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x10AB] = yearMon--年月
+        ModeBus[0x10AC] = dayHour--日时
+        ModeBus[0x10AD] = minSec--分秒
         value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,5)))
-        Modebus[0x10A7] = math.fmod(value, 65536);--曲线斜率
-        Modebus[0x10A8] = math.modf(value/65536);--曲线斜率
+        ModeBus[0x10A7] = math.fmod(value, 65536);--曲线斜率
+        ModeBus[0x10A8] = math.modf(value/65536);--曲线斜率
         value = FloatToHex(tonumber(get_text(RANGE_SET_SCREEN,6)))
-        Modebus[0x10A9] = math.fmod(value, 65536);--曲线截距
-        Modebus[0x10AA] = math.modf(value/65536);--曲线截距
+        ModeBus[0x10A9] = math.fmod(value, 65536);--曲线截距
+        ModeBus[0x10AA] = math.modf(value/65536);--曲线截距
     elseif Sys.processType == ProcessItem[Sys.language][10] then--线性核查
         value = FloatToHex(Sys.linearCorrelation);
-        Modebus[0x10C2] = math.fmod(value, 65536);--线性相关系数
-        Modebus[0x10C3] = math.modf(value/65536);--线性相关系数
+        ModeBus[0x10C2] = math.fmod(value, 65536);--线性相关系数
+        ModeBus[0x10C3] = math.modf(value/65536);--线性相关系数
     elseif Sys.processType == ProcessItem[Sys.language][12] then--空白校准
-        ModeBus[0x10C8] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x10C9] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x10CA] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x10C8] = yearMon--年月
+        ModeBus[0x10C9] = dayHour--日时
+        ModeBus[0x10CA] = minSec--分秒
     elseif Sys.processType == ProcessItem[Sys.language][13] then--标样校准
-        ModeBus[0x10CB] = ((Sys.dateTime.year % 100) * 256) + Sys.dateTime.mon;--年月
-        ModeBus[0x10CC] = Sys.dateTime.day * 256 + Sys.dateTime.hour;--日时
-        ModeBus[0x10CD] = Sys.dateTime.min * 256 + Sys.dateTime.sec;--分秒
+        ModeBus[0x10CB] = yearMon--年月
+        ModeBus[0x10CC] = dayHour--日时
+        ModeBus[0x10CD] = minSec--分秒
     end
 
     value = Sys.absorbancy;
-    Modebus[0x10C6] = math.fmod(value, 65536);--吸光度
-    Modebus[0x10C7] = math.modf(value/65536);--吸光度
-
+    ModeBus[0x10C6] = math.fmod(value, 65536);--吸光度
+    ModeBus[0x10C7] = math.modf(value/65536);--吸光度
+    SaveModeBusToFile()
 end
 
 --***********************************************************************************************
@@ -1107,27 +1163,27 @@ end
 function SetModebusSysStatus()
 
     if Sys.processType == ProcessItem[Sys.language][1] then--水样分析
-        Modebus[0x1083] = 1;
+        ModeBus[0x1083] = 1;
     elseif Sys.processType == ProcessItem[Sys.language][6] then --标样核查
-        Modebus[0x1083] = 2;
+        ModeBus[0x1083] = 2;
     elseif Sys.processType == ProcessItem[Sys.language][5] then --零点核查
-        Modebus[0x1083] = 3;
+        ModeBus[0x1083] = 3;
     elseif Sys.processType == ProcessItem[Sys.language][10] then --跨度核查
-        Modebus[0x1083] = 4;
+        ModeBus[0x1083] = 4;
     elseif Sys.processType == ProcessItem[Sys.language][11] then --空白测试
-        Modebus[0x1083] = 5;
+        ModeBus[0x1083] = 5;
     elseif Sys.processType == ProcessItem[Sys.language][9] then --平行样测试
-        Modebus[0x1083] = 6;
+        ModeBus[0x1083] = 6;
     elseif Sys.processType == ProcessItem[Sys.language][8] then --加标回收
-        Modebus[0x1083] = 7;
+        ModeBus[0x1083] = 7;
     elseif Sys.processType == ProcessItem[Sys.language][12] then --空白校准
-        Modebus[0x1083] = 8;
+        ModeBus[0x1083] = 8;
     elseif Sys.processType == ProcessItem[Sys.language][13] then --标样校准
-        Modebus[0x1083] = 9;
+        ModeBus[0x1083] = 9;
     elseif Sys.processType == ProcessItem[Sys.language][3] then --清洗
-        Modebus[0x1083] = 10;
+        ModeBus[0x1083] = 10;
     elseif Sys.processType == ProcessItem[Sys.language][2] then --标定(校准)
-        Modebus[0x1083] = 19;
+        ModeBus[0x1083] = 19;
     end
 end
 
@@ -1137,6 +1193,7 @@ end
 function setModebusRunMode()
     if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then
         ModeBus[0x1084] = 1;
+        
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
         ModeBus[0x1084] = 2;
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then
@@ -1144,15 +1201,8 @@ function setModebusRunMode()
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
         ModeBus[0x1084] = 4;
     end
+    SaveModeBusToFile()
 end
-
---***********************************************************************************************
---设置告警代码寄存器
---***********************************************************************************************
-function setModebusRunMode(alarm)
-    ModeBus[0x1085] = alarm;
-end
-
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -1185,7 +1235,17 @@ uartSendTab = {
     setPwm       = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "设置4-20mA输出",[ENG] = "Set Output "}},
     setPwm4mA    = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正4mA输出",[ENG] = "Set 4mA Adj. "}},
     setPwm20mA   = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正20mA输出",[ENG] = "Set 20mA Adj. "}},
-    getIOVer = {[0] = 226, 7, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "输入输出板版本",[ENG] = "Get I/O Bd. Ver."}},
+    getIOVer     = {[0] = 226, 7, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "输入输出板版本",[ENG] = "Get I/O Bd. Ver."}},
+
+    getDsTemp    ={[0] = 0xE4, 0x03, 0, 0x06, 0, 2, 0, 0, len = 6,note={[CHN] = "获取消解温度",[ENG] = "Get Dispel Temp."}},
+    getDsHardVer ={[0] = 0xE4, 0x03, 0, 0x00, 0, 2, 0, 0, len = 6,note={[CHN] = "获取消解版本",[ENG] = "Get Dispel Ver."}},
+    getDsSoftVer ={[0] = 0xE4, 0x03, 0, 0x02, 0, 2, 0, 0, len = 6,note={[CHN] = "获取消解版本",[ENG] = "Get Dispel Ver."}},
+    getDsStatus  ={[0] = 0xE4, 0x03, 0, 0x0A, 0, 1, 0, 0, len = 6,note={[CHN] = "获取消解状态",[ENG] = "Get Dispel Status"}},
+    setDsTemp    ={[0] = 0xE4, 0x10, 0, 0x0F, 0, 1, 2, 0, 0, 0, 0, len = 9,note={[CHN] = "设置消解温度",[ENG] = "Set Dispel Temp."}},
+    setDsTime    ={[0] = 0xE4, 0x10, 0, 0x10, 0, 2, 4, 0, 0, 0, 0, 0, 0, len = 11,note={[CHN] = "设置消解时间",[ENG] = "Set Dispel Time"}},
+    startDispel  ={[0] = 0xE4, 0x10, 0, 0x12, 0, 1, 2, 0, 0, 0, 0, len = 9,note={[CHN] = "开始消解",[ENG] = "Start Dispel"}},
+    stopDispel   ={[0] = 0xE4, 0x10, 0, 0x12, 0, 1, 2, 0, 0, 0, 0, len = 9,note={[CHN] = "停止消解",[ENG] = "Stop Dispel"}},
+    
     updateDrv = {}, --该变量用于驱动板升级
 }
 
@@ -1200,6 +1260,125 @@ UartArg = {
     reply_sta = SEND_OK;--用于指示发送的串口指令是否有正确回复
     lock = UNLOCKED, --用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
 };
+
+--***********************************************************************************************
+--控制单个阀关闭
+--valveId 阀id
+--***********************************************************************************************
+function close_single_valve(valveId)
+    if valveId == 11 then
+        on_uart_send_data(uartSendTab.closeV11, NEED_REPLY);
+    elseif valveId == 12 then
+        on_uart_send_data(uartSendTab.closeV12, NEED_REPLY);
+    end
+end
+
+--***********************************************************************************************
+--控制单个阀打开
+--***********************************************************************************************
+function open_single_valve(valveId)
+    if valveId == 11 then
+        on_uart_send_data(uartSendTab.openV11, NEED_REPLY);
+    elseif valveId == 12 then
+        on_uart_send_data(uartSendTab.openV12, NEED_REPLY);
+    end
+end
+
+
+--***********************************************************************************************
+--控制多个阀打开或者关闭, 在函数在流程运行时调用,当添加了阀操作或者注射泵加液时,可能会调用该函数(这两个子流程中,允许同时操作多个阀)
+--Sys.valveIdTab 中保存各16个阀是需要进行关闭还是打开操作
+--Sys.valveOperate 记录了需要打开还是关闭
+--***********************************************************************************************
+function control_multi_valve()
+    if UartArg.lock == LOCKED then
+        return;
+    end
+
+    for i = 1, 16, 1 do
+        if Sys.valveIdTab[i] == ENABLE_STRING then--需要进行操作
+            Sys.valveIdTab[i] = DISABLE_STRING;
+            if Sys.valveOperate == ValveStatus[Sys.language].open then
+                open_single_valve(i);--开阀并退出程序
+            else
+                close_single_valve(i);--关阀并退出程序
+            end
+            break;--跳出for循环
+        end
+        if i == 16 then--所有操作都完成
+            Sys.driverSubStep = FINISHED;
+        end
+    end
+end
+
+--***********************************************************************************************
+--控制十通阀
+--channel:通道号，取值0-9
+--***********************************************************************************************
+function control_valco(channel)
+    uartSendTab.openValco[2] = channel;
+    if Sys.language == CHN then
+        uartSendTab.openValco.note[Sys.language] = "开十通阀" .. channel;
+    else
+        uartSendTab.openValco.note[Sys.language] = "Open Valco " .. channel;
+    end
+    on_uart_send_data(uartSendTab.openValco, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--使能注射泵
+--***********************************************************************************************
+function enable_inject1(void)
+    on_uart_send_data(uartSendTab.enInject1, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--复位注射泵
+--***********************************************************************************************
+function reset_inject1(void)
+    on_uart_send_data(uartSendTab.rstInject1, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--设置注射泵速度
+--speed:注射泵速度,取值0-27
+--***********************************************************************************************
+function set_inject1_speed(speed)
+    uartSendTab.setInject1Spd[2] = speed;
+    on_uart_send_data(uartSendTab.setInject1Spd, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--移动注射泵到指定位置
+--scale：注射泵移动到的刻度，最大值45
+--***********************************************************************************************
+function move_inject1_to(scale)
+    uartSendTab.mvInject1To[4] = scale;
+    on_uart_send_data(uartSendTab.mvInject1To, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--设置消解温度
+--temp:温度
+--***********************************************************************************************
+function set_dispel_temp(temp)
+    uartSendTab.setDsTemp[7] = math.modf(temp/256)
+    uartSendTab.setDsTemp[8] = math.fmod(temp,256)
+    on_uart_send_data(uartSendTab.setDstemp, NEED_REPLY);
+end
+
+--***********************************************************************************************
+--设置消解时间
+--time:时间
+--***********************************************************************************************
+function set_dispel_time(time)
+    uartSendTab.setDsTime[7] = math.fmod( right_shift(time,24), 256)
+    uartSendTab.setDsTime[8] = math.fmod( right_shift(time,16), 256)
+    uartSendTab.setDsTime[9] = math.fmod( right_shift(time,8), 256)
+    uartSendTab.setDsTime[10]= math.fmod( time, 256)
+    on_uart_send_data(uartSendTab.setTime, NEED_REPLY);
+end
+
 
 --***********************************************************************************************
 --  通过电脑控制仪器的运转
@@ -1228,18 +1407,174 @@ function ComputerControl(package)
             --     SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             --     process_ready_run(processId);--开始运行前的一些初始化操作
             -- elseif package[3] == 6 then--停止分析
-            --     SystemStop(stopByClickButton);
+            --     
             -- end
             --当前为反控模式,接受写寄存器指令
             if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then 
             
                 
             end
-        elseif package[1] == 0x10 then--写多个寄存器
+        elseif package[1] == 0x10 then--写多个寄存器或者控制命令区
+            local register = package[2] * 256 + package[3]--寄存器地址
+            local number   = package[4] * 256 + package[5]--寄存器个数
+            
+            for i=0, 5, 1 do
+                replayData[i] = package[i];
+            end
+            
             --当前为反控模式,接受写寄存器指令
             if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then 
-                        
-                            
+                --控制命令
+                if register == 0x1200 then
+                    if package[8] == 0x01 then--启动水样分析
+                        Sys.controledProcessTypeId = 1;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x02 then--启动标样核查
+                        Sys.controledProcessTypeId = 6;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x03 then--启动零点核查
+                        Sys.controledProcessTypeId = 5;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x04 then--启动量程核查
+                        Sys.controledProcessTypeId = 7;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x05 then--启动空白测试
+                        Sys.controledProcessTypeId = 11;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x06 then--启动平行样测试
+                        Sys.controledProcessTypeId = 9;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x07 then--启动加标回收测试
+                        Sys.controledProcessTypeId = 8;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x08 then--启动空白校准
+                        Sys.controledProcessTypeId = 12;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x09 then--启动标样校准
+                        Sys.controledProcessTypeId = 13;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x0A then--启动排空清洗
+                        Sys.controledProcessTypeId = 3;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x0B then--停止测试
+                        SystemStop(stopByNormal);
+                    elseif package[8] == 0x0C then--仪器重启
+                        os.execute("shutdown -r -t 0");
+                    elseif package[8] == 0x0D then--时间校准
+                        local year = BCD_Decimal(package[9])
+                        local mon = BCD_Decimal(package[10])
+                        local day = BCD_Decimal(package[11])
+                        local hour = BCD_Decimal(package[12])
+                        local min = BCD_Decimal(package[13])
+                        local sec = BCD_Decimal(package[14])
+                        set_date_time(year,mon,day,hour,min,sec);
+                    elseif package[8] == 0x0E then--设置运行模式
+                        ModeBus[0x1084] = package[10];
+                        if package[10] == 1 then
+                            set_text(RUN_CONTROL_SCREEN, RunTypeID, WorkType[Sys.language].hand)
+                        elseif package[10] == 2 then
+                            set_text(RUN_CONTROL_SCREEN, RunTypeID, WorkType[Sys.language].period)
+                        elseif package[10] == 3 then
+                            set_text(RUN_CONTROL_SCREEN, RunTypeID, WorkType[Sys.language].timed)
+                        elseif package[10] == 4 then
+                            set_text(RUN_CONTROL_SCREEN, RunTypeID, WorkType[Sys.language].controlled)
+                        end
+                        WriteParaToConfigStrAndFile();
+                    elseif package[8] == 0x0F then--设置水样分析频率
+                        local freq = package[9] * 256 + package[10];
+                        set_text(RUN_CONTROL_PERIOD_SCREEN,9,freq)
+                        ModeBus[0x1089] = freq
+                        WriteParaToConfigStrAndFile();
+                    elseif package[8] == 0x10 then--设置零点核查频次
+                        local freq = package[9] * 256 + package[10];
+                        sget_text(RUN_CONTROL_PERIOD_SCREEN,16,freq)
+                        ModeBus[0x108A] = freq
+                        WriteParaToConfigStrAndFile();
+                    elseif package[8] == 0x11 then--设置量程核查频次
+                        local freq = package[9] * 256 + package[10];
+                        get_text(RUN_CONTROL_PERIOD_SCREEN,14,freq)
+                        ModeBus[0x108B] = freq
+                        WriteParaToConfigStrAndFile();
+                    elseif package[8] == 0x12 then--设置标样核查频次
+                        local freq = package[9] * 256 + package[10];
+                        get_text(RUN_CONTROL_PERIOD_SCREEN,18,freq)
+                        ModeBus[0x108C] = freq--标样核查频率
+                        WriteParaToConfigStrAndFile();
+                    elseif package[8] == 0x13 then--启动标定(校准)
+                        Sys.controledProcessTypeId = 2;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                    elseif package[8] == 0x14 then--启动线性核查
+                        Sys.controledProcessTypeId = 10;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    elseif package[8] == 0x15 then--启动实际水样比对
+                        Sys.controledProcessTypeId = 14;
+                        if package[10] ~= nil then
+                            Sys.controledRangeId = package[10];
+                        else
+                            Sys.controledRangeId = 1;
+                        end
+                        process_ready_run(controledProcessId);
+                    end
+                end
             end
         end
     else--crc错误
@@ -1360,74 +1695,6 @@ function uart_time_out()
     end
 end
 
---***********************************************************************************************
---右移一位的操作,在计算校验码中使用
---***********************************************************************************************
-function right_shift_one(data)
-    local new_data;
-    if math.fmod(data, 2) == 1 then
-        new_data = math.modf((data - 1) / 2);
-    else
-        new_data = math.modf(data / 2);
-    end
-    return new_data
-end
-
-
---***********************************************************************************************
---右移n位的操作
---***********************************************************************************************
-function right_shift(data,n)
-    local new_data = data;
-    for i=1,n,1 do
-        new_data = right_shift_one(new_data);
-    end
-    return new_data;
-end
-
-
---***********************************************************************************************
---异或操作,在计算校验码中使用
---***********************************************************************************************
-function xor(num1, num2)
-    local tmp1 = num1
-    local tmp2 = num2
-    local str = ""
-    repeat
-        local s1 = tmp1 % 2
-        local s2 = tmp2 % 2
-        if s1 == s2 then
-            str = "0" .. str
-        else
-            str = "1" .. str
-        end
-        tmp1 = math.modf(tmp1 / 2)
-        tmp2 = math.modf(tmp2 / 2)
-    until (tmp1 == 0 and tmp2 == 0)
-    return tonumber(str, 2)
-end
-
-
---***********************************************************************************************
---计算校验码: ModeBusCRC16
---***********************************************************************************************
-function CalculateCRC16(data, len)
-    local crc16 = 65535;
-    for i = 0, len - 1, 1 do
-        crc16 = xor(crc16, data[i]);
-        for j = 0, 7, 1 do
-            if math.fmod(crc16, 2) == 1 then
-                crc16 = right_shift_one(crc16);
-                crc16 = xor(crc16, 40961);
-            else
-                crc16 = right_shift_one(crc16);
-            end
-        end
-    end
-    local crc1 = math.fmod(crc16, 256);
-    local crc2 = math.modf(crc16 / 256);
-    return crc1, crc2;
-end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -1441,7 +1708,7 @@ LastResultE1Id = 25;     --E1
 LastResultE2Id = 26;     --E2
 -- NextProcessTimeTextId = 2  --下次启动时间
 ProgressBarId = 14--进度条，范围0-100
-
+DispelTempId = 10;
 SysWorkStatusId = 901;   --工作状态
 SysCurrentActionId = 902;--当前动作
 SysUserNameId = 903      --显示用户
@@ -1515,182 +1782,6 @@ function ShowSysAlarm(alarm)
     end
 end
 
---[[-----------------------------------------------------------------------------------------------------------------
-    阀/注射泵/蠕动泵控制
---------------------------------------------------------------------------------------------------------------------]]
---***********************************************************************************************
---控制单个阀关闭
---valveId 阀id
---***********************************************************************************************
-function close_single_valve(valveId)
-    if valveId == 11 then
-        on_uart_send_data(uartSendTab.closeV11, NEED_REPLY);
-    elseif valveId == 12 then
-        on_uart_send_data(uartSendTab.closeV12, NEED_REPLY);
-    end
-end
-
---***********************************************************************************************
---控制单个阀打开
---***********************************************************************************************
-function open_single_valve(valveId)
-    if valveId == 11 then
-        on_uart_send_data(uartSendTab.openV11, NEED_REPLY);
-    elseif valveId == 12 then
-        on_uart_send_data(uartSendTab.openV12, NEED_REPLY);
-    end
-end
-
-
---***********************************************************************************************
---控制多个阀打开或者关闭, 在函数在流程运行时调用,当添加了阀操作或者注射泵加液时,可能会调用该函数(这两个子流程中,允许同时操作多个阀)
---Sys.valveIdTab 中保存各16个阀是需要进行关闭还是打开操作
---Sys.valveOperate 记录了需要打开还是关闭
---***********************************************************************************************
-function control_multi_valve()
-    if UartArg.lock == LOCKED then
-        return;
-    end
-
-    for i = 1, 16, 1 do
-        if Sys.valveIdTab[i] == ENABLE_STRING then--需要进行操作
-            Sys.valveIdTab[i] = DISABLE_STRING;
-            if Sys.valveOperate == ValveStatus[Sys.language].open then
-                open_single_valve(i);--开阀并退出程序
-            else
-                close_single_valve(i);--关阀并退出程序
-            end
-            break;--跳出for循环
-        end
-        if i == 16 then--所有操作都完成
-            Sys.driverSubStep = FINISHED;
-        end
-    end
-end
-
---***********************************************************************************************
---控制十通阀
---channel:通道号，取值0-9
---***********************************************************************************************
-function control_valco(channel)
-    uartSendTab.openValco[2] = channel;
-    if Sys.language == CHN then
-        uartSendTab.openValco.note[Sys.language] = "开十通阀" .. channel;
-    else
-        uartSendTab.openValco.note[Sys.language] = "Open Valco " .. channel;
-    end
-    on_uart_send_data(uartSendTab.openValco, NEED_REPLY);
-end
-
---***********************************************************************************************
---使能注射泵
---***********************************************************************************************
-function enable_inject1(void)
-    on_uart_send_data(uartSendTab.enInject1, NEED_REPLY);
-end
-
---***********************************************************************************************
---复位注射泵
---***********************************************************************************************
-function reset_inject1(void)
-    on_uart_send_data(uartSendTab.rstInject1, NEED_REPLY);
-end
-
---***********************************************************************************************
---设置注射泵速度
---speed:注射泵速度,取值0-27
---***********************************************************************************************
-function set_inject1_speed(speed)
-    uartSendTab.setInject1Spd[2] = speed;
-    on_uart_send_data(uartSendTab.setInject1Spd, NEED_REPLY);
-end
-
---***********************************************************************************************
---移动注射泵到指定位置
---scale：注射泵移动到的刻度，最大值45
---***********************************************************************************************
-function move_inject1_to(scale)
-    uartSendTab.mvInject1To[4] = scale;
-    on_uart_send_data(uartSendTab.mvInject1To, NEED_REPLY);
-end
-
-
-
---***********************************************************************************************
---控制注射泵
---Sys.driverSubStep 用于控制执行哪一段代码块
---Sys.injectId 变量保存了需要操作的注射泵
---Sys.injectSpeed 变量保存了需要设置速度
---Sys.injectScale 变量保存了需要将注射泵移动到什么刻度
---***********************************************************************************************
-function control_inject1()
-    -----------------设置注射泵速度------------------------------
-    if Sys.driverSubStep == 1 then
-        if Sys.injectCurrentSpd == Sys.injectSpeed then --设置的速度与当前速度相等, 不需要重复设置
-            Sys.driverSubStep = 3;
-        else
-            set_inject1_speed(Sys.injectSpeed);--发送设置速度的串口指令
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-    elseif Sys.driverSubStep == 2 then--等待串口回复
-        if UartArg.lock == UNLOCKED then
-            Sys.injectCurrentSpd = Sys.injectSpeed;
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-        -----------------将注射泵移动到指定位置------------------------
-    elseif Sys.driverSubStep == 3 then
-        move_inject1_to(Sys.injectScale)--将注射泵移动到指定的位置
-        Sys.driverSubStep = Sys.driverSubStep + 1;
-    elseif Sys.driverSubStep == 4 then--等待串口回复
-        if UartArg.lock == UNLOCKED then
-            Sys.driverSubStep = FINISHED;
-        end
-    end
-end
-
-
---***********************************************************************************************
---控制蠕动泵(目前硬件暂未有蠕动泵)   ##待完善##
---Sys.peristalticSpeed  保存了需要设置的速度
---Sys.peristalticDir    保存了需要设置的方向
---Sys.peristalticVolume 保存了需要抽取的体积
---***********************************************************************************************
-function control_peristaltic()
-    -----------------设置蠕动泵速度------------------------------
-    if Sys.driverSubStep == 1 then
-        if Sys.peristalticCurrentSpd == Sys.peristalticSpeed then --设置的速度与当前速度相等, 不需要重复设置
-            Sys.driverSubStep = Sys.driverSubStep + 2;
-        else
-            --发送设置速度的串口指令
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-    elseif Sys.driverSubStep == 2 then--等待串口回复
-        if UartArg.lock == UNLOCKED then
-            Sys.peristalticCurrentSpd = Sys.peristalticSpeed;
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-        -----------------设置蠕动泵方向------------------------
-    elseif Sys.driverSubStep == 3 then
-        if Sys.peristalticCurrentDir == Sys.peristalticDir then--设置的方向与当前方向相同, 不需要重复设置
-            Sys.driverSubStep = Sys.driverSubStep + 2;
-        else
-
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-    elseif Sys.driverSubStep == 4 then--等待串口回复
-        if UartArg.lock == UNLOCKED then
-            Sys.peristalticCurrentDir = Sys.peristalticDir;
-            Sys.driverSubStep = Sys.driverSubStep + 1;
-        end
-        -----------------设置蠕动泵抽取指定体积的液体------------
-    elseif Sys.driverSubStep == 5 then
-        Sys.driverSubStep = Sys.driverSubStep + 1;
-    elseif Sys.driverSubStep == 6 then--等待串口回复
-        if UartArg.lock == UNLOCKED then
-            Sys.driverSubStep = FINISHED;
-        end
-    end
-end
 
 
 --***********************************************************************************************
@@ -1769,7 +1860,6 @@ RUNCTRL_TextEid = 8;
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 --***********************************************************************************************
 function run_control_notify(screen, control, value)
-    print("control="..control)
     if control == RunStopBtId then--运行与停止按钮
         if get_value(RUN_CONTROL_SCREEN, control) == ENABLE then --按钮按下,此时系统状态变为待机运行
             if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then--
@@ -1812,7 +1902,7 @@ function run_control_notify(screen, control, value)
         process_name_select_set(screen, control-100);
     --保存按钮---------------------------------------------------------------------
     elseif control == 50 and value == ENABLE then
-        WriteParaToConfigStrAndFile(2);
+        WriteParaToConfigStrAndFile();
     end
 end
 
@@ -1959,7 +2049,7 @@ function setNextPeriodTime(minFreq)
     set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId, PeriodicTab.sTime.min);--设置分钟
 
     --周期设置界面有更新, 需要保存到配置文件当中
-    WriteParaToConfigStrAndFile(2);
+    WriteParaToConfigStrAndFile();
 
     --在首页显示下次自动运行启动流程的时间
     set_text(MAIN_SCREEN, NextStartTimeId, string.format("%d-%02d-%02d  %02d:%02d",
@@ -1976,7 +2066,7 @@ function setPeriodStartTime()
     set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.dayId,  Sys.dateTime.day);
     set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.hourId, Sys.dateTime.hour);--设置小时
     set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab.sTime.minId,  Sys.dateTime.min);--设置分钟
-    WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
+    WriteParaToConfigStrAndFile();--周期设置界面有更新, 需要保存到配置文件当中
 end
 
 --***********************************************************************************************
@@ -2109,6 +2199,32 @@ function get_auto_range_process_id()
         Sys.logContent = TipsTab[Sys.language].autoRangeProcess .. processId;
         ShowSysTips(Sys.logContent);
         add_history_record(HISTORY_LOG_SCREEN);
+    end
+    return processId;
+end
+
+--***********************************************************************************************
+--[反控下获取流程id
+--***********************************************************************************************
+function get_controled_process_id()
+    local processId = 0;
+
+    --查找类型为分析且量程为destRangeId的 流程的id
+    for i = 1, 12, 1 do
+        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
+        tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
+            processId = i;
+            break;
+        end
+    end
+    if processId == 0 then--在流程设置1界面未找到符合条件的流程, 则在流程设置2界面继续查找
+        for i = 13, 24, 1 do
+            if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
+            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
+                processId = i;
+                break;
+            end
+        end
     end
     return processId;
 end
@@ -2346,6 +2462,8 @@ function process_ready_run(processIdType)
         Sys.currentProcessId = get_period_process_id();
     elseif processIdType == autoStdCheck then--自动标样核查逻辑获取流程id
         Sys.currentProcessId = get_auto_check_process_id();
+    elseif processIdType == controledProcessId then--反控模式下获取流程id
+        Sys.currentProcessId = get_controled_process_id();
     else
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     end
@@ -2559,7 +2677,7 @@ function SystemStop(stopType)
         PeriodicTab[i].freq = 0;
         PeriodicTab[i].isReadyRun = false;
     end
-    Modebus[0x1083] = 0;--设置工作状态为空闲
+    ModeBus[0x1083] = 0;--设置工作状态为空闲
     -- --手动停止,执行排空清洗函数
     -- if stopType == stopByClickButton and getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then
     --     Sys.suddenPwrOff = true;
@@ -2595,7 +2713,7 @@ PeriodicTab = {
 function run_control_period_notify(screen, control, value)
     if control == SureButtonId then
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
-            WriteParaToConfigStrAndFile(2);--将数据存入文件
+            WriteParaToConfigStrAndFile();--将数据存入文件
             change_screen(RUN_CONTROL_SCREEN);
         end
     elseif control == CancelButtonId then
@@ -2618,7 +2736,7 @@ function goto_period_mode_set_screen()
 
         set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[2].processNameId, get_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId));
         set_text(RUN_CONTROL_PERIOD_SCREEN ,PeriodicTab[3].processNameId, BLANK_SPACE);
-        WriteParaToConfigStrAndFile(2);--周期设置界面有更新, 需要保存到配置文件当中
+        WriteParaToConfigStrAndFile();--周期设置界面有更新, 需要保存到配置文件当中
     end
 end
 
@@ -2660,7 +2778,7 @@ TimedProcessTab = {
 function run_control_timed_notify(screen, control, value)
     if control == SureButtonId and value == ENABLE then
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
-            WriteParaToConfigStrAndFile(2);--将数据存入文件
+            WriteParaToConfigStrAndFile();--将数据存入文件
             change_screen(RUN_CONTROL_SCREEN);
         end
     elseif control == CancelButtonId and value == ENABLE then
@@ -2691,7 +2809,7 @@ HandProcessTab = {
 function run_control_hand_notify(screen, control, value)
     if control == SureButtonId and value == ENABLE then
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
-            WriteParaToConfigStrAndFile(2);--将数据存入文件
+            WriteParaToConfigStrAndFile();--将数据存入文件
             change_screen(RUN_CONTROL_SCREEN);
         end
     elseif control == CancelButtonId and value == ENABLE then
@@ -2747,7 +2865,7 @@ ProcessCopyBtId = 3;--流程设置1界面中的复制按钮
 function process_set12_control_notify(screen, control, value)
 
     if control == ProcessSaveBtId then -- 保存
-        WriteParaToConfigStrAndFile(1);
+        WriteParaToConfigStrAndFile();
         --导入按钮----------------------------------------------------------------------
     elseif control == InportBtId then --
         if UsbPath ~= nil and SdPath ~= nil then
@@ -3480,7 +3598,7 @@ function excute_inject_add_process(paraTab)
             end
             print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
             set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
-            WriteParaToConfigStrAndFile(5);--保存试剂余量界面的数据到配置文件
+            WriteParaToConfigStrAndFile();--保存界面的数据到配置文件
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
         -----------------------------------------------------------------
@@ -3491,6 +3609,37 @@ function excute_inject_add_process(paraTab)
     return Sys.actionSubStep;
 end
 
+--***********************************************************************************************
+--控制注射泵
+--Sys.driverSubStep 用于控制执行哪一段代码块
+--Sys.injectId 变量保存了需要操作的注射泵
+--Sys.injectSpeed 变量保存了需要设置速度
+--Sys.injectScale 变量保存了需要将注射泵移动到什么刻度
+--***********************************************************************************************
+function control_inject1()
+    -----------------设置注射泵速度------------------------------
+    if Sys.driverSubStep == 1 then
+        if Sys.injectCurrentSpd == Sys.injectSpeed then --设置的速度与当前速度相等, 不需要重复设置
+            Sys.driverSubStep = 3;
+        else
+            set_inject1_speed(Sys.injectSpeed);--发送设置速度的串口指令
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+    elseif Sys.driverSubStep == 2 then--等待串口回复
+        if UartArg.lock == UNLOCKED then
+            Sys.injectCurrentSpd = Sys.injectSpeed;
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+        -----------------将注射泵移动到指定位置------------------------
+    elseif Sys.driverSubStep == 3 then
+        move_inject1_to(Sys.injectScale)--将注射泵移动到指定的位置
+        Sys.driverSubStep = Sys.driverSubStep + 1;
+    elseif Sys.driverSubStep == 4 then--等待串口回复
+        if UartArg.lock == UNLOCKED then
+            Sys.driverSubStep = FINISHED;
+        end
+    end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-蠕动泵加液
@@ -3590,6 +3739,49 @@ function excute_peristaltic_process(paraTab)
     return Sys.actionSubStep;
 end
 
+--***********************************************************************************************
+--控制蠕动泵(目前硬件暂未有蠕动泵)   ##待完善##
+--Sys.peristalticSpeed  保存了需要设置的速度
+--Sys.peristalticDir    保存了需要设置的方向
+--Sys.peristalticVolume 保存了需要抽取的体积
+--***********************************************************************************************
+function control_peristaltic()
+    -----------------设置蠕动泵速度------------------------------
+    if Sys.driverSubStep == 1 then
+        if Sys.peristalticCurrentSpd == Sys.peristalticSpeed then --设置的速度与当前速度相等, 不需要重复设置
+            Sys.driverSubStep = Sys.driverSubStep + 2;
+        else
+            --发送设置速度的串口指令
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+    elseif Sys.driverSubStep == 2 then--等待串口回复
+        if UartArg.lock == UNLOCKED then
+            Sys.peristalticCurrentSpd = Sys.peristalticSpeed;
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+        -----------------设置蠕动泵方向------------------------
+    elseif Sys.driverSubStep == 3 then
+        if Sys.peristalticCurrentDir == Sys.peristalticDir then--设置的方向与当前方向相同, 不需要重复设置
+            Sys.driverSubStep = Sys.driverSubStep + 2;
+        else
+
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+    elseif Sys.driverSubStep == 4 then--等待串口回复
+        if UartArg.lock == UNLOCKED then
+            Sys.peristalticCurrentDir = Sys.peristalticDir;
+            Sys.driverSubStep = Sys.driverSubStep + 1;
+        end
+        -----------------设置蠕动泵抽取指定体积的液体------------
+    elseif Sys.driverSubStep == 5 then
+        Sys.driverSubStep = Sys.driverSubStep + 1;
+    elseif Sys.driverSubStep == 6 then--等待串口回复
+        if UartArg.lock == UNLOCKED then
+            Sys.driverSubStep = FINISHED;
+        end
+    end
+end
+
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程设置-消解
@@ -3618,18 +3810,66 @@ end
 --  执行消解流程(目前硬件上还没有消解) ##待完善##
 --***********************************************************************************************
 function excute_dispel_process(paraTab)
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要消解
-            Sys.dispelTemp = tonumber(paraTab[24]);
-            Sys.dispelTime = tonumber(paraTab[25]);
-            Sys.dispelEmptyTemp = tonumber(paraTab[26]);
-            Sys.waitTime = tonumber(paraTab[27]);
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
-        else
+            --设置消解温度
+            set_dispel_temp(tonumber(paraTab[2]));
+            start_wait_time(1);
             Sys.actionSubStep = Sys.actionSubStep + 1;
+        else
+            Sys.actionSubStep = FINISHED;--结束
         end
-    elseif Sys.actionSubStep == 2 then
+    elseif Sys.actionSubStep == 2 then--设置消解时间
+        set_dispel_time(tonumber(paraTab[3]))
+        start_wait_time(1);
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    elseif Sys.actionSubStep == 3 then--开始消解
+        on_uart_send_data(uartSendTab.startDispel, NEED_REPLY);
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    elseif Sys.actionSubStep == 4 then--获取消解温度
+        on_uart_send_data(uartSendTab.getDsTemp, NEED_REPLY);
+        start_wait_time(2);--2秒钟获取一次温度
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    elseif Sys.actionSubStep == 5 then--显示消解温度,并获取消解状态
+        if UartArg.reply_sta == SEND_OK then
+            local Temp = (UartArg.recv_data[5] * 256 + UartArg.recv_data[6]) / 10
+            if UartArg.recv_data[4] == 0x01 then--温度为负数
+                Temp = Temp * (-1);
+            end
+            set_text(MAIN_SCREEN, DispelTempId, Temp)--在首页显示温度
+        end
+        on_uart_send_data(uartSendTab.getDsStatus, NEED_REPLY);--获取消解状态
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    elseif Sys.actionSubStep == 6 then--判断消解状态
+        if UartArg.reply_sta == SEND_OK and UartArg.recv_data[4] == 0x04 then--消解状态为消解中
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        else
+            Sys.actionSubStep = 4;--返回第4步继续获取温度
+        end
+    elseif Sys.actionSubStep == 7 then
+        on_uart_send_data(uartSendTab.getDsTemp, NEED_REPLY);
+        start_wait_time(2);--2秒钟获取一次温度
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    elseif Sys.actionSubStep == 8 then
+        if UartArg.reply_sta == SEND_OK then
+            local Temp = (UartArg.recv_data[5] * 256 + UartArg.recv_data[6]) / 10
+            if UartArg.recv_data[4] == 0x01 then--温度为负数
+                Temp = Temp * (-1);
+            end
+            set_text(MAIN_SCREEN, DispelTempId, Temp)--在首页显示温度
+            if Temp <= tonumber(paraTab[4]) then
+                Sys.actionSubStep = Sys.actionSubStep + 1;
+            else
+                Sys.actionSubStep = 7;--返回第7步继续获取温度
+            end
+        else
+            Sys.actionSubStep = 7;--返回第7步继续获取温度
+        end
+    elseif Sys.actionSubStep == 9 then
         Sys.actionSubStep = FINISHED;--结束
     end
     return Sys.actionSubStep;
@@ -4132,7 +4372,7 @@ function calc_calibrate_result_by_log(void)
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId, b);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
-    WriteParaToConfigStrAndFile(3);--保存量程设置界面的参数
+    WriteParaToConfigStrAndFile();--保存量程设置界面的参数
 end
 
 --***********************************************************************************************
@@ -4214,7 +4454,7 @@ function calc_calibrate_result_by_diff(n)
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId, c);
     set_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId, d);
     print("a=" .. a .. ",b=" .. b .. ",c=" .. c .. ",d=" .. d);
-    WriteParaToConfigStrAndFile(3);--保存量程设置界面的参数
+    WriteParaToConfigStrAndFile();--保存量程设置界面的参数
 end
 
 --***********************************************************************************************
@@ -4370,7 +4610,7 @@ function process_type_select_control_notify(screen, control, value)
                     set_text(DestScreen, DestControl - 100, ProcessItem[Sys.language][ProcessTypeSelectItem] .. (DestControl - 300));--DestControl-100对应流程名称
                 end
             end
-            WriteParaToConfigStrAndFile(1);--保存流程设置1界面中的参数
+            WriteParaToConfigStrAndFile();--保存界面中的参数
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
@@ -4398,7 +4638,7 @@ function process_name_select_control_notify(screen, control, value)
     elseif control == SureButtonId and value == ENABLE then --确认按钮,返回之前的界面
         if ProcessNameSelecItem ~= nil then --ProcessNameSelecItem默认为nil,如果选择了某个流程则该值不为nil
             set_text(DestScreen, DestControl, get_text(PROCESS_NAME_SELECT_SCREEN, ProcessNameSelecItem));--DestControl对应动作?≡?
-            WriteParaToConfigStrAndFile(2);--2对应<RunCtrl>标签
+            WriteParaToConfigStrAndFile();
         end
         change_screen(DestScreen);
     elseif control == CancelButtonId then --取消按钮
@@ -4539,7 +4779,7 @@ function range_set_control_notify(screen, control, value)
     if control == UniteSetMenuId then --设置单位
         set_unit();
     elseif control == 50 and value == ENABLE then --保存按钮
-        WriteParaToConfigStrAndFile(3);
+        WriteParaToConfigStrAndFile();
     elseif control >= 1 and control <= 18 then
         if get_text(RANGE_SET_SCREEN, control) == "" then
             set_text(RANGE_SET_SCREEN, control, 0);
@@ -4680,32 +4920,29 @@ HandSetLedCurrentId = 72;
 HandShowVoltageId = 42;
 HandLedStatusId = 6;
 HandLedCtrlBtId = 3;
+HandGetTempBtId = 55;
+HandTempTextId = 53;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate2_control_notify(screen, control, value)
-    if value == DISABLE and operate_permission_detect(CHK_RUN) == DISABLE then--瞬变按钮会调用两次该函数, 增加该判断使得第二次调用后可以立马退出
+
+    if value == DISABLE and operate_permission_detect(CHK_RUN) == DISABLE then
         return;
     end
+
     if control == HandGetVoltageId then--获取电压
         if Sys.hand_control_func == nil then
             Sys.processStep = 1;
             UartArg.lock = UNLOCKED;
             set_enable(screen, control, DISABLE);
             Sys.hand_control_func = hand_get_voltage;
-        else
         end
-    elseif control == HandSetLedCurrentId then
+    elseif control == HandGetTempBtId then
         if Sys.hand_control_func == nil then
             Sys.processStep = 1;
             UartArg.lock = UNLOCKED;
-            Sys.hand_control_func = hand_set_led_current;
-        else
-        end
-    elseif control == HandLedCtrlBtId then--控制led灯开关按钮
-        if get_text(HAND_OPERATE2_SCREEN, HandLedStatusId) == LedStatus[Sys.language].open then--打开
-            on_uart_send_data(uartSendTab.openLed, NO_NEED_REPLY);
-        else
-            on_uart_send_data(uartSendTab.closeLed, NO_NEED_REPLY);
+            set_enable(screen, control, DISABLE);
+            Sys.hand_control_func = hand_get_temperature;
         end
     end
 end
@@ -4766,6 +5003,37 @@ function hand_get_voltage()
     end
 end
 
+--***********************************************************************************************
+--手动操作-手动获取温度
+--***********************************************************************************************
+function hand_get_temperature()
+    if UartArg.lock == LOCKED then
+        return;
+    end
+
+    if Sys.processStep == 1 then--第一步: 发送串口指令获取电压
+        ShowSysCurrentAction("手动操作-获取温度");
+        on_uart_send_data(uartSendTab.getDsTemp, NEED_REPLY);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 2 then--第二步: 解析电压值并进行显示
+        local Temp = "time out";
+        if UartArg.reply_sta == SEND_OK then
+            Temp = (UartArg.recv_data[5] * 256 + UartArg.recv_data[6]) / 10
+            if UartArg.recv_data[4] == 0x01 then--温度为负数
+                Temp = Temp * (-1);
+            end
+            Temp = (UartArg.recv_data[3] * 256 + UartArg.recv_data[4]) / 10;
+        end
+        set_enable(HAND_OPERATE2_SCREEN, HandGetTempBtId, ENABLE);
+        set_value(HAND_OPERATE2_SCREEN, HandGetTempBtId, DISABLE);
+        set_text(HAND_OPERATE2_SCREEN, HandTempTextId, Temp);
+        Sys.processStep = Sys.processStep + 1;
+    elseif Sys.processStep == 3 then--第三步:结束
+        ShowSysCurrentAction(TipsTab[Sys.language].null);
+        Sys.processStep = 1;
+        Sys.hand_control_func = nil;
+    end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     手动操作3
@@ -4789,7 +5057,7 @@ ReagentTab = {
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function hand_operate3_control_notify(screen, control, value)
     if control == REAGENT_SaveId and value == ENABLE then--保存按钮
-        WriteParaToConfigStrAndFile(5);
+        WriteParaToConfigStrAndFile();
     elseif control >= 7 and control <= 30 then--试剂判断
         ShowSysAlarm("");
         for i = 1, 6, 1 do
@@ -4809,9 +5077,6 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 --虽然命名为手动操作4, 其实是通讯记录界面
 UartRecordId = 1--串口通讯记录空间id
-
-
-
 
 --[[-----------------------------------------------------------------------------------------------------------------
     输入输出
@@ -4868,7 +5133,7 @@ function in_out_control_notify(screen, control, value)
     end
 
     if control >= IOSET_TextStartId and control <= IOSET_TextEndId then
-        WriteParaToConfigStrAndFile(4);
+        WriteParaToConfigStrAndFile();
     end
 end
 
@@ -5628,7 +5893,7 @@ function dialog_screen_control_notify(screen, control, value)
             set_text(DestScreen, DestControl + 50, BLANK_SPACE);
             set_text(DestScreen, DestControl - 50, BLANK_SPACE);
             set_text(DestScreen, DestControl + 100, 1);
-            WriteParaToConfigStrAndFile(1);--保存流程设置1界面中的参数
+            WriteParaToConfigStrAndFile();--保存界面中的参数
             os.remove(SdPath.."config/"..file);--删除配置文件
         elseif DestScreen == PROCESS_EDIT1_SCREEN or DestScreen == PROCESS_EDIT2_SCREEN or DestScreen == PROCESS_EDIT3_SCREEN or DestScreen == PROCESS_EDIT4_SCREEN then
             DeleteAction(DestControl - 600);--DestControl为流程编辑界面的删除按钮的id,其从601开始,而流程序号从1开始;
@@ -5886,9 +6151,7 @@ function ReadFile0ToConfigStrAndScreen()
     if configFile == nil then--如果没有该文件则返回
         print("没有找到配置文件:0,创建一个默认的配置文件");
         ConfigStr[0] = "";
-        for i = 1,5,1 do
-            WriteParaToConfigStrAndFile(i);
-        end
+        WriteParaToConfigStrAndFile();
         configFile = io.open(SdPath .. "config/"  .. "0", "r")      --打开文本
     end
     configFile:seek("set")    --把文件位置定位到开头
@@ -5902,13 +6165,8 @@ end
 
 --***********************************************************************************************
 --创建配置文件,并保存在"0"文件中
---tagNum = 1 : 修改流程设置1界面中的参数 
---tagNum = 2 : 修改运行控制界面中的参数
---tagNum = 3 : 运行控制界面中的参数
---tagNum = 4 : 输入输出中的参数
---tagNum = 5 : 试剂余量中的参数
 --***********************************************************************************************
-function WriteParaToConfigStrAndFile(tagNum)
+function WriteParaToConfigStrAndFile()
     print("调用 WriteParaToConfigStrAndFile 函数");
     ConfigStr[0] = "";  
    --流程设置界面中的参数-------------------------------------------------------------------
@@ -5999,10 +6257,7 @@ end
 function SetConfigStrToScreen(tagNum)
     -- print("设置"..cfgFileTab[tagNum].sTag.."参数")
     local tagString = GetSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);--截取标签之间的字符串
-    if tagString == BLANK_SPACE then--如果文件0中缺少哪一个标签, 则创建该标签,然后重新获取该标签的内容
-        WriteParaToConfigStrAndFile(tagNum);
-        tagString = GetSubString(ConfigStr[0], cfgFileTab[tagNum].sTag, cfgFileTab[tagNum].eTag);
-    end
+
     local tab = split(tagString, ",")--将读出的字符串按逗号分割,并以此存入tab表
     if tagNum == 1 then--流程设置界面中的参数
         for i = 1, 12, 1 do
@@ -6607,6 +6862,29 @@ end
 --------------------------------------------------------------------------------------------------------------------]]
 
 --***********************************************************************************************
+--十进制转BCD码
+--***********************************************************************************************
+function Decimal_BCD(decimal)
+    local bcd,h,l
+    h = math.modf(decimal/10);
+    l = math.fmod(decimal,10)
+    bcd = h * 16 + l;
+    return bcd
+end
+
+
+--***********************************************************************************************
+--十进制转BCD码
+--***********************************************************************************************
+function BCD_Decimal(bcd)
+    local decimal,h,l
+    h = math.modf(bcd/16);
+    l = math.fmod(bcd,16);
+    decimal = h * 10 + l;
+    return decimal;
+end
+
+--***********************************************************************************************
 --字符串分割函数,str -> 需要分割的字符串;delimiter->分隔符
 --***********************************************************************************************
 function split(str, delimiter)
@@ -6846,3 +7124,73 @@ function GetPreciseDecimal(nNum, n)
     local nRet = nTemp / nDecimal;
     return nRet;
 end
+
+--***********************************************************************************************
+--右移一位的操作,在计算校验码中使用
+--***********************************************************************************************
+function right_shift_one(data)
+    local new_data;
+    if math.fmod(data, 2) == 1 then
+        new_data = math.modf((data - 1) / 2);
+    else
+        new_data = math.modf(data / 2);
+    end
+    return new_data
+end
+
+
+--***********************************************************************************************
+--右移n位的操作
+--***********************************************************************************************
+function right_shift(data,n)
+    local new_data = data;
+    for i=1,n,1 do
+        new_data = right_shift_one(new_data);
+    end
+    return new_data;
+end
+
+
+--***********************************************************************************************
+--异或操作,在计算校验码中使用
+--***********************************************************************************************
+function xor(num1, num2)
+    local tmp1 = num1
+    local tmp2 = num2
+    local str = ""
+    repeat
+        local s1 = tmp1 % 2
+        local s2 = tmp2 % 2
+        if s1 == s2 then
+            str = "0" .. str
+        else
+            str = "1" .. str
+        end
+        tmp1 = math.modf(tmp1 / 2)
+        tmp2 = math.modf(tmp2 / 2)
+    until (tmp1 == 0 and tmp2 == 0)
+    return tonumber(str, 2)
+end
+
+
+--***********************************************************************************************
+--计算校验码: ModeBusCRC16
+--***********************************************************************************************
+function CalculateCRC16(data, len)
+    local crc16 = 65535;
+    for i = 0, len - 1, 1 do
+        crc16 = xor(crc16, data[i]);
+        for j = 0, 7, 1 do
+            if math.fmod(crc16, 2) == 1 then
+                crc16 = right_shift_one(crc16);
+                crc16 = xor(crc16, 40961);
+            else
+                crc16 = right_shift_one(crc16);
+            end
+        end
+    end
+    local crc1 = math.fmod(crc16, 256);
+    local crc2 = math.modf(crc16 / 256);
+    return crc1, crc2;
+end
+

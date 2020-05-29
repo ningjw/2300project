@@ -27,33 +27,34 @@ PROCESS_READ_SIGNAL_SCREEN = 16;
 PROCESS_CALCULATE_SCREEN = 17;
 PROCESS_VALVE_CTRL_SCREEN = 18;
 PROCESS_WAIT_TIME_SCREEN = 19;
-PROCESS_TYPE_SELECT_SCREEN = 20;
-PROCESS_NAME_SELECT_SCREEN = 21;
-ACTION_SELECT_SCREEN = 22;
-RANGE_SET_SCREEN = 23;
-RANGE_SELECT_SCREEN = 24;
-HAND_OPERATE1_SCREEN = 25;
-HAND_OPERATE2_SCREEN = 26;
-HAND_OPERATE3_SCREEN = 27;
-HAND_OPERATE4_SCREEN = 28;
-IN_OUT_SCREEN = 29;
-HISTORY_ANALYSIS_SCREEN = 30;
-HISTORY_CHECK_SCREEN = 31;
-HISTORY_CALIBRATION_SCREEN = 32;
-HISTORY_RECOVERY_SCREEN = 33;
-HISTORY_LINER_SCREEN = 34;
-HISTORY_ALARM_SCREEN = 35;
-HISTORY_LOG_SCREEN = 36;
-SYSTEM_INFO_SCREEN = 37;
-PASSWORD_SET_SCREEN = 38;
-LOGIN_SYSTEM_SCREEN = 39;
-CONTACT_US_SCREEN = 40;
-DIALOG_SCREEN = 41;
-KEYBOARD_SCREEN = 42;
-WIFI_CONNECT_SCREEN = 43;
-REMOTE_UPDATE_SCREEN = 44;
-PASSWORD_DIALOG_SCREEN = 45;
-PROCESS_COPY_SCREEN = 45;
+PROCESS_LINEAR_CHK_SET_SCREEN = 20
+PROCESS_TYPE_SELECT_SCREEN = 21;
+PROCESS_NAME_SELECT_SCREEN = 22;
+ACTION_SELECT_SCREEN = 23;
+RANGE_SET_SCREEN = 24;
+RANGE_SELECT_SCREEN = 25;
+HAND_OPERATE1_SCREEN = 26;
+HAND_OPERATE2_SCREEN = 27;
+HAND_OPERATE3_SCREEN = 28;
+HAND_OPERATE4_SCREEN = 29;
+IN_OUT_SCREEN = 30;
+HISTORY_ANALYSIS_SCREEN = 31;
+HISTORY_CHECK_SCREEN = 32;
+HISTORY_CALIBRATION_SCREEN = 33;
+HISTORY_RECOVERY_SCREEN = 34;
+HISTORY_LINER_SCREEN = 35;
+HISTORY_ALARM_SCREEN = 36;
+HISTORY_LOG_SCREEN = 37;
+SYSTEM_INFO_SCREEN = 38;
+PASSWORD_SET_SCREEN = 39;
+LOGIN_SYSTEM_SCREEN = 40;
+CONTACT_US_SCREEN = 41;
+DIALOG_SCREEN = 42;
+KEYBOARD_SCREEN = 43;
+WIFI_CONNECT_SCREEN = 44;
+REMOTE_UPDATE_SCREEN = 45;
+PASSWORD_DIALOG_SCREEN = 46;
+PROCESS_COPY_SCREEN = 47;
 
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
 PublicTab = {
@@ -529,10 +530,7 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-    Sys.actionFunction = excute_wait_time_process;
-    if Sys.actionFunction == excute_wait_time_process then
-        print("两者相等");
-    end
+    
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
@@ -557,29 +555,6 @@ function on_init()
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
-    --以下代码用于测试自动量程切换功能
-    -- Sys.rangetypeId = 1;--预设当前量程id为1
-    -- Sys.result = 5;--预设当前分析结果为5
-    -- process_ready_run(autoRangeProcessId);--运行自动量程切换流程
-    --end  测试自动量程切换功能
-    --以下代码用于测试当记录满了之后, 是否会删除一条最旧记录的记录(报警记录)
-    
-    -- for i = 1,8,1 do
-    --     Sys.alarmContent = i;
-    --     add_history_record(HISTORY_ALARM_SCREEN);--记录报警内容
-    -- end
-
-    -- for i = 1,8,1 do
-    --     Sys.startTime = Sys.dateTime;
-    --     Sys.result = 1;
-    --     Sys.checkValue = 1;
-    --     Sys.signalE1 = 3000.0
-    --     Sys.signalE2 = 4000.0
-    --     Sys.rangetypeId = 1
-    --     Sys.processTag = ""
-    --     add_history_record(HISTORY_CHECK_SCREEN);--记录报警内容
-    -- end
-
 end
 
 
@@ -1161,7 +1136,6 @@ end
 --设置系统状态寄存器
 --***********************************************************************************************
 function SetModebusSysStatus()
-
     if Sys.processType == ProcessItem[Sys.language][1] then--水样分析
         ModeBus[0x1083] = 1;
     elseif Sys.processType == ProcessItem[Sys.language][6] then --标样核查
@@ -2677,6 +2651,10 @@ function SystemStop(stopType)
         PeriodicTab[i].freq = 0;
         PeriodicTab[i].isReadyRun = false;
     end
+    if Sys.actionFunction == excute_dispel_process then--停止时正在消解,需要发送停止消解指令
+        on_uart_send_data(uartSendTab.stopDispel, NEED_REPLY);
+    end
+
     ModeBus[0x1083] = 0;--设置工作状态为空闲
     -- --手动停止,执行排空清洗函数
     -- if stopType == stopByClickButton and getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then

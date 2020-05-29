@@ -20,33 +20,34 @@
         <page name="流程设置-计算" id="17" />
         <page name="流程设置-阀操作" id="18" />
         <page name="流程设置-等待时间" id="19" />
-        <page name="流程类型选择" id="20" />
-        <page name="流程名称选择" id="21" />
-        <page name="动作选择" id="22" />
-        <page name="量程设置" id="23" />
-        <page name="量程选择" id="24" />
-        <page name="手动操作1" id="25" />
-        <page name="手动操作2" id="26" />
-        <page name="手动操作3" id="27" />
-        <page name="手动操作4" id="28" />
-        <page name="输入输出" id="29" />
-        <page name="历史记录-分析记录" id="30" />
-        <page name="历史记录-核查记录" id="31" />
-        <page name="历史记录-校准记录" id="32" />
-        <page name="历史记录-加标回收" id="33" />
-        <page name="历史记录-线性核查" id="34" />
-        <page name="历史记录-报警记录" id="35" />
-        <page name="历史记录-运行日志" id="36" />
-        <page name="系统信息" id="37" />
-        <page name="密码设置" id="38" />
-        <page name="登录系统" id="39" />
-        <page name="联系我们" id="40" />
-        <page name="对话框" id="41" />
-        <page name="自定义全键盘" id="42" />
-        <page name="无线连接" id="43" />
-        <page name="远程升级" id="44" />
-        <page name="密码对话框" id="45" />
-        <page name="流程复制" id="46" />
+        <page name="流程设置-线性核查设置" id="20" />
+        <page name="流程类型选择" id="21" />
+        <page name="流程名称选择" id="22" />
+        <page name="动作选择" id="23" />
+        <page name="量程设置" id="24" />
+        <page name="量程选择" id="25" />
+        <page name="手动操作1" id="26" />
+        <page name="手动操作2" id="27" />
+        <page name="手动操作3" id="28" />
+        <page name="手动操作4" id="29" />
+        <page name="输入输出" id="30" />
+        <page name="历史记录-分析记录" id="31" />
+        <page name="历史记录-核查记录" id="32" />
+        <page name="历史记录-校准记录" id="33" />
+        <page name="历史记录-加标回收" id="34" />
+        <page name="历史记录-线性核查" id="35" />
+        <page name="历史记录-报警记录" id="36" />
+        <page name="历史记录-运行日志" id="37" />
+        <page name="系统信息" id="38" />
+        <page name="密码设置" id="39" />
+        <page name="登录系统" id="40" />
+        <page name="联系我们" id="41" />
+        <page name="对话框" id="42" />
+        <page name="自定义全键盘" id="43" />
+        <page name="无线连接" id="44" />
+        <page name="远程升级" id="45" />
+        <page name="密码对话框" id="46" />
+        <page name="流程复制" id="47" />
     </pages>
     <images>
         <image id="0" url="d:\ningjw\2300project\Images\菜单按钮一.png" effect_width="106" effect_height="53" />

@@ -140,6 +140,7 @@ processId = 0;
 autoRangeProcessId = 1;
 periodProcessId = 2;
 controledProcessId = 3;
+linearProcessId = 4;
 
 --stopType
 stopByNormal = 0;
@@ -196,7 +197,8 @@ TipsTab = {
         resultSaveErr = "未检测到SD卡,分析结果未存入文件",
         connecting = " 连接中...",
         stopByHand = "手动停止系统",
-        qualified = "不合格"
+        qualified = "不合格",
+        dispelErr = "消解错误",
     },
     [ENG] = {
         insertSdUsb = "Please Insert SD Card",
@@ -239,7 +241,8 @@ TipsTab = {
         resultSaveErr = "No sd card,the result isn't save to the file",
         connecting = "Connecting",
         stopByHand = "Stop system by hand",
-        qualified = " below standard"
+        qualified = " Below standard",
+        dispelErr = "Dispel Error",
     },
 };
 
@@ -376,6 +379,8 @@ Sys = {
     linearX = {},--线性核查标准浓度
     linearCorrelation = 0,--线性相关系数
     linearRatioDensity = {0, 0.2, 0.4, 0.6, 0.8},
+    linearProcessStep = 1;
+    linearStartStep = 1;
 
     controledRangeId,--反控模式下设置的量程
     controledProcessTypeId,--反控模式设置的流程在ProcessItem表中对应的下标
@@ -498,8 +503,8 @@ ProcessItem = {
 
 --ActionItem里面的值一定要与动作选择界面按钮中的值一一对应
 ActionItem = {
-    [CHN] = { "初始化", "注射泵", "注射泵加液体", "读取信号", "蠕动泵加液", "计算", "等待时间", "消解", "阀操作", BLANK_SPACE },
-    [ENG] = { "Initialize", "Injector", "Injector Add", "Read Signal", "Pump Add", "Calculation", "Wait Time", "Dispel", "Valve", BLANK_SPACE },
+    [CHN] = { "初始化", "注射泵", "注射泵加液体", "读取信号", "蠕动泵加液", "计算", "等待时间", "消解", "阀操作","线性核查稀释", BLANK_SPACE },
+    [ENG] = { "Initialize", "Injector", "Injector Add", "Read Signal", "Pump Add", "Calculation", "Wait Time", "Dispel", "Valve","Linear Dilution", BLANK_SPACE },
 };
 
 --用于保存配置文件字符串
@@ -530,7 +535,7 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-    
+
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
@@ -553,7 +558,6 @@ function on_init()
     UsbPath = "";
     on_sd_inserted(SdPath);
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
-    
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
 end
 
@@ -757,6 +761,8 @@ function on_control_notify(screen, control, value)
         process_valve_ctrl_control_notify(screen, control, value);
     elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
         process_wait_time_control_notify(screen, control, value);
+    elseif screen == PROCESS_LINEAR_CHK_SET_SCREEN then--流程设置-线性核查稀释
+        process_linear_set_control_notify(screen, control, value);
     elseif screen == RANGE_SET_SCREEN then --量程设置
         range_set_control_notify(screen, control, value);
     elseif screen == HAND_OPERATE1_SCREEN then --手动操作1
@@ -1269,7 +1275,7 @@ function control_multi_valve()
         return;
     end
 
-    for i = 1, 16, 1 do
+    for i = 11, 16, 1 do
         if Sys.valveIdTab[i] == ENABLE_STRING then--需要进行操作
             Sys.valveIdTab[i] = DISABLE_STRING;
             if Sys.valveOperate == ValveStatus[Sys.language].open then
@@ -2438,6 +2444,8 @@ function process_ready_run(processIdType)
         Sys.currentProcessId = get_auto_check_process_id();
     elseif processIdType == controledProcessId then--反控模式下获取流程id
         Sys.currentProcessId = get_controled_process_id();
+    elseif processIdType == linearProcessId then
+        Sys.currentProcessId = Sys.currentProcessId;
     else
         Sys.currentProcessId = get_current_process_id();--获取当前需要运行的流程id
     end
@@ -2494,7 +2502,6 @@ function excute_process()
         local tab = split(typeString, ",");--将动作类型与名称放在tab表中
         Sys.actionType    = tab[1];--获取动作类型
         Sys.contentTabStr = GetSubString(Sys.actionIdTab[Sys.actionStep], "<content>", "</content>");--再截取<content>标签中的内容
-        -- set_text(IN_OUT_SCREEN, 9, Sys.actionIdTab[Sys.actionStep]);
         Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
         ShowSysCurrentAction(Sys.processName .. ":" .. Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
         if Sys.actionType == ActionItem[Sys.language][1] then
@@ -2515,6 +2522,8 @@ function excute_process()
             Sys.actionFunction = excute_dispel_process;--执行-消解流程
         elseif Sys.actionType == ActionItem[Sys.language][9] then
             Sys.actionFunction = excute_valve_ctrl_process;--执行-阀操作流程
+        elseif Sys.actionType == ActionItem[Sys.language][10] then--执行-线性核查标液稀释
+            Sys.actionFunction = excute_linear_set_process;
         end
         Sys.driverStep = 1;--孙流程从第一步开始
         Sys.actionSubStep = 1;--子流程从第一步开始执行
@@ -2538,9 +2547,13 @@ function excute_process()
             Sys.logContent = WorkStatus[Sys.language].stop .. "\"" .. Sys.processName .. "\"";--“停止”+流程名称
             add_history_record(HISTORY_LOG_SCREEN);--添加一条停止流程的日志信息
             set_text(MAIN_SCREEN, StartTimeId, "0000-00-00  00:00");--将本次启动流程的开始时间清0
-            ------类型为分析且满足自动量程切换条件----------
+            ------类型为水样分析且满足自动量程切换条件----------
             if Sys.processType == ProcessItem[Sys.language][1] and get_auto_range_process_id() ~= 0 then
                 process_ready_run(autoRangeProcessId);--运行自动量程切换流程
+            ------类型为线性核查且还未执行完5次流程----------
+            elseif Sys.processType ==  ProcessItem[Sys.language][10] and Sys.linearProcessStep < 5 then
+                Sys.linearProcessStep = Sys.linearProcessStep + 1;
+                process_ready_run(linearProcessId);
             ----------------手动模式--------------------
             elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then     
                 Sys.handProcessIndex = Sys.handProcessIndex + 1;--指向下一个流程
@@ -2634,7 +2647,8 @@ function SystemStop(stopType)
     Sys.processStep = 1;
     Sys.handProcessIndex = 1;
     Sys.handRunTimes = 0;
-
+    Sys.linearProcessStep = 1;
+    Sys.linearStartStep = 1;
     Sys.flag_save_uart_log = ENABLE;--打开串口通信日志记录功能
     UartArg.lock = UNLOCKED;--解锁串口
     UartArg.repeat_times = 0;--重发计数请0
@@ -3037,6 +3051,8 @@ function set_edit_screen(para, screen, control)
         change_screen(PROCESS_DISPEL_SCREEN);
     elseif para == ActionItem[Sys.language][9] then --阀操作
         change_screen(PROCESS_VALVE_CTRL_SCREEN);
+    elseif para == ActionItem[Sys.language][10] then --线性核查稀释
+        change_screen(PROCESS_LINEAR_CHK_SET_SCREEN);
     end
 end
 
@@ -3378,30 +3394,146 @@ end
 --***********************************************************************************************
 function excute_inject_process(paraTab)
 
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+
+    -----------------------------------------------------------------
     if Sys.actionSubStep == 1 then
-        if paraTab[1] == ENABLE_STRING then--判断是否需要对注射泵1进行操作
-            Sys.injectSpeed = tonumber(paraTab[4]);
-            Sys.injectScale = tonumber(paraTab[5]) * 10;
-            Sys.waitTime = tonumber(paraTab[6]);
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            control_valco(tonumber(paraTab[20]));--通道号
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 2 then--
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作,在此配置参数
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].open;
+            Sys.waitTime = 2;--等待时间
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作,在此执行开阀操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[3] == ENABLE_STRING then
+            Sys.injectId = tonumber(paraTab[21])
+            Sys.injectSpeed = tonumber(paraTab[22]);
+            if paraTab[23] == InjectPara[Sys.language][2] then--加标体积 
+                Sys.injectScale = Sys.recoveryVa * 10;
+            else
+                Sys.injectScale = tonumber(paraTab[24]) * 10;
+            end
+            Sys.waitTime = 10;
             Sys.driverStep1Func = control_inject1;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 2 then
-        if paraTab[2] == ENABLE_STRING then--判断是否需要对注射泵2进行操作
-            Sys.injectSpeed = tonumber(paraTab[7]);
-            Sys.injectScale = tonumber(paraTab[8]) * 10;
-            Sys.waitTime = tonumber(paraTab[9]);
-            -- Sys.driverStep1Func = ;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].close;
+            Sys.waitTime = 0
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 6 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
             Sys.actionSubStep = Sys.actionSubStep + 1;
         end
-    elseif Sys.actionSubStep == 3 then--结束
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 7 then
+        if paraTab[4] == ENABLE_STRING then--判断是否需要对十通阀操作
+            control_valco(tonumber(paraTab[25]));
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 8 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作,在此设置参数
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i+3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].open;
+            Sys.waitTime = 2
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 9 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作,在此执行开阀操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 10 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[6] == ENABLE_STRING then
+            Sys.injectId = tonumber(paraTab[26]);
+            Sys.injectSpeed = tonumber(paraTab[27]);
+            if paraTab[28] == InjectPara[Sys.language][2] then--加标体积 
+                Sys.injectScale = Sys.recoveryVa * 10;
+            else
+                Sys.injectScale = tonumber(paraTab[29]) * 10;
+            end
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 11 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i+3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].close;
+            Sys.waitTime = 0;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 12 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 13 then--判断该步骤用了多少试剂
+        if paraTab[7] == ENABLE_STRING then
+            local index = tonumber(paraTab[30])
+            local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId));--获取试剂当前余量
+            reagentRemain = reagentRemain - tonumber(paraTab[31]);--计算出最新的试剂余量
+            if reagentRemain < 0 then
+                reagentRemain = 0;
+            end
+            print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
+            set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
+            WriteParaToConfigStrAndFile();--保存界面的数据到配置文件
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 14 then--结束
         Sys.actionSubStep = FINISHED;
     end
-    return Sys.actionSubStep;
 end
 
 
@@ -3651,8 +3783,8 @@ function excute_peristaltic_process(paraTab)
     ----------------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
-            Sys.valcoChannel = tonumber(paraTab[22]);--通道号
-            Sys.waitTime = tonumber(paraTab[23]);--等待时间
+            Sys.valcoChannel = tonumber(paraTab[20]);--通道号
+            Sys.waitTime = 2;--等待时间
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
@@ -3661,37 +3793,28 @@ function excute_peristaltic_process(paraTab)
         ----------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
         if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
-            for i = 1, 16, 1 do
-                Sys.valveIdTab[i] = paraTab[i + 6];
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
             end
             Sys.valveOperate = ValveStatus[Sys.language].open;
-            Sys.waitTime = tonumber(paraTab[24]);
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+            Sys.waitTime = 2;
+            
         else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
+            Sys.actionSubStep = Sys.actionSubStep + 2;
         end
-        ----------------------------------------------------------------
     elseif Sys.actionSubStep == 3 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作
+        -- Sys.driverStep1Func = ;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 2;
+        ----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
         if paraTab[3] == ENABLE_STRING then--判断对蠕动泵的操作
-            Sys.periodicSpeed = tonumber(paraTab[25]);
-            Sys.periodicVolume = tonumber(paraTab[26]);
-            Sys.periodicDir = paraTab[27];
-            Sys.waitTime = tonumber(paraTab[28]);
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
-        elseif paraTab[4] == ENABLE_STRING then
-            Sys.periodicSpeed = tonumber(paraTab[29]);
-            Sys.periodicVolume = tonumber(paraTab[30]);
-            Sys.periodicDir = paraTab[31];
-            Sys.waitTime = tonumber(paraTab[32]);
-            -- Sys.driverStep1Func = ;
-            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
-        elseif paraTab[5] == ENABLE_STRING then
-            Sys.periodicSpeed = tonumber(paraTab[33]);
-            Sys.periodicVolume = tonumber(paraTab[34]);
-            Sys.periodicDir = paraTab[35];
-            Sys.waitTime = tonumber(paraTab[36]);
+            Sys.periodicSpeed = tonumber(paraTab[22]);
+            Sys.periodicVolume = tonumber(paraTab[24]);
+            Sys.periodicDir = paraTab[23];
+            Sys.waitTime = Sys.periodicVolume * 10;
             -- Sys.driverStep1Func = ;
             driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
         else
@@ -3700,8 +3823,8 @@ function excute_peristaltic_process(paraTab)
         ----------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
         if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
-            for i = 1, 16, 1 do
-                Sys.valveIdTab[i] = paraTab[i + 6];
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;
             Sys.waitTime = 0;
@@ -3759,6 +3882,7 @@ function control_peristaltic()
         end
     end
 end
+
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
@@ -3825,8 +3949,14 @@ function excute_dispel_process(paraTab)
     elseif Sys.actionSubStep == 6 then--判断消解状态
         if UartArg.reply_sta == SEND_OK and UartArg.recv_data[4] == 0x04 then--消解状态为消解中
             Sys.actionSubStep = Sys.actionSubStep + 1;
-        else
+        elseif UartArg.reply_sta == SEND_OK and UartArg.recv_data[4] == 0x03 then--消解状态为消解温度上升中
             Sys.actionSubStep = 4;--返回第4步继续获取温度
+        elseif UartArg.reply_sta == SEND_OK and UartArg.recv_data[4] == 0x00 then--消解状态为空闲
+            Sys.actionSubStep = 3;--返回第3步启动消解
+        else
+            Sys.alarmContent = TipsTab[Sys.language].dispelErr;
+            add_history_record(HISTORY_ALARM_SCREEN);
+            UartArg.lock = LOCKED;--锁定串口,流程会在此处停止往下执行.
         end
     elseif Sys.actionSubStep == 7 then
         on_uart_send_data(uartSendTab.getDsTemp, NEED_REPLY);
@@ -4028,16 +4158,14 @@ end
 --  执行计算流程
 --***********************************************************************************************
 function excute_calculate_process(paraTab)
-    Sys.calculateWay = paraTab[10];--计算方式:校准还是分析
-    Sys.calculateType = paraTab[12];--计算类型:对数还是差值
+    Sys.calculateWay = paraTab[10];--计算方式:对数还是差值
     Sys.CalibrationDensity = tonumber(paraTab[13]);--校准浓度
     Sys.CalcStep = tonumber(paraTab[15])--步骤
     Sys.checkValue = tonumber(paraTab[16]);--核查浓度
     set_fore_color(MAIN_SCREEN, LastResultId, BLACK);--黑色
 
-
     --------当前流程为校准-------------------------------------------------------
-    if Sys.calculateType == CalcType[Sys.language][2] then
+    if  Sys.processType ==  ProcessItem[Sys.language][2] then
 
         if Sys.CalcStep == 1 then
             Sys.slop = " ";
@@ -4071,6 +4199,9 @@ function excute_calculate_process(paraTab)
             calc_calibrate_result_by_diff(4);--通过行列式与克莱姆法则自动算出a,b,c,d的值
             print("校正4：E1=", Sys.caliE1[4], ",E2=", Sys.caliE2[4]);
         end
+        if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
+            add_history_record(HISTORY_CALIBRATION_SCREEN)
+        end
     ------当前计算为水样分析/核查/加标回收/线性核查等需要计算结果浓度的流程---------------------------------------------------------
     else
         --根据公式计算结果
@@ -4084,8 +4215,10 @@ function excute_calculate_process(paraTab)
         setPwmOutput(1, Sys.result)
         print("分析结果 =", Sys.result);
 
-         --当前流程为分析------------------------------------------------------
-         if Sys.calculateType == CalcType[Sys.language][1] then
+         --当前流程为水样分析/平行样/空白测试/空白校准/标样校准/实际水样比对------------------------------------------------------
+         if Sys.processType ==  ProcessItem[Sys.language][1] or Sys.processType ==  ProcessItem[Sys.language][9] or
+         Sys.processType ==  ProcessItem[Sys.language][11] or Sys.processType ==  ProcessItem[Sys.language][12] or 
+         Sys.processType ==  ProcessItem[Sys.language][13] or Sys.processType ==  ProcessItem[Sys.language][14] then
             --是否需要进行报警
             if paraTab[2] == ENABLE_STRING then
                 if Sys.result > tonumber(paraTab[9]) then--结果高于报警值
@@ -4111,10 +4244,12 @@ function excute_calculate_process(paraTab)
             else
                 Sys.processResultTag = ":N"
             end
-        
-
-        --当前流程为核查,则需要判断核查结果------------------------------------------------------
-        elseif Sys.calculateType == CalcType[Sys.language][3] then
+            if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
+                add_history_record(HISTORY_ANALYSIS_SCREEN)
+            end
+        --当前流程为零点核查/标样核查/量程核查,则需要判断核查结果------------------------------------------------------
+        elseif Sys.processType ==  ProcessItem[Sys.language][5] or Sys.processType ==  ProcessItem[Sys.language][6] or 
+               Sys.processType ==  ProcessItem[Sys.language][7] then
             local needCheck = false;
             Sys.isCheckOk = true;--默认核查结果合格
             local DNL_Value = tonumber(paraTab[14])--核查误差
@@ -4135,10 +4270,12 @@ function excute_calculate_process(paraTab)
                 set_fore_color(MAIN_SCREEN, LastResultId, RED);--红色
                 beep(2000);
             end
-        
-
-        --当前流程为加标回收,则需要判断核查结果------------------------------------------------------
-        elseif Sys.calculateType == CalcType[Sys.language][4] then
+            
+            if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
+                add_history_record(HISTORY_CHECK_SCREEN)
+            end
+        --当前流程为加标回收,------------------------------------------------------
+        elseif Sys.processType ==  ProcessItem[Sys.language][8] then
             local Vs = tonumber(paraTab[17])--加标回收样品体积设定值,用于计算加标回收率
             local stdDensity = tonumber(paraTab[18])--标准溶液浓度
             if Sys.CalcStep == 1 then--加标回收第一次流程,需要保存结果以及
@@ -4164,42 +4301,38 @@ function excute_calculate_process(paraTab)
                 Sys.recoveryRate = ((Sys.recoveryM2 - Sys.recoveryM1) * Vs * 100) / (stdDensity * Sys.recoveryVa )
                 Sys.recoveryRate = GetPreciseDecimal(Sys.recoveryRate, 1)--保留小数点后1位
             end
-
-        --当前流程为线性核查,则需要判断核查结果------------------------------------------------------
-        elseif Sys.calculateType == CalcType[Sys.language][4] then
-
-            for i = 1,Sys.CalcStep,1 do
-                Sys.linearX[i] = tonumber(paratab[16]) * Sys.linearRatioDensity[i]--保存的是当前标液浓度
+            if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
+                add_history_record(HISTORY_RECOVERY_SCREEN);
+            end
+        --当前流程为线性核查------------------------------------------------------
+        elseif Sys.processType ==  ProcessItem[Sys.language][10] then
+            print("开始线性核查计算")
+            for i = 1,Sys.linearProcessStep,1 do
+                Sys.linearX[i] = tonumber(paraTab[16]) * Sys.linearRatioDensity[i]--保存的是当前标液浓度
             end
 
-            if Sys.CalcStep == 1 then--线性核查1
+            if Sys.linearProcessStep == 1 then--线性核查1
                 Sys.linearY[1] = Sys.result
                 Sys.linearCorrelation = 1.0000 --线性相关系数
-            elseif Sys.CalcStep == 2 then--线性核查2
+            elseif Sys.linearProcessStep == 2 then--线性核查2
                 Sys.linearY[2] = Sys.result
                 Sys.linearCorrelation = 1.0000 --线性相关系数
-            elseif Sys.CalcStep == 3 then--线性核查3
+            elseif Sys.linearProcessStep == 3 then--线性核查3
                 Sys.linearY[3] = Sys.result
                 Sys.linearCorrelation = CalcLinearCorrelation();
-            elseif Sys.CalcStep == 4 then--线性核查4
+            elseif Sys.linearProcessStep == 4 then--线性核查4
                 Sys.linearY[4] = Sys.result
                 Sys.linearCorrelation = CalcLinearCorrelation();
-            elseif Sys.CalcStep == 5 then--线性核查5
+            elseif Sys.linearProcessStep == 5 then--线性核查5
                 Sys.linearY[5] = Sys.result
                 Sys.linearCorrelation = CalcLinearCorrelation();
             end
+            if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录 then
+                add_history_record(HISTORY_LINER_SCREEN);
+            end
         end
     end
 
-    if paraTab[3] == ENABLE_STRING then--是否需要保存历史记录
-        if Sys.calculateType == CalcType[Sys.language][1] then--当前计算为分析
-            add_history_record(HISTORY_ANALYSIS_SCREEN)
-        elseif Sys.calculateType == CalcType[Sys.language][2] then --当前计算为校准
-            add_history_record(HISTORY_CALIBRATION_SCREEN)
-        elseif Sys.calculateType == CalcType[Sys.language][3] then --当前计算为核查
-            add_history_record(HISTORY_CHECK_SCREEN)
-        end
-    end
 
     --设置Modebus测量数据区
     SetModebusResultArea();
@@ -4214,6 +4347,7 @@ function excute_calculate_process(paraTab)
     Sys.startTime.hour, Sys.startTime.min);
     set_text(MAIN_SCREEN, LastAnalysisTimeId, sTime);
     print("执行完成计算流程");
+
     return FINISHED;
 end
 
@@ -4225,17 +4359,17 @@ function averageSum(x, y)
     local averagex=0
     local averagey=0
     local sum=0;
-    for i = 1, Sys.CalcStep, 1 do
+    for i = 1, Sys.linearProcessStep, 1 do
         averagex = averagex + x[i];
     end
-    averagex = averagex / Sys.CalcStep;--求x平均值
+    averagex = averagex / Sys.linearProcessStep;--求x平均值
 
-    for i = 1, Sys.CalcStep, 1 do
+    for i = 1, Sys.linearProcessStep, 1 do
         averagey = averagey + x[i];
     end
-    averagey = averagey / Sys.CalcStep;--求y平均值
+    averagey = averagey / Sys.linearProcessStep;--求y平均值
 
-    for i=0, i<Sys.CalcStep, 1 do
+    for i=0, i<Sys.linearProcessStep, 1 do
        sum = sum + (x[i]-averagex) * (y[i]-averagey)
     end
     return sum;
@@ -4247,12 +4381,12 @@ end
 function squareAverage(x)
     local sum = 0
     local average = 0;
-    for i=1,Sys.CalcStep,i do
+    for i=1,Sys.linearProcessStep,i do
         average = average + x[i]
     end
-    average = average/Sys.CalcStep;--取平均值
+    average = average/Sys.linearProcessStep;--取平均值
 
-    for i=0,i<Sys.CalcStep,1 do
+    for i=0,i<Sys.linearProcessStep,1 do
         sum = sum + (x[i]-average) * (x[i]-average);--取平方差后再求和
     end
     return math.sqrt(sum)
@@ -4445,8 +4579,11 @@ function calc_analysis_result(type)
     -- Sys.signalE1 = 4278.91;
     -- Sys.signalE2 = 3752.21;
     if type == CalcWay[Sys.language].log then--取对数方式
-        x = math.log(Sys.signalE1 / Sys.signalE2, 10);
-        print("对数方式，x=", x);
+        if Sys.signalE2 == 0 then
+            x = 0;
+        else
+            x = math.log(Sys.signalE1 / Sys.signalE2, 10);
+        end
     else
         x = Sys.signalE1 - Sys.signalE2;
     end
@@ -4455,8 +4592,8 @@ function calc_analysis_result(type)
     b = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].bId));
     c = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId));
     d = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
-    print(string.format("a=%f,b=%f,c=%f,d=%f", a, b, c, d));
-    Sys.result = a * (x ^ 3) + b * (x ^ 2) + c * x + d;
+    print(string.format("a=%f,b=%f,c=%f,d=%f,x=%f", a, b, c, d, x));
+    -- Sys.result = a *math.pow(x, 3) + b * math.pow(x, 2) + c * x + d;
     Sys.result = GetPreciseDecimal(Sys.result, tonumber(get_text(RUN_CONTROL_SCREEN,DecimalTextId)))--保留小数点后四位
 end
 
@@ -4558,6 +4695,182 @@ function excute_wait_time_process(paraTab)
     return Sys.actionSubStep;
 end
 
+--[[-----------------------------------------------------------------------------------------------------------------
+    流程设置-线性核查稀释
+--------------------------------------------------------------------------------------------------------------------]]
+LINEAR_BtStartId = 1
+LINEAR_BtEndId = 10
+LINEAR_TextStartId = 11
+LINEAR_TextEndId = 60
+
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function process_linear_set_control_notify(screen, control, value)
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            WriteTypeAndContentToActionStrTab(DestActionNum);
+            change_screen(DestScreen);
+        end
+    elseif control == CancelButtonId then --取消按钮
+        change_screen(DestScreen);
+    end
+end
+
+--***********************************************************************************************
+--  线性核查稀释标液
+--***********************************************************************************************
+function excute_linear_set_process(paraTab)
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+
+    local valNum = 10;
+    -----------------------------------------------------------------
+    if Sys.actionSubStep == 1 then
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对阀操作
+            valNum = tonumber(paraTab[Sys.linearProcessStep*10+1])
+            if valNum < 10 then--操作十通阀
+                control_valco(valNum)--通道号
+            elseif valNum >= 11 and valNum <= 16 then--操作电磁阀
+                open_single_valve(valNum);
+            end
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 2 then--
+        if paraTab[2] == ENABLE_STRING then
+            Sys.injectScale = tonumber(paraTab[Sys.linearProcessStep*10+2]) * 10;
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then--
+        if paraTab[1] == ENABLE_STRING and valNum >= 11 and valNum <= 16 then--操作电磁阀
+            close_single_valve(valNum);
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
+        if paraTab[3] == ENABLE_STRING then--判断是否需要对阀操作
+            valNum = tonumber(paraTab[Sys.linearProcessStep*10+3])
+            if valNum < 10 then--操作十通阀
+                control_valco(valNum)--通道号
+            elseif valNum >= 11 and valNum <= 16 then--操作电磁阀
+                open_single_valve(valNum);
+            end
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then--
+        if paraTab[4] == ENABLE_STRING then
+            Sys.injectScale = tonumber(paraTab[Sys.linearProcessStep*10+4]) * 10;
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 6 then--
+        if paraTab[3] == ENABLE_STRING and valNum >= 11 and valNum <= 16 then--操作电磁阀
+            close_single_valve(valNum);
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 7 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对阀操作
+            valNum = tonumber(paraTab[Sys.linearProcessStep*10+5])
+            if valNum < 10 then--操作十通阀
+                control_valco(valNum)--通道号
+            elseif valNum >= 11 and valNum <= 16 then--操作电磁阀
+                open_single_valve(valNum);
+            end
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 8 then--
+        if paraTab[6] == ENABLE_STRING then
+            Sys.injectScale = tonumber(paraTab[Sys.linearProcessStep*10+6]) * 10;
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 9 then--
+        if paraTab[5] == ENABLE_STRING and valNum >= 11 and valNum <= 16 then--操作电磁阀
+            close_single_valve(valNum);
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 10 then
+        if paraTab[7] == ENABLE_STRING then--判断是否需要对阀操作
+            valNum = tonumber(paraTab[Sys.linearProcessStep*10+7])
+            if valNum < 10 then--操作十通阀
+                control_valco(valNum)--通道号
+            elseif valNum >= 11 and valNum <= 16 then--操作电磁阀
+                open_single_valve(valNum);
+            end
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 11 then--
+        if paraTab[8] == ENABLE_STRING then
+            Sys.injectScale = tonumber(paraTab[Sys.linearProcessStep*10+8]) * 10;
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 12 then--
+        if paraTab[7] == ENABLE_STRING and valNum >= 11 and valNum <= 16 then--操作电磁阀
+            close_single_valve(valNum);
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 13 then
+        if paraTab[9] == ENABLE_STRING then--判断是否需要对阀操作
+            valNum = tonumber(paraTab[Sys.linearProcessStep*10+9])
+            if valNum < 10 then--操作十通阀
+                control_valco(valNum)--通道号
+            elseif valNum >= 11 and valNum <= 16 then--操作电磁阀
+                open_single_valve(valNum);
+            end
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 14 then--
+        if paraTab[10] == ENABLE_STRING then
+            Sys.injectScale = tonumber(paraTab[Sys.linearProcessStep*10+10]) * 10;
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+    elseif Sys.actionSubStep == 15 then--
+        if paraTab[9] == ENABLE_STRING and valNum >= 11 and valNum <= 16 then--操作电磁阀
+            close_single_valve(valNum);
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+    -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 16 then--结束
+        Sys.actionSubStep = FINISHED;
+    end
+end
 
 --[[-----------------------------------------------------------------------------------------------------------------
     流程类型选择
@@ -5061,12 +5374,15 @@ UartRecordId = 1--串口通讯记录空间id
 --------------------------------------------------------------------------------------------------------------------]]
 IOSET_TextStartId = 1;
 IOSET_TextEndId = 12;
+IOSET_BaudSelectMenuId = 18;
+IOSET_BaudTextId = 2;
 IOSET_ComputerAddr = 1;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function in_out_control_notify(screen, control, value)
-    
-    if control == 3 or control == 4 or control == 5  then--修改输出1设置
+    if control == IOSET_BaudSelectMenuId  then
+        uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN,IOSET_BaudTextId)))
+    elseif control == 3 or control == 4 or control == 5  then--修改输出1设置
         local v4 = tonumber(get_text(IN_OUT_SCREEN,4))--4mA对应值
         local v20 = tonumber(get_text(IN_OUT_SCREEN,5))--20mA对应值
         local a = 16/(v20-v4);
@@ -5219,7 +5535,7 @@ function add_history_record(screen)
     elseif screen == HISTORY_LINER_SCREEN then--线性核查
         signalHistoryContent = (historyOrder + 1) .. ";" .. date .. ";" .. time .. ";" ..--序号,日期,时间
                    Sys.result.. ";" ..Sys.signalE1 .. ";" .. Sys.signalE2 .. ";" ..--结果,E1,E2
-                   Sys.linearCorrelation.. ";" ..Sys.CalcStep..";"..Sys.rangetypeId--相关系数,点,量程
+                   Sys.linearCorrelation.. ";" ..Sys.linearProcessStep..";"..Sys.rangetypeId--相关系数,点,量程
     elseif screen == HISTORY_ALARM_SCREEN then--报警
         date = string.format("%d-%02d-%02d", math.fmod(Sys.dateTime.year,100), Sys.dateTime.mon, Sys.dateTime.day);
         time = string.format("%02d:%02d", Sys.dateTime.hour, Sys.dateTime.min);
@@ -6690,8 +7006,16 @@ function WriteTypeAndContentToActionStrTab(actionNumber)
         for i = VALVE_TextStartId, VALVE_TextEndId, 1 do
             ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. get_text(PROCESS_VALVE_CTRL_SCREEN, i) .. "," --写入文本值
         end
-        --------------------------------写-空操作参数------------------------------------------------------
+        --------------------------------写-线性核查稀释参数------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][10] then
+        for i = LINEAR_BtStartId, LINEAR_BtEndId, 1 do
+            ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. get_value(PROCESS_LINEAR_CHK_SET_SCREEN, i) .. "," --写入按钮值
+        end
+        for i = LINEAR_TextStartId, LINEAR_TextEndId, 1 do
+            ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. get_text(PROCESS_LINEAR_CHK_SET_SCREEN, i) .. "," --写入文本值
+        end
+        --------------------------------写-空操作参数------------------------------------------------------
+    elseif actionType == ActionItem[Sys.language][11] then
         ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. "<content> </content>"
     end
     ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. "</content>"
@@ -6830,6 +7154,18 @@ function SetActionToScreen(actionNumber)
         for i = VALVE_TextStartId, VALVE_TextEndId, 1 do
             if tab[i] ~= nil then
                 set_text(PROCESS_VALVE_CTRL_SCREEN, i, tab[i]);--写入文本值
+            end
+        end
+        --------------------------------读-线性核查稀释参数------------------------------------------------------
+    elseif actionType[1] == ActionItem[Sys.language][10] then
+        for i = LINEAR_BtStartId, LINEAR_BtEndId, 1 do
+            if tab[i] ~= nil then
+                set_value(PROCESS_LINEAR_CHK_SET_SCREEN, i, tab[i]);--写入按钮值
+            end
+        end
+        for i = LINEAR_TextStartId, LINEAR_TextEndId, 1 do
+            if tab[i] ~= nil then
+                set_text(PROCESS_LINEAR_CHK_SET_SCREEN, i, tab[i]);--写入文本值
             end
         end
     end

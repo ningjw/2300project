@@ -3935,21 +3935,21 @@
 
 #define  _MENU_流程设置-初始化_MENU1                                                108
 
-//画面流程设置-注射泵中按钮Button3弹起时的图片
-#define  _IMG_流程设置-注射泵_BUTTON3_UP                                             14
+//画面流程设置-注射泵中按钮Button51弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON51_UP                                            18
 
-//画面流程设置-注射泵中按钮Button3按下时的图片
-#define  _IMG_流程设置-注射泵_BUTTON3_DOWN                                           14
+//画面流程设置-注射泵中按钮Button51按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON51_DOWN                                          19
 
-#define  _BTN_流程设置-注射泵_BUTTON3                                                99
+#define  _BTN_流程设置-注射泵_BUTTON51                                                1
 
-//画面流程设置-注射泵中按钮Button1弹起时的图片
-#define  _IMG_流程设置-注射泵_BUTTON1_UP                                             14
+//画面流程设置-注射泵中按钮Button35弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON35_UP                                            18
 
-//画面流程设置-注射泵中按钮Button1按下时的图片
-#define  _IMG_流程设置-注射泵_BUTTON1_DOWN                                           15
+//画面流程设置-注射泵中按钮Button35按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON35_DOWN                                          19
 
-#define  _BTN_流程设置-注射泵_BUTTON1                                                98
+#define  _BTN_流程设置-注射泵_BUTTON35                                                2
 
 //画面流程设置-注射泵中按钮Button9弹起时的图片
 #define  _IMG_流程设置-注射泵_BUTTON9_UP                                             18
@@ -3957,57 +3957,213 @@
 //画面流程设置-注射泵中按钮Button9按下时的图片
 #define  _IMG_流程设置-注射泵_BUTTON9_DOWN                                           19
 
-#define  _BTN_流程设置-注射泵_BUTTON9                                                 1
+#define  _BTN_流程设置-注射泵_BUTTON9                                                 3
 
-//画面流程设置-注射泵中按钮Button10弹起时的图片
-#define  _IMG_流程设置-注射泵_BUTTON10_UP                                            18
+//画面流程设置-注射泵中按钮Button6弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON6_UP                                             18
 
-//画面流程设置-注射泵中按钮Button10按下时的图片
-#define  _IMG_流程设置-注射泵_BUTTON10_DOWN                                          19
+//画面流程设置-注射泵中按钮Button6按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON6_DOWN                                           19
 
-#define  _BTN_流程设置-注射泵_BUTTON10                                                2
+#define  _BTN_流程设置-注射泵_BUTTON6                                                 5
 
-//画面流程设置-注射泵中按钮Button2弹起时的图片
-#define  _IMG_流程设置-注射泵_BUTTON2_UP                                             18
+//画面流程设置-注射泵中按钮Button39弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON39_UP                                            18
 
-//画面流程设置-注射泵中按钮Button2按下时的图片
-#define  _IMG_流程设置-注射泵_BUTTON2_DOWN                                           19
+//画面流程设置-注射泵中按钮Button39按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON39_DOWN                                          19
 
-#define  _BTN_流程设置-注射泵_BUTTON2                                                 3
+#define  _BTN_流程设置-注射泵_BUTTON39                                                6
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY3                                      4
+//画面流程设置-注射泵中按钮Button37弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON37_UP                                            14
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY4                                      5
+//画面流程设置-注射泵中按钮Button37按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON37_DOWN                                          14
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY6                                      6
+#define  _BTN_流程设置-注射泵_BUTTON37                                               99
+
+//画面流程设置-注射泵中按钮Button38弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON38_UP                                            14
+
+//画面流程设置-注射泵中按钮Button38按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON38_DOWN                                          15
+
+#define  _BTN_流程设置-注射泵_BUTTON38                                               98
+
+//画面流程设置-注射泵中按钮Button41弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON41_UP                                            18
+
+//画面流程设置-注射泵中按钮Button41按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON41_DOWN                                          19
+
+#define  _BTN_流程设置-注射泵_BUTTON41                                                4
+
+//画面流程设置-注射泵中按钮Button1弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON1_UP                                             18
+
+//画面流程设置-注射泵中按钮Button1按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON1_DOWN                                           19
+
+#define  _BTN_流程设置-注射泵_BUTTON1                                                 7
+
+//画面流程设置-注射泵中按钮Button19弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON19_UP                                            32
+
+//画面流程设置-注射泵中按钮Button19按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON19_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON19                                                8
+
+//画面流程设置-注射泵中按钮Button20弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON20_UP                                            32
+
+//画面流程设置-注射泵中按钮Button20按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON20_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON20                                                9
+
+//画面流程设置-注射泵中按钮Button21弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON21_UP                                            32
+
+//画面流程设置-注射泵中按钮Button21按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON21_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON21                                               10
+
+//画面流程设置-注射泵中按钮Button22弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON22_UP                                            32
+
+//画面流程设置-注射泵中按钮Button22按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON22_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON22                                               11
+
+//画面流程设置-注射泵中按钮Button26弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON26_UP                                            32
+
+//画面流程设置-注射泵中按钮Button26按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON26_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON26                                               12
+
+//画面流程设置-注射泵中按钮Button27弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON27_UP                                            32
+
+//画面流程设置-注射泵中按钮Button27按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON27_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON27                                               13
+
+//画面流程设置-注射泵中按钮Button31弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON31_UP                                            32
+
+//画面流程设置-注射泵中按钮Button31按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON31_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON31                                               14
+
+//画面流程设置-注射泵中按钮Button32弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON32_UP                                            32
+
+//画面流程设置-注射泵中按钮Button32按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON32_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON32                                               15
+
+//画面流程设置-注射泵中按钮Button33弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON33_UP                                            32
+
+//画面流程设置-注射泵中按钮Button33按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON33_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON33                                               16
+
+//画面流程设置-注射泵中按钮Button34弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON34_UP                                            32
+
+//画面流程设置-注射泵中按钮Button34按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON34_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON34                                               17
+
+//画面流程设置-注射泵中按钮Button36弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON36_UP                                            32
+
+//画面流程设置-注射泵中按钮Button36按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON36_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON36                                               18
+
+//画面流程设置-注射泵中按钮Button42弹起时的图片
+#define  _IMG_流程设置-注射泵_BUTTON42_UP                                            32
+
+//画面流程设置-注射泵中按钮Button42按下时的图片
+#define  _IMG_流程设置-注射泵_BUTTON42_DOWN                                          33
+
+#define  _BTN_流程设置-注射泵_BUTTON42                                               19
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY17                                    20
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY3                                     22
+
+//画面流程设置-注射泵中文本显示Text_Display3的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY3                                          36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY4                                     24
+
+//画面流程设置-注射泵中文本显示Text_Display4的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY4                                          36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY6                                     21
 
 //画面流程设置-注射泵中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY6                                          37
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY6                                          36
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY7                                      7
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY21                                    25
+
+//画面流程设置-注射泵中文本显示Text_Display21的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY21                                         36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY12                                    27
+
+//画面流程设置-注射泵中文本显示Text_Display12的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY12                                         36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY13                                    29
+
+//画面流程设置-注射泵中文本显示Text_Display13的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY13                                         36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY5                                     31
+
+//画面流程设置-注射泵中文本显示Text_Display5的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY5                                          36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY14                                    30
+
+//画面流程设置-注射泵中文本显示Text_Display14的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY14                                         36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY1                                     23
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY2                                     26
+
+//画面流程设置-注射泵中文本显示Text_Display2的背景图片
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY2                                          36
+
+#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY7                                     28
 
 //画面流程设置-注射泵中文本显示Text_Display7的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY7                                          36
+#define  _IMG_流程设置-注射泵_TEXT_DISPLAY7                                          37
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY8                                      8
+#define  _MENU_流程设置-注射泵_MENU1                                                223
 
-//画面流程设置-注射泵中文本显示Text_Display8的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY8                                          37
+#define  _MENU_流程设置-注射泵_MENU2                                                228
 
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY10                                     9
+#define  _BTN_流程设置-注射泵_BUTTON2                                               123
 
-//画面流程设置-注射泵中文本显示Text_Display10的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY10                                         37
-
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY15                                    10
-
-//画面流程设置-注射泵中文本显示Text_Display15的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY15                                         37
-
-#define  _TXT_DIS__流程设置-注射泵_TEXT_DISPLAY16                                    11
-
-//画面流程设置-注射泵中文本显示Text_Display16的背景图片
-#define  _IMG_流程设置-注射泵_TEXT_DISPLAY16                                         37
+#define  _BTN_流程设置-注射泵_BUTTON3                                               128
 
 //画面流程设置-注射泵加液中按钮Button16弹起时的图片
 #define  _IMG_流程设置-注射泵加液_BUTTON16_UP                                          32
@@ -4355,112 +4511,109 @@
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY17                                  42
 
-//画面流程设置-注射泵加液中文本显示Text_Display17的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY17                                       36
-
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY1                                   43
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY2                                   44
 
 //画面流程设置-注射泵加液中文本显示Text_Display2的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY2                                        37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY2                                        36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY3                                   45
 
 //画面流程设置-注射泵加液中文本显示Text_Display3的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY3                                        36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY3                                        38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY4                                   46
 
 //画面流程设置-注射泵加液中文本显示Text_Display4的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY4                                        37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY4                                        36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY6                                   47
 
 //画面流程设置-注射泵加液中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY6                                        37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY6                                        36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY7                                   48
 
 //画面流程设置-注射泵加液中文本显示Text_Display7的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY7                                        36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY7                                        38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY8                                   49
 
 //画面流程设置-注射泵加液中文本显示Text_Display8的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY8                                        37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY8                                        36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY10                                  50
 
 //画面流程设置-注射泵加液中文本显示Text_Display10的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY10                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY10                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY9                                   51
 
 //画面流程设置-注射泵加液中文本显示Text_Display9的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY9                                        36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY9                                        38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY21                                  52
 
 //画面流程设置-注射泵加液中文本显示Text_Display21的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY21                                       36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY21                                       38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY22                                  53
 
 //画面流程设置-注射泵加液中文本显示Text_Display22的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY22                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY22                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY11                                  54
 
 //画面流程设置-注射泵加液中文本显示Text_Display11的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY11                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY11                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY12                                  55
 
 //画面流程设置-注射泵加液中文本显示Text_Display12的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY12                                       36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY12                                       38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY13                                  56
 
 //画面流程设置-注射泵加液中文本显示Text_Display13的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY13                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY13                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY15                                  57
 
 //画面流程设置-注射泵加液中文本显示Text_Display15的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY15                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY15                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY16                                  58
 
 //画面流程设置-注射泵加液中文本显示Text_Display16的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY16                                       36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY16                                       38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY18                                  59
 
 //画面流程设置-注射泵加液中文本显示Text_Display18的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY18                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY18                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY20                                  60
 
 //画面流程设置-注射泵加液中文本显示Text_Display20的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY20                                       37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY20                                       36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY5                                   61
 
 //画面流程设置-注射泵加液中文本显示Text_Display5的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY5                                        37
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY5                                        36
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY14                                  62
 
 //画面流程设置-注射泵加液中文本显示Text_Display14的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY14                                       36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY14                                       38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY19                                  63
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY23                                  64
 
 //画面流程设置-注射泵加液中文本显示Text_Display23的背景图片
-#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY23                                       36
+#define  _IMG_流程设置-注射泵加液_TEXT_DISPLAY23                                       38
 
 #define  _TXT_DIS__流程设置-注射泵加液_TEXT_DISPLAY24                                  65
 
@@ -4512,109 +4665,67 @@
 
 #define  _BTN_流程设置-蠕动泵加液_BUTTON9                                               3
 
-//画面流程设置-蠕动泵加液中按钮Button10弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON10_UP                                          18
-
-//画面流程设置-蠕动泵加液中按钮Button10按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON10_DOWN                                        19
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON10                                              4
-
-//画面流程设置-蠕动泵加液中按钮Button11弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON11_UP                                          18
-
-//画面流程设置-蠕动泵加液中按钮Button11按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON11_DOWN                                        19
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON11                                              5
-
 //画面流程设置-蠕动泵加液中按钮Button2弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON2_UP                                           18
 
 //画面流程设置-蠕动泵加液中按钮Button2按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON2_DOWN                                         19
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON2                                               6
+#define  _BTN_流程设置-蠕动泵加液_BUTTON2                                               7
 
-//画面流程设置-蠕动泵加液中按钮Button4弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON4_UP                                           32
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY4                                   24
 
-//画面流程设置-蠕动泵加液中按钮Button4按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON4_DOWN                                         33
+//画面流程设置-蠕动泵加液中文本显示Text_Display4的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY4                                        36
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON4                                               7
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY5                                   23
 
-//画面流程设置-蠕动泵加液中按钮Button5弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON5_UP                                           32
+//画面流程设置-蠕动泵加液中文本显示Text_Display5的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY5                                        36
 
-//画面流程设置-蠕动泵加液中按钮Button5按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON5_DOWN                                         33
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY15                                  31
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON5                                               8
+//画面流程设置-蠕动泵加液中文本显示Text_Display15的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY15                                       36
+
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY16                                  30
+
+//画面流程设置-蠕动泵加液中文本显示Text_Display16的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY16                                       36
 
 //画面流程设置-蠕动泵加液中按钮Button6弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON6_UP                                           32
+#define  _IMG_流程设置-蠕动泵加液_BUTTON6_UP                                           18
 
 //画面流程设置-蠕动泵加液中按钮Button6按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON6_DOWN                                         33
+#define  _IMG_流程设置-蠕动泵加液_BUTTON6_DOWN                                         19
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON6                                               9
+#define  _BTN_流程设置-蠕动泵加液_BUTTON6                                               5
 
-//画面流程设置-蠕动泵加液中按钮Button12弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON12_UP                                          32
+//画面流程设置-蠕动泵加液中按钮Button39弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON39_UP                                          18
 
-//画面流程设置-蠕动泵加液中按钮Button12按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON12_DOWN                                        33
+//画面流程设置-蠕动泵加液中按钮Button39按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON39_DOWN                                        19
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON12                                             10
+#define  _BTN_流程设置-蠕动泵加液_BUTTON39                                              6
 
-//画面流程设置-蠕动泵加液中按钮Button13弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON13_UP                                          32
+//画面流程设置-蠕动泵加液中按钮Button41弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON41_UP                                          18
 
-//画面流程设置-蠕动泵加液中按钮Button13按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON13_DOWN                                        33
+//画面流程设置-蠕动泵加液中按钮Button41按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON41_DOWN                                        19
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON13                                             11
+#define  _BTN_流程设置-蠕动泵加液_BUTTON41                                              4
 
-//画面流程设置-蠕动泵加液中按钮Button14弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON14_UP                                          32
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY21                                  25
 
-//画面流程设置-蠕动泵加液中按钮Button14按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON14_DOWN                                        33
+//画面流程设置-蠕动泵加液中文本显示Text_Display21的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY21                                       36
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON14                                             12
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY17                                  20
 
-//画面流程设置-蠕动泵加液中按钮Button15弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON15_UP                                          32
-
-//画面流程设置-蠕动泵加液中按钮Button15按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON15_DOWN                                        33
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON15                                             13
-
-//画面流程设置-蠕动泵加液中按钮Button16弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON16_UP                                          32
-
-//画面流程设置-蠕动泵加液中按钮Button16按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON16_DOWN                                        33
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON16                                             14
-
-//画面流程设置-蠕动泵加液中按钮Button17弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON17_UP                                          32
-
-//画面流程设置-蠕动泵加液中按钮Button17按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON17_DOWN                                        33
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON17                                             15
-
-//画面流程设置-蠕动泵加液中按钮Button18弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON18_UP                                          32
-
-//画面流程设置-蠕动泵加液中按钮Button18按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON18_DOWN                                        33
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON18                                             16
+//画面流程设置-蠕动泵加液中文本显示Text_Display17的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY17                                       36
 
 //画面流程设置-蠕动泵加液中按钮Button19弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON19_UP                                          32
@@ -4622,7 +4733,7 @@
 //画面流程设置-蠕动泵加液中按钮Button19按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON19_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON19                                             17
+#define  _BTN_流程设置-蠕动泵加液_BUTTON19                                              8
 
 //画面流程设置-蠕动泵加液中按钮Button20弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON20_UP                                          32
@@ -4630,7 +4741,7 @@
 //画面流程设置-蠕动泵加液中按钮Button20按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON20_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON20                                             18
+#define  _BTN_流程设置-蠕动泵加液_BUTTON20                                              9
 
 //画面流程设置-蠕动泵加液中按钮Button21弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON21_UP                                          32
@@ -4638,7 +4749,7 @@
 //画面流程设置-蠕动泵加液中按钮Button21按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON21_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON21                                             19
+#define  _BTN_流程设置-蠕动泵加液_BUTTON21                                             10
 
 //画面流程设置-蠕动泵加液中按钮Button22弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON22_UP                                          32
@@ -4646,7 +4757,7 @@
 //画面流程设置-蠕动泵加液中按钮Button22按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON22_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON22                                             20
+#define  _BTN_流程设置-蠕动泵加液_BUTTON22                                             11
 
 //画面流程设置-蠕动泵加液中按钮Button26弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON26_UP                                          32
@@ -4654,7 +4765,7 @@
 //画面流程设置-蠕动泵加液中按钮Button26按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON26_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON26                                             21
+#define  _BTN_流程设置-蠕动泵加液_BUTTON26                                             12
 
 //画面流程设置-蠕动泵加液中按钮Button27弹起时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON27_UP                                          32
@@ -4662,115 +4773,98 @@
 //画面流程设置-蠕动泵加液中按钮Button27按下时的图片
 #define  _IMG_流程设置-蠕动泵加液_BUTTON27_DOWN                                        33
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON27                                             22
+#define  _BTN_流程设置-蠕动泵加液_BUTTON27                                             13
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY17                                  23
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display17的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY17                                       37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY1                                   24
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display1的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY1                                        37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY2                                   25
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display2的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY2                                        37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY3                                   26
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY3                                   22
 
 //画面流程设置-蠕动泵加液中文本显示Text_Display3的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY3                                        37
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY3                                        36
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY4                                   27
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display4的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY4                                        37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY6                                   28
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY6                                   21
 
 //画面流程设置-蠕动泵加液中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY6                                        37
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY6                                        36
 
-#define  _MENU_流程设置-蠕动泵加液_MENU3                                              143
+#define  _MENU_流程设置-蠕动泵加液_MENU3                                              223
 
-//画面流程设置-蠕动泵加液中按钮Button7弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON7_UP                                           37
-
-//画面流程设置-蠕动泵加液中按钮Button7按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON7_DOWN                                         37
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON7                                             119
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY5                                   29
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY7                                   30
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display7的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY7                                        37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY8                                   31
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display8的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY8                                        37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY10                                  32
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display10的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY10                                       37
-
-#define  _MENU_流程设置-蠕动泵加液_MENU1                                              144
-
-//画面流程设置-蠕动泵加液中按钮Button8弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON8_UP                                           37
-
-//画面流程设置-蠕动泵加液中按钮Button8按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON8_DOWN                                         37
-
-#define  _BTN_流程设置-蠕动泵加液_BUTTON8                                             127
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY9                                   33
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY11                                  34
-
-//画面流程设置-蠕动泵加液中文本显示Text_Display11的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY11                                       37
-
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY12                                  35
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY12                                  27
 
 //画面流程设置-蠕动泵加液中文本显示Text_Display12的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY12                                       37
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY12                                       36
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY14                                  36
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY13                                  29
 
-//画面流程设置-蠕动泵加液中文本显示Text_Display14的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY14                                       37
+//画面流程设置-蠕动泵加液中文本显示Text_Display13的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY13                                       36
 
-#define  _MENU_流程设置-蠕动泵加液_MENU2                                              145
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY2                                   26
 
-//画面流程设置-蠕动泵加液中按钮Button23弹起时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON23_UP                                          37
+//画面流程设置-蠕动泵加液中文本显示Text_Display2的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY2                                        36
 
-//画面流程设置-蠕动泵加液中按钮Button23按下时的图片
-#define  _IMG_流程设置-蠕动泵加液_BUTTON23_DOWN                                        37
+#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY7                                   28
 
-#define  _BTN_流程设置-蠕动泵加液_BUTTON23                                            136
+//画面流程设置-蠕动泵加液中文本显示Text_Display7的背景图片
+#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY7                                        36
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY13                                  37
+#define  _BTN_流程设置-蠕动泵加液_BUTTON4                                             128
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY15                                  38
+#define  _MENU_流程设置-蠕动泵加液_MENU1                                              228
 
-#define  _TXT_DIS__流程设置-蠕动泵加液_TEXT_DISPLAY16                                  39
+#define  _BTN_流程设置-蠕动泵加液_BUTTON5                                             123
 
-//画面流程设置-蠕动泵加液中文本显示Text_Display16的背景图片
-#define  _IMG_流程设置-蠕动泵加液_TEXT_DISPLAY16                                       36
+//画面流程设置-蠕动泵加液中按钮Button31弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON31_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button31按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON31_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON31                                             14
+
+//画面流程设置-蠕动泵加液中按钮Button32弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON32_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button32按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON32_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON32                                             15
+
+//画面流程设置-蠕动泵加液中按钮Button33弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON33_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button33按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON33_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON33                                             16
+
+//画面流程设置-蠕动泵加液中按钮Button34弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON34_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button34按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON34_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON34                                             17
+
+//画面流程设置-蠕动泵加液中按钮Button36弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON36_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button36按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON36_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON36                                             18
+
+//画面流程设置-蠕动泵加液中按钮Button42弹起时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON42_UP                                          32
+
+//画面流程设置-蠕动泵加液中按钮Button42按下时的图片
+#define  _IMG_流程设置-蠕动泵加液_BUTTON42_DOWN                                        33
+
+#define  _BTN_流程设置-蠕动泵加液_BUTTON42                                             19
 
 #define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY5                                       5
 
 //画面流程设置-消解中文本显示Text_Display5的背景图片
-#define  _IMG_流程设置-消解_TEXT_DISPLAY5                                           36
+#define  _IMG_流程设置-消解_TEXT_DISPLAY5                                           38
 
 //画面流程设置-消解中按钮Button3弹起时的图片
 #define  _IMG_流程设置-消解_BUTTON3_UP                                              14
@@ -4799,17 +4893,17 @@
 #define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY3                                       3
 
 //画面流程设置-消解中文本显示Text_Display3的背景图片
-#define  _IMG_流程设置-消解_TEXT_DISPLAY3                                           36
+#define  _IMG_流程设置-消解_TEXT_DISPLAY3                                           38
 
 #define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY4                                       2
 
 //画面流程设置-消解中文本显示Text_Display4的背景图片
-#define  _IMG_流程设置-消解_TEXT_DISPLAY4                                           36
+#define  _IMG_流程设置-消解_TEXT_DISPLAY4                                           38
 
 #define  _TXT_DIS__流程设置-消解_TEXT_DISPLAY6                                       4
 
 //画面流程设置-消解中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-消解_TEXT_DISPLAY6                                           36
+#define  _IMG_流程设置-消解_TEXT_DISPLAY6                                           38
 
 //画面流程设置-读取信号中按钮Button3弹起时的图片
 #define  _IMG_流程设置-读取信号_BUTTON3_UP                                            14
@@ -4830,17 +4924,17 @@
 #define  _TXT_DIS__流程设置-读取信号_TEXT_DISPLAY3                                     2
 
 //画面流程设置-读取信号中文本显示Text_Display3的背景图片
-#define  _IMG_流程设置-读取信号_TEXT_DISPLAY3                                         36
+#define  _IMG_流程设置-读取信号_TEXT_DISPLAY3                                         38
 
 #define  _TXT_DIS__流程设置-读取信号_TEXT_DISPLAY5                                     3
 
 //画面流程设置-读取信号中文本显示Text_Display5的背景图片
-#define  _IMG_流程设置-读取信号_TEXT_DISPLAY5                                         36
+#define  _IMG_流程设置-读取信号_TEXT_DISPLAY5                                         38
 
 #define  _TXT_DIS__流程设置-读取信号_TEXT_DISPLAY6                                     4
 
 //画面流程设置-读取信号中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-读取信号_TEXT_DISPLAY6                                         36
+#define  _IMG_流程设置-读取信号_TEXT_DISPLAY6                                         38
 
 //画面流程设置-读取信号中按钮Button2按下时的图片
 #define  _IMG_流程设置-读取信号_BUTTON2_DOWN                                          40
@@ -4854,12 +4948,14 @@
 #define  _TXT_DIS__流程设置-读取信号_TEXT_DISPLAY1                                     5
 
 //画面流程设置-读取信号中文本显示Text_Display1的背景图片
-#define  _IMG_流程设置-读取信号_TEXT_DISPLAY1                                         36
+#define  _IMG_流程设置-读取信号_TEXT_DISPLAY1                                         38
+
+#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY3                                      12
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY17                                      7
 
 //画面流程设置-计算中图片Image13使用的图片
-#define  _IMG_流程设置-计算_IMAGE13                                                 36
+#define  _IMG_流程设置-计算_IMAGE13                                                 38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY16                                      6
 
@@ -4882,7 +4978,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY2                                       4
 
 //画面流程设置-计算中文本显示Text_Display2的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY2                                           36
+#define  _IMG_流程设置-计算_TEXT_DISPLAY2                                           38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY7                                       5
 
@@ -4892,7 +4988,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY13                                      8
 
 //画面流程设置-计算中文本显示Text_Display13的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY13                                          36
+#define  _IMG_流程设置-计算_TEXT_DISPLAY13                                          38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY14                                      9
 
@@ -4927,29 +5023,19 @@
 #define  _IMG_流程设置-计算_IMAGE1                                                  35
 
 //画面流程设置-计算中按钮Button7弹起时的图片
-#define  _IMG_流程设置-计算_BUTTON7_UP                                              36
+#define  _IMG_流程设置-计算_BUTTON7_UP                                              38
 
 //画面流程设置-计算中按钮Button7按下时的图片
-#define  _IMG_流程设置-计算_BUTTON7_DOWN                                            36
+#define  _IMG_流程设置-计算_BUTTON7_DOWN                                            38
 
 #define  _BTN_流程设置-计算_BUTTON7                                                120
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY1                                      10
 
-//画面流程设置-计算中按钮Button8弹起时的图片
-#define  _IMG_流程设置-计算_BUTTON8_UP                                              36
-
-//画面流程设置-计算中按钮Button8按下时的图片
-#define  _IMG_流程设置-计算_BUTTON8_DOWN                                            36
-
-#define  _BTN_流程设置-计算_BUTTON8                                                129
-
-#define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY3                                      12
-
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY15                                     13
 
 //画面流程设置-计算中文本显示Text_Display15的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY15                                          36
+#define  _IMG_流程设置-计算_TEXT_DISPLAY15                                          38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY4                                      11
 
@@ -4969,7 +5055,7 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY6                                      14
 
 //画面流程设置-计算中文本显示Text_Display6的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY6                                           36
+#define  _IMG_流程设置-计算_TEXT_DISPLAY6                                           38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY8                                      16
 
@@ -4981,17 +5067,15 @@
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY9                                      17
 
 //画面流程设置-计算中文本显示Text_Display9的背景图片
-#define  _IMG_流程设置-计算_TEXT_DISPLAY9                                           36
+#define  _IMG_流程设置-计算_TEXT_DISPLAY9                                           38
 
 #define  _TXT_DIS__流程设置-计算_TEXT_DISPLAY10                                     18
 
 //画面流程设置-计算中文本显示Text_Display10的背景图片
 #define  _IMG_流程设置-计算_TEXT_DISPLAY10                                          41
 
-#define  _MENU_流程设置-计算_MENU1                                                 128
-
 //画面流程设置-阀操作中图片Image14使用的图片
-#define  _IMG_流程设置-阀操作_IMAGE14                                                37
+#define  _IMG_流程设置-阀操作_IMAGE14                                                36
 
 #define  _TXT_DIS__流程设置-阀操作_TEXT_DISPLAY17                                    19
 
@@ -5004,7 +5088,7 @@
 #define  _BTN_流程设置-阀操作_BUTTON51                                                1
 
 //画面流程设置-阀操作中图片Image2使用的图片
-#define  _IMG_流程设置-阀操作_IMAGE2                                                 36
+#define  _IMG_流程设置-阀操作_IMAGE2                                                 38
 
 #define  _TXT_DIS__流程设置-阀操作_TEXT_DISPLAY1                                     20
 
@@ -5153,7 +5237,7 @@
 #define  _BTN_流程设置-阀操作_BUTTON27                                               18
 
 //画面流程设置-阀操作中图片Image1使用的图片
-#define  _IMG_流程设置-阀操作_IMAGE1                                                 36
+#define  _IMG_流程设置-阀操作_IMAGE1                                                 38
 
 #define  _TXT_DIS__流程设置-阀操作_TEXT_DISPLAY2                                     21
 
@@ -5166,10 +5250,10 @@
 #define  _BTN_流程设置-阀操作_BUTTON2                                                 2
 
 //画面流程设置-阀操作中按钮Button5弹起时的图片
-#define  _IMG_流程设置-阀操作_BUTTON5_UP                                             37
+#define  _IMG_流程设置-阀操作_BUTTON5_UP                                             36
 
 //画面流程设置-阀操作中按钮Button5按下时的图片
-#define  _IMG_流程设置-阀操作_BUTTON5_DOWN                                           37
+#define  _IMG_流程设置-阀操作_BUTTON5_DOWN                                           36
 
 #define  _BTN_流程设置-阀操作_BUTTON5                                               112
 
@@ -5196,7 +5280,7 @@
 #define  _TXT_DIS__流程设置-等待时间_TEXT_DISPLAY2                                     1
 
 //画面流程设置-等待时间中文本显示Text_Display2的背景图片
-#define  _IMG_流程设置-等待时间_TEXT_DISPLAY2                                         36
+#define  _IMG_流程设置-等待时间_TEXT_DISPLAY2                                         38
 
 //画面流程设置-线性核查设置中按钮Button3弹起时的图片
 #define  _IMG_流程设置-线性核查设置_BUTTON3_UP                                          14
@@ -5253,6 +5337,146 @@
 #define  _IMG_流程设置-线性核查设置_BUTTON41_DOWN                                       19
 
 #define  _BTN_流程设置-线性核查设置_BUTTON41                                             5
+
+//画面流程设置-线性核查设置中按钮Button2弹起时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON2_UP                                          18
+
+//画面流程设置-线性核查设置中按钮Button2按下时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON2_DOWN                                        19
+
+#define  _BTN_流程设置-线性核查设置_BUTTON2                                              6
+
+//画面流程设置-线性核查设置中按钮Button4弹起时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON4_UP                                          18
+
+//画面流程设置-线性核查设置中按钮Button4按下时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON4_DOWN                                        19
+
+#define  _BTN_流程设置-线性核查设置_BUTTON4                                              7
+
+//画面流程设置-线性核查设置中按钮Button5弹起时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON5_UP                                          18
+
+//画面流程设置-线性核查设置中按钮Button5按下时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON5_DOWN                                        19
+
+#define  _BTN_流程设置-线性核查设置_BUTTON5                                              8
+
+//画面流程设置-线性核查设置中按钮Button6弹起时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON6_UP                                          18
+
+//画面流程设置-线性核查设置中按钮Button6按下时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON6_DOWN                                        19
+
+#define  _BTN_流程设置-线性核查设置_BUTTON6                                              9
+
+//画面流程设置-线性核查设置中按钮Button7弹起时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON7_UP                                          18
+
+//画面流程设置-线性核查设置中按钮Button7按下时的图片
+#define  _IMG_流程设置-线性核查设置_BUTTON7_DOWN                                        19
+
+#define  _BTN_流程设置-线性核查设置_BUTTON7                                             10
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY1                                  11
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY2                                  12
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY3                                  13
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY4                                  14
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY5                                  15
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY6                                  16
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY7                                  17
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY8                                  18
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY9                                  19
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY10                                 20
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY11                                 21
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY12                                 22
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY13                                 23
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY14                                 24
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY15                                 25
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY16                                 26
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY17                                 27
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY18                                 28
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY19                                 29
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY20                                 30
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY21                                 31
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY22                                 32
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY23                                 33
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY24                                 34
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY25                                 35
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY26                                 36
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY27                                 37
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY28                                 38
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY29                                 39
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY30                                 40
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY31                                 41
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY32                                 42
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY33                                 43
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY34                                 44
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY35                                 45
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY36                                 46
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY37                                 47
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY38                                 48
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY39                                 49
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY40                                 50
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY41                                 51
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY42                                 52
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY43                                 53
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY44                                 54
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY45                                 55
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY46                                 56
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY47                                 57
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY48                                 58
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY49                                 59
+
+#define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY50                                 60
 
 //画面流程类型选择中按钮Button3弹起时的图片
 #define  _IMG_流程类型选择_BUTTON3_UP                                               14
@@ -5646,83 +5870,77 @@
 
 #define  _TXT_DIS__流程名称选择_TEXT_DISPLAY25                                      26
 
-//画面动作选择中按钮Button8弹起时的图片
-#define  _IMG_动作选择_BUTTON8_UP                                                 45
-
-//画面动作选择中按钮Button8按下时的图片
-#define  _IMG_动作选择_BUTTON8_DOWN                                               46
-
 #define  _BTN_动作选择_BUTTON8                                                     2
 
 //画面动作选择中按钮Button10弹起时的图片
-#define  _IMG_动作选择_BUTTON10_UP                                                45
+#define  _IMG_动作选择_BUTTON10_UP                                                47
 
 //画面动作选择中按钮Button10按下时的图片
-#define  _IMG_动作选择_BUTTON10_DOWN                                              46
+#define  _IMG_动作选择_BUTTON10_DOWN                                              48
 
 #define  _BTN_动作选择_BUTTON10                                                    5
 
 //画面动作选择中按钮Button11弹起时的图片
-#define  _IMG_动作选择_BUTTON11_UP                                                45
+#define  _IMG_动作选择_BUTTON11_UP                                                47
 
 //画面动作选择中按钮Button11按下时的图片
-#define  _IMG_动作选择_BUTTON11_DOWN                                              46
+#define  _IMG_动作选择_BUTTON11_DOWN                                              48
 
 #define  _BTN_动作选择_BUTTON11                                                    6
 
 //画面动作选择中按钮Button9弹起时的图片
-#define  _IMG_动作选择_BUTTON9_UP                                                 45
+#define  _IMG_动作选择_BUTTON9_UP                                                 47
 
 //画面动作选择中按钮Button9按下时的图片
-#define  _IMG_动作选择_BUTTON9_DOWN                                               46
+#define  _IMG_动作选择_BUTTON9_DOWN                                               48
 
 #define  _BTN_动作选择_BUTTON9                                                     3
 
 //画面动作选择中按钮Button7弹起时的图片
-#define  _IMG_动作选择_BUTTON7_UP                                                 45
+#define  _IMG_动作选择_BUTTON7_UP                                                 47
 
 //画面动作选择中按钮Button7按下时的图片
-#define  _IMG_动作选择_BUTTON7_DOWN                                               46
+#define  _IMG_动作选择_BUTTON7_DOWN                                               48
 
 #define  _BTN_动作选择_BUTTON7                                                     4
 
 //画面动作选择中按钮Button12弹起时的图片
-#define  _IMG_动作选择_BUTTON12_UP                                                45
+#define  _IMG_动作选择_BUTTON12_UP                                                47
 
 //画面动作选择中按钮Button12按下时的图片
-#define  _IMG_动作选择_BUTTON12_DOWN                                              46
+#define  _IMG_动作选择_BUTTON12_DOWN                                              48
 
 #define  _BTN_动作选择_BUTTON12                                                    7
 
 //画面动作选择中按钮Button1弹起时的图片
-#define  _IMG_动作选择_BUTTON1_UP                                                 45
+#define  _IMG_动作选择_BUTTON1_UP                                                 47
 
 //画面动作选择中按钮Button1按下时的图片
-#define  _IMG_动作选择_BUTTON1_DOWN                                               46
+#define  _IMG_动作选择_BUTTON1_DOWN                                               48
 
 #define  _BTN_动作选择_BUTTON1                                                     8
 
 //画面动作选择中按钮Button2弹起时的图片
-#define  _IMG_动作选择_BUTTON2_UP                                                 45
+#define  _IMG_动作选择_BUTTON2_UP                                                 47
 
 //画面动作选择中按钮Button2按下时的图片
-#define  _IMG_动作选择_BUTTON2_DOWN                                               46
+#define  _IMG_动作选择_BUTTON2_DOWN                                               48
 
-#define  _BTN_动作选择_BUTTON2                                                    10
+#define  _BTN_动作选择_BUTTON2                                                    11
 
 //画面动作选择中按钮Button4弹起时的图片
-#define  _IMG_动作选择_BUTTON4_UP                                                 45
+#define  _IMG_动作选择_BUTTON4_UP                                                 47
 
 //画面动作选择中按钮Button4按下时的图片
-#define  _IMG_动作选择_BUTTON4_DOWN                                               46
+#define  _IMG_动作选择_BUTTON4_DOWN                                               48
 
 #define  _BTN_动作选择_BUTTON4                                                     1
 
 //画面动作选择中按钮Button13弹起时的图片
-#define  _IMG_动作选择_BUTTON13_UP                                                45
+#define  _IMG_动作选择_BUTTON13_UP                                                47
 
 //画面动作选择中按钮Button13按下时的图片
-#define  _IMG_动作选择_BUTTON13_DOWN                                              46
+#define  _IMG_动作选择_BUTTON13_DOWN                                              48
 
 #define  _BTN_动作选择_BUTTON13                                                    9
 
@@ -5742,6 +5960,14 @@
 
 #define  _BTN_动作选择_BUTTON14                                                   98
 
+//画面动作选择中按钮Button5弹起时的图片
+#define  _IMG_动作选择_BUTTON5_UP                                                 47
+
+//画面动作选择中按钮Button5按下时的图片
+#define  _IMG_动作选择_BUTTON5_DOWN                                               48
+
+#define  _BTN_动作选择_BUTTON5                                                    10
+
 //画面量程设置中图片Image1使用的图片
 #define  _IMG_量程设置_IMAGE1                                                      1
 
@@ -5758,104 +5984,104 @@
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY3                                          5
 
 //画面量程设置中文本显示Text_Display3的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY3                                              47
+#define  _IMG_量程设置_TEXT_DISPLAY3                                              49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY6                                          6
 
 //画面量程设置中文本显示Text_Display6的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY6                                              47
+#define  _IMG_量程设置_TEXT_DISPLAY6                                              49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY15                                         1
 
 //画面量程设置中文本显示Text_Display15的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY15                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY15                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY16                                         2
 
 //画面量程设置中文本显示Text_Display16的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY16                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY16                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY29                                       300
 
 //画面量程设置中按钮Button9按下时的图片
-#define  _IMG_量程设置_BUTTON9_DOWN                                               49
+#define  _IMG_量程设置_BUTTON9_DOWN                                               51
 
 #define  _BTN_量程设置_BUTTON9                                                   250
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY4                                          9
 
 //画面量程设置中文本显示Text_Display4的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY4                                              47
+#define  _IMG_量程设置_TEXT_DISPLAY4                                              49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY5                                         10
 
 //画面量程设置中文本显示Text_Display5的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY5                                              48
+#define  _IMG_量程设置_TEXT_DISPLAY5                                              50
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY11                                        11
 
 //画面量程设置中文本显示Text_Display11的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY11                                             47
+#define  _IMG_量程设置_TEXT_DISPLAY11                                             49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY12                                        12
 
 //画面量程设置中文本显示Text_Display12的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY12                                             47
+#define  _IMG_量程设置_TEXT_DISPLAY12                                             49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY17                                         7
 
 //画面量程设置中文本显示Text_Display17的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY17                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY17                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY18                                         8
 
 //画面量程设置中文本显示Text_Display18的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY18                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY18                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY32                                       301
 
 //画面量程设置中按钮Button10弹起时的图片
-#define  _IMG_量程设置_BUTTON10_UP                                                49
+#define  _IMG_量程设置_BUTTON10_UP                                                51
 
 //画面量程设置中按钮Button10按下时的图片
-#define  _IMG_量程设置_BUTTON10_DOWN                                              49
+#define  _IMG_量程设置_BUTTON10_DOWN                                              51
 
 #define  _BTN_量程设置_BUTTON10                                                  264
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY19                                        15
 
 //画面量程设置中文本显示Text_Display19的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY19                                             47
+#define  _IMG_量程设置_TEXT_DISPLAY19                                             49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY20                                        16
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY23                                        17
 
 //画面量程设置中文本显示Text_Display23的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY23                                             47
+#define  _IMG_量程设置_TEXT_DISPLAY23                                             49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY24                                        18
 
 //画面量程设置中文本显示Text_Display24的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY24                                             47
+#define  _IMG_量程设置_TEXT_DISPLAY24                                             49
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY27                                        13
 
 //画面量程设置中文本显示Text_Display27的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY27                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY27                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY28                                        14
 
 //画面量程设置中文本显示Text_Display28的背景图片
-#define  _IMG_量程设置_TEXT_DISPLAY28                                             36
+#define  _IMG_量程设置_TEXT_DISPLAY28                                             38
 
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY34                                       302
 
 //画面量程设置中按钮Button11弹起时的图片
-#define  _IMG_量程设置_BUTTON11_UP                                                49
+#define  _IMG_量程设置_BUTTON11_UP                                                51
 
 //画面量程设置中按钮Button11按下时的图片
-#define  _IMG_量程设置_BUTTON11_DOWN                                              49
+#define  _IMG_量程设置_BUTTON11_DOWN                                              51
 
 #define  _BTN_量程设置_BUTTON11                                                  280
 
@@ -5868,7 +6094,7 @@
 #define  _BTN_量程设置_BUTTON42                                                   50
 
 //画面量程设置中按钮Button61按下时的图片
-#define  _IMG_量程设置_BUTTON61_DOWN                                              51
+#define  _IMG_量程设置_BUTTON61_DOWN                                              53
 
 #define  _BTN_量程设置_BUTTON61                                                  297
 
@@ -5987,42 +6213,42 @@
 #define  _BTN_量程选择_BUTTON8                                                     1
 
 //画面量程选择中按钮Button9弹起时的图片
-#define  _IMG_量程选择_BUTTON9_UP                                                 52
+#define  _IMG_量程选择_BUTTON9_UP                                                 54
 
 //画面量程选择中按钮Button9按下时的图片
-#define  _IMG_量程选择_BUTTON9_DOWN                                               53
+#define  _IMG_量程选择_BUTTON9_DOWN                                               55
 
 #define  _BTN_量程选择_BUTTON9                                                     2
 
 //画面量程选择中按钮Button7弹起时的图片
-#define  _IMG_量程选择_BUTTON7_UP                                                 52
+#define  _IMG_量程选择_BUTTON7_UP                                                 54
 
 //画面量程选择中按钮Button7按下时的图片
-#define  _IMG_量程选择_BUTTON7_DOWN                                               53
+#define  _IMG_量程选择_BUTTON7_DOWN                                               55
 
 #define  _BTN_量程选择_BUTTON7                                                     3
 
 //画面量程选择中按钮Button1弹起时的图片
-#define  _IMG_量程选择_BUTTON1_UP                                                 49
+#define  _IMG_量程选择_BUTTON1_UP                                                 51
 
 //画面量程选择中按钮Button1按下时的图片
-#define  _IMG_量程选择_BUTTON1_DOWN                                               49
+#define  _IMG_量程选择_BUTTON1_DOWN                                               51
 
 #define  _BTN_量程选择_BUTTON1                                                   101
 
 //画面量程选择中按钮Button10弹起时的图片
-#define  _IMG_量程选择_BUTTON10_UP                                                49
+#define  _IMG_量程选择_BUTTON10_UP                                                51
 
 //画面量程选择中按钮Button10按下时的图片
-#define  _IMG_量程选择_BUTTON10_DOWN                                              49
+#define  _IMG_量程选择_BUTTON10_DOWN                                              51
 
 #define  _BTN_量程选择_BUTTON10                                                  102
 
 //画面量程选择中按钮Button11弹起时的图片
-#define  _IMG_量程选择_BUTTON11_UP                                                49
+#define  _IMG_量程选择_BUTTON11_UP                                                51
 
 //画面量程选择中按钮Button11按下时的图片
-#define  _IMG_量程选择_BUTTON11_DOWN                                              49
+#define  _IMG_量程选择_BUTTON11_DOWN                                              51
 
 #define  _BTN_量程选择_BUTTON11                                                  103
 
@@ -6067,18 +6293,18 @@
 #define  _TXT_DIS__手动操作1_TEXT_DISPLAY3                                        74
 
 //画面手动操作1中按钮Button30弹起时的图片
-#define  _IMG_手动操作1_BUTTON30_UP                                               54
+#define  _IMG_手动操作1_BUTTON30_UP                                               56
 
 //画面手动操作1中按钮Button30按下时的图片
-#define  _IMG_手动操作1_BUTTON30_DOWN                                             55
+#define  _IMG_手动操作1_BUTTON30_DOWN                                             57
 
 #define  _BTN_手动操作1_BUTTON30                                                  76
 
 //画面手动操作1中按钮Button31弹起时的图片
-#define  _IMG_手动操作1_BUTTON31_UP                                               56
+#define  _IMG_手动操作1_BUTTON31_UP                                               58
 
 //画面手动操作1中按钮Button31按下时的图片
-#define  _IMG_手动操作1_BUTTON31_DOWN                                             57
+#define  _IMG_手动操作1_BUTTON31_DOWN                                             59
 
 #define  _BTN_手动操作1_BUTTON31                                                  77
 
@@ -6101,18 +6327,18 @@
 #define  _TXT_DIS__手动操作1_TEXT_DISPLAY5                                        84
 
 //画面手动操作1中按钮Button33弹起时的图片
-#define  _IMG_手动操作1_BUTTON33_UP                                               54
+#define  _IMG_手动操作1_BUTTON33_UP                                               56
 
 //画面手动操作1中按钮Button33按下时的图片
-#define  _IMG_手动操作1_BUTTON33_DOWN                                             55
+#define  _IMG_手动操作1_BUTTON33_DOWN                                             57
 
 #define  _BTN_手动操作1_BUTTON33                                                  86
 
 //画面手动操作1中按钮Button34弹起时的图片
-#define  _IMG_手动操作1_BUTTON34_UP                                               56
+#define  _IMG_手动操作1_BUTTON34_UP                                               58
 
 //画面手动操作1中按钮Button34按下时的图片
-#define  _IMG_手动操作1_BUTTON34_DOWN                                             57
+#define  _IMG_手动操作1_BUTTON34_DOWN                                             59
 
 #define  _BTN_手动操作1_BUTTON34                                                  87
 
@@ -6163,20 +6389,20 @@
 #define  _BTN_手动操作1_BUTTON46                                                 131
 
 //画面手动操作1中按钮Button42按下时的图片
-#define  _IMG_手动操作1_BUTTON42_DOWN                                             59
+#define  _IMG_手动操作1_BUTTON42_DOWN                                             61
 
 #define  _BTN_手动操作1_BUTTON42                                                 116
 
 //画面手动操作1中按钮Button43按下时的图片
-#define  _IMG_手动操作1_BUTTON43_DOWN                                             60
+#define  _IMG_手动操作1_BUTTON43_DOWN                                             62
 
 #define  _BTN_手动操作1_BUTTON43                                                 119
 
 //画面手动操作1中按钮Button44弹起时的图片
-#define  _IMG_手动操作1_BUTTON44_UP                                               60
+#define  _IMG_手动操作1_BUTTON44_UP                                               62
 
 //画面手动操作1中按钮Button44按下时的图片
-#define  _IMG_手动操作1_BUTTON44_DOWN                                             59
+#define  _IMG_手动操作1_BUTTON44_DOWN                                             61
 
 #define  _BTN_手动操作1_BUTTON44                                                 122
 
@@ -6201,90 +6427,90 @@
 #define  _BTN_手动操作1_BUTTON51                                                  19
 
 //画面手动操作1中按钮Button52弹起时的图片
-#define  _IMG_手动操作1_BUTTON52_UP                                               63
+#define  _IMG_手动操作1_BUTTON52_UP                                               65
 
 //画面手动操作1中按钮Button52按下时的图片
-#define  _IMG_手动操作1_BUTTON52_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON52_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON52                                                  20
 
 //画面手动操作1中按钮Button53弹起时的图片
-#define  _IMG_手动操作1_BUTTON53_UP                                               63
+#define  _IMG_手动操作1_BUTTON53_UP                                               65
 
 //画面手动操作1中按钮Button53按下时的图片
-#define  _IMG_手动操作1_BUTTON53_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON53_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON53                                                  21
 
 //画面手动操作1中按钮Button54弹起时的图片
-#define  _IMG_手动操作1_BUTTON54_UP                                               63
+#define  _IMG_手动操作1_BUTTON54_UP                                               65
 
 //画面手动操作1中按钮Button54按下时的图片
-#define  _IMG_手动操作1_BUTTON54_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON54_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON54                                                  22
 
 //画面手动操作1中按钮Button55弹起时的图片
-#define  _IMG_手动操作1_BUTTON55_UP                                               63
+#define  _IMG_手动操作1_BUTTON55_UP                                               65
 
 //画面手动操作1中按钮Button55按下时的图片
-#define  _IMG_手动操作1_BUTTON55_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON55_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON55                                                  23
 
 //画面手动操作1中按钮Button56弹起时的图片
-#define  _IMG_手动操作1_BUTTON56_UP                                               63
+#define  _IMG_手动操作1_BUTTON56_UP                                               65
 
 //画面手动操作1中按钮Button56按下时的图片
-#define  _IMG_手动操作1_BUTTON56_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON56_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON56                                                  24
 
 //画面手动操作1中按钮Button19弹起时的图片
-#define  _IMG_手动操作1_BUTTON19_UP                                               63
+#define  _IMG_手动操作1_BUTTON19_UP                                               65
 
 //画面手动操作1中按钮Button19按下时的图片
-#define  _IMG_手动操作1_BUTTON19_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON19_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON19                                                  35
 
 //画面手动操作1中按钮Button20弹起时的图片
-#define  _IMG_手动操作1_BUTTON20_UP                                               63
+#define  _IMG_手动操作1_BUTTON20_UP                                               65
 
 //画面手动操作1中按钮Button20按下时的图片
-#define  _IMG_手动操作1_BUTTON20_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON20_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON20                                                  36
 
 //画面手动操作1中按钮Button21弹起时的图片
-#define  _IMG_手动操作1_BUTTON21_UP                                               63
+#define  _IMG_手动操作1_BUTTON21_UP                                               65
 
 //画面手动操作1中按钮Button21按下时的图片
-#define  _IMG_手动操作1_BUTTON21_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON21_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON21                                                  37
 
 //画面手动操作1中按钮Button22弹起时的图片
-#define  _IMG_手动操作1_BUTTON22_UP                                               63
+#define  _IMG_手动操作1_BUTTON22_UP                                               65
 
 //画面手动操作1中按钮Button22按下时的图片
-#define  _IMG_手动操作1_BUTTON22_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON22_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON22                                                  38
 
 //画面手动操作1中按钮Button26弹起时的图片
-#define  _IMG_手动操作1_BUTTON26_UP                                               63
+#define  _IMG_手动操作1_BUTTON26_UP                                               65
 
 //画面手动操作1中按钮Button26按下时的图片
-#define  _IMG_手动操作1_BUTTON26_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON26_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON26                                                  39
 
 //画面手动操作1中按钮Button27弹起时的图片
-#define  _IMG_手动操作1_BUTTON27_UP                                               63
+#define  _IMG_手动操作1_BUTTON27_UP                                               65
 
 //画面手动操作1中按钮Button27按下时的图片
-#define  _IMG_手动操作1_BUTTON27_DOWN                                             64
+#define  _IMG_手动操作1_BUTTON27_DOWN                                             66
 
 #define  _BTN_手动操作1_BUTTON27                                                  40
 
@@ -6368,43 +6594,43 @@
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY2                                        42
 
 //画面手动操作2中图片Image5使用的图片
-#define  _IMG_手动操作2_IMAGE5                                                    65
+#define  _IMG_手动操作2_IMAGE5                                                    67
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY5                                        65
 
 //画面手动操作2中图片Image7使用的图片
-#define  _IMG_手动操作2_IMAGE7                                                    65
+#define  _IMG_手动操作2_IMAGE7                                                    67
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY6                                        70
 
 #define  _BTN_手动操作2_BUTTON10                                                  74
 
 //画面手动操作2中按钮Button40弹起时的图片
-#define  _IMG_手动操作2_BUTTON40_UP                                               66
+#define  _IMG_手动操作2_BUTTON40_UP                                               68
 
 //画面手动操作2中按钮Button40按下时的图片
-#define  _IMG_手动操作2_BUTTON40_DOWN                                             67
+#define  _IMG_手动操作2_BUTTON40_DOWN                                             69
 
 #define  _BTN_手动操作2_BUTTON40                                                 109
 
 //画面手动操作2中按钮Button11弹起时的图片
-#define  _IMG_手动操作2_BUTTON11_UP                                               66
+#define  _IMG_手动操作2_BUTTON11_UP                                               68
 
 //画面手动操作2中按钮Button11按下时的图片
-#define  _IMG_手动操作2_BUTTON11_DOWN                                             67
+#define  _IMG_手动操作2_BUTTON11_DOWN                                             69
 
 #define  _BTN_手动操作2_BUTTON11                                                  76
 
 //画面手动操作2中图片Image8使用的图片
-#define  _IMG_手动操作2_IMAGE8                                                    65
+#define  _IMG_手动操作2_IMAGE8                                                    67
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY11                                       53
 
 //画面手动操作2中按钮Button13弹起时的图片
-#define  _IMG_手动操作2_BUTTON13_UP                                               66
+#define  _IMG_手动操作2_BUTTON13_UP                                               68
 
 //画面手动操作2中按钮Button13按下时的图片
-#define  _IMG_手动操作2_BUTTON13_DOWN                                             67
+#define  _IMG_手动操作2_BUTTON13_DOWN                                             69
 
 #define  _BTN_手动操作2_BUTTON13                                                  55
 
@@ -6415,47 +6641,47 @@
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY88                                      900
 
 //画面手动操作2中按钮Button42弹起时的图片
-#define  _IMG_手动操作2_BUTTON42_UP                                               60
+#define  _IMG_手动操作2_BUTTON42_UP                                               62
 
 //画面手动操作2中按钮Button42按下时的图片
-#define  _IMG_手动操作2_BUTTON42_DOWN                                             60
+#define  _IMG_手动操作2_BUTTON42_DOWN                                             62
 
 #define  _BTN_手动操作2_BUTTON42                                                 116
 
 //画面手动操作2中按钮Button43弹起时的图片
-#define  _IMG_手动操作2_BUTTON43_UP                                               59
+#define  _IMG_手动操作2_BUTTON43_UP                                               61
 
 //画面手动操作2中按钮Button43按下时的图片
-#define  _IMG_手动操作2_BUTTON43_DOWN                                             59
+#define  _IMG_手动操作2_BUTTON43_DOWN                                             61
 
 #define  _BTN_手动操作2_BUTTON43                                                 119
 
 //画面手动操作2中按钮Button44弹起时的图片
-#define  _IMG_手动操作2_BUTTON44_UP                                               60
+#define  _IMG_手动操作2_BUTTON44_UP                                               62
 
 //画面手动操作2中按钮Button44按下时的图片
-#define  _IMG_手动操作2_BUTTON44_DOWN                                             59
+#define  _IMG_手动操作2_BUTTON44_DOWN                                             61
 
 #define  _BTN_手动操作2_BUTTON44                                                 122
 
 //画面手动操作2中按钮Button35弹起时的图片
-#define  _IMG_手动操作2_BUTTON35_UP                                               61
+#define  _IMG_手动操作2_BUTTON35_UP                                               63
 
 //画面手动操作2中按钮Button35按下时的图片
-#define  _IMG_手动操作2_BUTTON35_DOWN                                             62
+#define  _IMG_手动操作2_BUTTON35_DOWN                                             64
 
 #define  _BTN_手动操作2_BUTTON35                                                  15
 
 //画面手动操作2中图片Image2使用的图片
-#define  _IMG_手动操作2_IMAGE2                                                    65
+#define  _IMG_手动操作2_IMAGE2                                                    67
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY1                                        11
 
 //画面手动操作2中按钮Button9弹起时的图片
-#define  _IMG_手动操作2_BUTTON9_UP                                                66
+#define  _IMG_手动操作2_BUTTON9_UP                                                68
 
 //画面手动操作2中按钮Button9按下时的图片
-#define  _IMG_手动操作2_BUTTON9_DOWN                                              67
+#define  _IMG_手动操作2_BUTTON9_DOWN                                              69
 
 #define  _BTN_手动操作2_BUTTON9                                                   13
 
@@ -6543,76 +6769,76 @@
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY88                                      900
 
 //画面手动操作3中按钮Button42弹起时的图片
-#define  _IMG_手动操作3_BUTTON42_UP                                               60
+#define  _IMG_手动操作3_BUTTON42_UP                                               62
 
 //画面手动操作3中按钮Button42按下时的图片
-#define  _IMG_手动操作3_BUTTON42_DOWN                                             60
+#define  _IMG_手动操作3_BUTTON42_DOWN                                             62
 
 #define  _BTN_手动操作3_BUTTON42                                                 116
 
 //画面手动操作3中按钮Button43弹起时的图片
-#define  _IMG_手动操作3_BUTTON43_UP                                               60
+#define  _IMG_手动操作3_BUTTON43_UP                                               62
 
 //画面手动操作3中按钮Button43按下时的图片
-#define  _IMG_手动操作3_BUTTON43_DOWN                                             60
+#define  _IMG_手动操作3_BUTTON43_DOWN                                             62
 
 #define  _BTN_手动操作3_BUTTON43                                                 119
 
 //画面手动操作3中按钮Button44弹起时的图片
-#define  _IMG_手动操作3_BUTTON44_UP                                               59
+#define  _IMG_手动操作3_BUTTON44_UP                                               61
 
 //画面手动操作3中按钮Button44按下时的图片
-#define  _IMG_手动操作3_BUTTON44_DOWN                                             59
+#define  _IMG_手动操作3_BUTTON44_DOWN                                             61
 
 #define  _BTN_手动操作3_BUTTON44                                                 122
 
 //画面手动操作3中按钮Button35弹起时的图片
-#define  _IMG_手动操作3_BUTTON35_UP                                               61
+#define  _IMG_手动操作3_BUTTON35_UP                                               63
 
 //画面手动操作3中按钮Button35按下时的图片
-#define  _IMG_手动操作3_BUTTON35_DOWN                                             62
+#define  _IMG_手动操作3_BUTTON35_DOWN                                             64
 
 #define  _BTN_手动操作3_BUTTON35                                                 102
 
 #define  _BTN_手动操作3_BUTTON10                                                   1
 
 //画面手动操作3中按钮Button17弹起时的图片
-#define  _IMG_手动操作3_BUTTON17_UP                                               68
+#define  _IMG_手动操作3_BUTTON17_UP                                               70
 
 //画面手动操作3中按钮Button17按下时的图片
-#define  _IMG_手动操作3_BUTTON17_DOWN                                             69
+#define  _IMG_手动操作3_BUTTON17_DOWN                                             71
 
 #define  _BTN_手动操作3_BUTTON17                                                   2
 
 //画面手动操作3中按钮Button18弹起时的图片
-#define  _IMG_手动操作3_BUTTON18_UP                                               68
+#define  _IMG_手动操作3_BUTTON18_UP                                               70
 
 //画面手动操作3中按钮Button18按下时的图片
-#define  _IMG_手动操作3_BUTTON18_DOWN                                             69
+#define  _IMG_手动操作3_BUTTON18_DOWN                                             71
 
 #define  _BTN_手动操作3_BUTTON18                                                   3
 
 //画面手动操作3中按钮Button19弹起时的图片
-#define  _IMG_手动操作3_BUTTON19_UP                                               68
+#define  _IMG_手动操作3_BUTTON19_UP                                               70
 
 //画面手动操作3中按钮Button19按下时的图片
-#define  _IMG_手动操作3_BUTTON19_DOWN                                             69
+#define  _IMG_手动操作3_BUTTON19_DOWN                                             71
 
 #define  _BTN_手动操作3_BUTTON19                                                   4
 
 //画面手动操作3中按钮Button20弹起时的图片
-#define  _IMG_手动操作3_BUTTON20_UP                                               68
+#define  _IMG_手动操作3_BUTTON20_UP                                               70
 
 //画面手动操作3中按钮Button20按下时的图片
-#define  _IMG_手动操作3_BUTTON20_DOWN                                             69
+#define  _IMG_手动操作3_BUTTON20_DOWN                                             71
 
 #define  _BTN_手动操作3_BUTTON20                                                   5
 
 //画面手动操作3中按钮Button21弹起时的图片
-#define  _IMG_手动操作3_BUTTON21_UP                                               68
+#define  _IMG_手动操作3_BUTTON21_UP                                               70
 
 //画面手动操作3中按钮Button21按下时的图片
-#define  _IMG_手动操作3_BUTTON21_DOWN                                             69
+#define  _IMG_手动操作3_BUTTON21_DOWN                                             71
 
 #define  _BTN_手动操作3_BUTTON21                                                   6
 
@@ -6681,27 +6907,27 @@
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY11                                       13
 
 //画面手动操作3中文本显示Text_Display11的背景图片
-#define  _IMG_手动操作3_TEXT_DISPLAY11                                            70
+#define  _IMG_手动操作3_TEXT_DISPLAY11                                            72
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY15                                       17
 
 //画面手动操作3中文本显示Text_Display15的背景图片
-#define  _IMG_手动操作3_TEXT_DISPLAY15                                            70
+#define  _IMG_手动操作3_TEXT_DISPLAY15                                            72
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY19                                       21
 
 //画面手动操作3中文本显示Text_Display19的背景图片
-#define  _IMG_手动操作3_TEXT_DISPLAY19                                            70
+#define  _IMG_手动操作3_TEXT_DISPLAY19                                            72
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY23                                       25
 
 //画面手动操作3中文本显示Text_Display23的背景图片
-#define  _IMG_手动操作3_TEXT_DISPLAY23                                            70
+#define  _IMG_手动操作3_TEXT_DISPLAY23                                            72
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY27                                       29
 
 //画面手动操作3中文本显示Text_Display27的背景图片
-#define  _IMG_手动操作3_TEXT_DISPLAY27                                            70
+#define  _IMG_手动操作3_TEXT_DISPLAY27                                            72
 
 #define  _TXT_DIS__手动操作3_TEXT_DISPLAY4                                        10
 
@@ -6827,34 +7053,34 @@
 #define  _TXT_DIS__手动操作4_TEXT_DISPLAY88                                      900
 
 //画面手动操作4中按钮Button42弹起时的图片
-#define  _IMG_手动操作4_BUTTON42_UP                                               60
+#define  _IMG_手动操作4_BUTTON42_UP                                               62
 
 //画面手动操作4中按钮Button42按下时的图片
-#define  _IMG_手动操作4_BUTTON42_DOWN                                             60
+#define  _IMG_手动操作4_BUTTON42_DOWN                                             62
 
 #define  _BTN_手动操作4_BUTTON42                                                 116
 
 //画面手动操作4中按钮Button43弹起时的图片
-#define  _IMG_手动操作4_BUTTON43_UP                                               60
+#define  _IMG_手动操作4_BUTTON43_UP                                               62
 
 //画面手动操作4中按钮Button43按下时的图片
-#define  _IMG_手动操作4_BUTTON43_DOWN                                             60
+#define  _IMG_手动操作4_BUTTON43_DOWN                                             62
 
 #define  _BTN_手动操作4_BUTTON43                                                 119
 
 //画面手动操作4中按钮Button44弹起时的图片
-#define  _IMG_手动操作4_BUTTON44_UP                                               60
+#define  _IMG_手动操作4_BUTTON44_UP                                               62
 
 //画面手动操作4中按钮Button44按下时的图片
-#define  _IMG_手动操作4_BUTTON44_DOWN                                             60
+#define  _IMG_手动操作4_BUTTON44_DOWN                                             62
 
 #define  _BTN_手动操作4_BUTTON44                                                 122
 
 //画面手动操作4中按钮Button35弹起时的图片
-#define  _IMG_手动操作4_BUTTON35_UP                                               62
+#define  _IMG_手动操作4_BUTTON35_UP                                               64
 
 //画面手动操作4中按钮Button35按下时的图片
-#define  _IMG_手动操作4_BUTTON35_DOWN                                             62
+#define  _IMG_手动操作4_BUTTON35_DOWN                                             64
 
 #define  _BTN_手动操作4_BUTTON35                                                  15
 
@@ -7216,82 +7442,82 @@
 #define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY89                                  905
 
 //画面历史记录-分析记录中按钮Button9按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON9_DOWN                                          71
+#define  _IMG_历史记录-分析记录_BUTTON9_DOWN                                          73
 
 #define  _BTN_历史记录-分析记录_BUTTON9                                               41
 
 //画面历史记录-分析记录中按钮Button10按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-分析记录_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-分析记录_BUTTON10                                              43
 
 //画面历史记录-分析记录中按钮Button11弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON11_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-分析记录_BUTTON11                                              44
 
 //画面历史记录-分析记录中按钮Button12弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON12_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON12_UP                                           74
 
 //画面历史记录-分析记录中按钮Button12按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-分析记录_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-分析记录_BUTTON12                                              45
 
 //画面历史记录-分析记录中按钮Button14弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON14_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON14_UP                                           74
 
 //画面历史记录-分析记录中按钮Button14按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-分析记录_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-分析记录_BUTTON14                                              42
 
 //画面历史记录-分析记录中按钮Button13弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON13_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON13_UP                                           74
 
 //画面历史记录-分析记录中按钮Button13按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-分析记录_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-分析记录_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY1                                     5
 
 //画面历史记录-分析记录中按钮Button15按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-分析记录_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-分析记录_BUTTON15                                             128
 
 //画面历史记录-分析记录中按钮Button28弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON28_UP                                           74
+#define  _IMG_历史记录-分析记录_BUTTON28_UP                                           76
 
 //画面历史记录-分析记录中按钮Button28按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-分析记录_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-分析记录_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY2                                     6
 
 //画面历史记录-分析记录中按钮Button16弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON16_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON16_UP                                           74
 
 //画面历史记录-分析记录中按钮Button16按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-分析记录_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-分析记录_BUTTON16                                               8
 
 //画面历史记录-分析记录中按钮Button17弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON17_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON17_UP                                           74
 
 //画面历史记录-分析记录中按钮Button17按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-分析记录_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-分析记录_BUTTON17                                               9
 
 //画面历史记录-分析记录中按钮Button21弹起时的图片
-#define  _IMG_历史记录-分析记录_BUTTON21_UP                                           72
+#define  _IMG_历史记录-分析记录_BUTTON21_UP                                           74
 
 //画面历史记录-分析记录中按钮Button21按下时的图片
-#define  _IMG_历史记录-分析记录_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-分析记录_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-分析记录_BUTTON21                                              14
 
@@ -7381,94 +7607,94 @@
 #define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY89                                  905
 
 //画面历史记录-核查记录中按钮Button9弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON9_UP                                            72
+#define  _IMG_历史记录-核查记录_BUTTON9_UP                                            74
 
 //画面历史记录-核查记录中按钮Button9按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-核查记录_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-核查记录_BUTTON9                                               41
 
 //画面历史记录-核查记录中按钮Button10弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON10_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON10_UP                                           74
 
 //画面历史记录-核查记录中按钮Button10按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-核查记录_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-核查记录_BUTTON10                                              43
 
 //画面历史记录-核查记录中按钮Button11弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON11_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-核查记录_BUTTON11                                              44
 
 //画面历史记录-核查记录中按钮Button12弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON12_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON12_UP                                           74
 
 //画面历史记录-核查记录中按钮Button12按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-核查记录_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-核查记录_BUTTON12                                              45
 
 //画面历史记录-核查记录中按钮Button14弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON14_UP                                           71
+#define  _IMG_历史记录-核查记录_BUTTON14_UP                                           73
 
 //画面历史记录-核查记录中按钮Button14按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON14_DOWN                                         71
+#define  _IMG_历史记录-核查记录_BUTTON14_DOWN                                         73
 
 #define  _BTN_历史记录-核查记录_BUTTON14                                              42
 
 //画面历史记录-核查记录中按钮Button13弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON13_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON13_UP                                           74
 
 //画面历史记录-核查记录中按钮Button13按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-核查记录_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-核查记录_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY1                                     5
 
 //画面历史记录-核查记录中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-核查记录_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-核查记录_TEXT_DISPLAY1                                         75
 
 //画面历史记录-核查记录中按钮Button15弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON15_UP                                           74
+#define  _IMG_历史记录-核查记录_BUTTON15_UP                                           76
 
 //画面历史记录-核查记录中按钮Button15按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-核查记录_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-核查记录_BUTTON15                                             128
 
 //画面历史记录-核查记录中按钮Button28弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON28_UP                                           74
+#define  _IMG_历史记录-核查记录_BUTTON28_UP                                           76
 
 //画面历史记录-核查记录中按钮Button28按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-核查记录_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-核查记录_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY2                                     6
 
 //画面历史记录-核查记录中按钮Button16弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON16_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON16_UP                                           74
 
 //画面历史记录-核查记录中按钮Button16按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-核查记录_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-核查记录_BUTTON16                                               8
 
 //画面历史记录-核查记录中按钮Button17弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON17_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON17_UP                                           74
 
 //画面历史记录-核查记录中按钮Button17按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-核查记录_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-核查记录_BUTTON17                                               9
 
 //画面历史记录-核查记录中按钮Button21弹起时的图片
-#define  _IMG_历史记录-核查记录_BUTTON21_UP                                           72
+#define  _IMG_历史记录-核查记录_BUTTON21_UP                                           74
 
 //画面历史记录-核查记录中按钮Button21按下时的图片
-#define  _IMG_历史记录-核查记录_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-核查记录_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-核查记录_BUTTON21                                              14
 
@@ -7558,94 +7784,94 @@
 #define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY89                                  905
 
 //画面历史记录-校准记录中按钮Button9弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON9_UP                                            72
+#define  _IMG_历史记录-校准记录_BUTTON9_UP                                            74
 
 //画面历史记录-校准记录中按钮Button9按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-校准记录_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-校准记录_BUTTON9                                               41
 
 //画面历史记录-校准记录中按钮Button10弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON10_UP                                           71
+#define  _IMG_历史记录-校准记录_BUTTON10_UP                                           73
 
 //画面历史记录-校准记录中按钮Button10按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON10_DOWN                                         71
+#define  _IMG_历史记录-校准记录_BUTTON10_DOWN                                         73
 
 #define  _BTN_历史记录-校准记录_BUTTON10                                              43
 
 //画面历史记录-校准记录中按钮Button11弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON11_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-校准记录_BUTTON11                                              44
 
 //画面历史记录-校准记录中按钮Button12弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON12_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON12_UP                                           74
 
 //画面历史记录-校准记录中按钮Button12按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-校准记录_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-校准记录_BUTTON12                                              45
 
 //画面历史记录-校准记录中按钮Button13弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON13_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON13_UP                                           74
 
 //画面历史记录-校准记录中按钮Button13按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-校准记录_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-校准记录_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY1                                     5
 
 //画面历史记录-校准记录中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-校准记录_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-校准记录_TEXT_DISPLAY1                                         75
 
 //画面历史记录-校准记录中按钮Button15弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON15_UP                                           74
+#define  _IMG_历史记录-校准记录_BUTTON15_UP                                           76
 
 //画面历史记录-校准记录中按钮Button15按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-校准记录_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-校准记录_BUTTON15                                             128
 
 //画面历史记录-校准记录中按钮Button28弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON28_UP                                           74
+#define  _IMG_历史记录-校准记录_BUTTON28_UP                                           76
 
 //画面历史记录-校准记录中按钮Button28按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-校准记录_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-校准记录_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY2                                     6
 
 //画面历史记录-校准记录中按钮Button16弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON16_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON16_UP                                           74
 
 //画面历史记录-校准记录中按钮Button16按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-校准记录_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-校准记录_BUTTON16                                               8
 
 //画面历史记录-校准记录中按钮Button14弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON14_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON14_UP                                           74
 
 //画面历史记录-校准记录中按钮Button14按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-校准记录_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-校准记录_BUTTON14                                              42
 
 //画面历史记录-校准记录中按钮Button17弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON17_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON17_UP                                           74
 
 //画面历史记录-校准记录中按钮Button17按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-校准记录_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-校准记录_BUTTON17                                              12
 
 //画面历史记录-校准记录中按钮Button21弹起时的图片
-#define  _IMG_历史记录-校准记录_BUTTON21_UP                                           72
+#define  _IMG_历史记录-校准记录_BUTTON21_UP                                           74
 
 //画面历史记录-校准记录中按钮Button21按下时的图片
-#define  _IMG_历史记录-校准记录_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-校准记录_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-校准记录_BUTTON21                                              14
 
@@ -7735,94 +7961,94 @@
 #define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY89                                  905
 
 //画面历史记录-加标回收中按钮Button9弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON9_UP                                            72
+#define  _IMG_历史记录-加标回收_BUTTON9_UP                                            74
 
 //画面历史记录-加标回收中按钮Button9按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-加标回收_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-加标回收_BUTTON9                                               41
 
 //画面历史记录-加标回收中按钮Button10弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON10_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON10_UP                                           74
 
 //画面历史记录-加标回收中按钮Button10按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-加标回收_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-加标回收_BUTTON10                                              43
 
 //画面历史记录-加标回收中按钮Button11弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON11_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-加标回收_BUTTON11                                              44
 
 //画面历史记录-加标回收中按钮Button12弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON12_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON12_UP                                           74
 
 //画面历史记录-加标回收中按钮Button12按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-加标回收_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-加标回收_BUTTON12                                              45
 
 //画面历史记录-加标回收中按钮Button14弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON14_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON14_UP                                           74
 
 //画面历史记录-加标回收中按钮Button14按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-加标回收_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-加标回收_BUTTON14                                              42
 
 //画面历史记录-加标回收中按钮Button13弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON13_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON13_UP                                           74
 
 //画面历史记录-加标回收中按钮Button13按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-加标回收_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-加标回收_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY1                                     5
 
 //画面历史记录-加标回收中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-加标回收_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-加标回收_TEXT_DISPLAY1                                         75
 
 //画面历史记录-加标回收中按钮Button15弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON15_UP                                           74
+#define  _IMG_历史记录-加标回收_BUTTON15_UP                                           76
 
 //画面历史记录-加标回收中按钮Button15按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-加标回收_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-加标回收_BUTTON15                                             128
 
 //画面历史记录-加标回收中按钮Button28弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON28_UP                                           74
+#define  _IMG_历史记录-加标回收_BUTTON28_UP                                           76
 
 //画面历史记录-加标回收中按钮Button28按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-加标回收_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-加标回收_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY2                                     6
 
 //画面历史记录-加标回收中按钮Button16弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON16_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON16_UP                                           74
 
 //画面历史记录-加标回收中按钮Button16按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-加标回收_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-加标回收_BUTTON16                                               8
 
 //画面历史记录-加标回收中按钮Button17弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON17_UP                                           71
+#define  _IMG_历史记录-加标回收_BUTTON17_UP                                           73
 
 //画面历史记录-加标回收中按钮Button17按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON17_DOWN                                         71
+#define  _IMG_历史记录-加标回收_BUTTON17_DOWN                                         73
 
 #define  _BTN_历史记录-加标回收_BUTTON17                                               9
 
 //画面历史记录-加标回收中按钮Button21弹起时的图片
-#define  _IMG_历史记录-加标回收_BUTTON21_UP                                           72
+#define  _IMG_历史记录-加标回收_BUTTON21_UP                                           74
 
 //画面历史记录-加标回收中按钮Button21按下时的图片
-#define  _IMG_历史记录-加标回收_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-加标回收_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-加标回收_BUTTON21                                              14
 
@@ -7912,94 +8138,94 @@
 #define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY89                                  905
 
 //画面历史记录-线性核查中按钮Button9弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON9_UP                                            72
+#define  _IMG_历史记录-线性核查_BUTTON9_UP                                            74
 
 //画面历史记录-线性核查中按钮Button9按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-线性核查_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-线性核查_BUTTON9                                               41
 
 //画面历史记录-线性核查中按钮Button10弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON10_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON10_UP                                           74
 
 //画面历史记录-线性核查中按钮Button10按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-线性核查_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-线性核查_BUTTON10                                              43
 
 //画面历史记录-线性核查中按钮Button11弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON11_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-线性核查_BUTTON11                                              44
 
 //画面历史记录-线性核查中按钮Button12弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON12_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON12_UP                                           74
 
 //画面历史记录-线性核查中按钮Button12按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-线性核查_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-线性核查_BUTTON12                                              45
 
 //画面历史记录-线性核查中按钮Button14弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON14_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON14_UP                                           74
 
 //画面历史记录-线性核查中按钮Button14按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-线性核查_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-线性核查_BUTTON14                                              42
 
 //画面历史记录-线性核查中按钮Button13弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON13_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON13_UP                                           74
 
 //画面历史记录-线性核查中按钮Button13按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-线性核查_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-线性核查_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY1                                     5
 
 //画面历史记录-线性核查中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-线性核查_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-线性核查_TEXT_DISPLAY1                                         75
 
 //画面历史记录-线性核查中按钮Button15弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON15_UP                                           74
+#define  _IMG_历史记录-线性核查_BUTTON15_UP                                           76
 
 //画面历史记录-线性核查中按钮Button15按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-线性核查_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-线性核查_BUTTON15                                             128
 
 //画面历史记录-线性核查中按钮Button28弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON28_UP                                           74
+#define  _IMG_历史记录-线性核查_BUTTON28_UP                                           76
 
 //画面历史记录-线性核查中按钮Button28按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-线性核查_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-线性核查_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY2                                     6
 
 //画面历史记录-线性核查中按钮Button16弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON16_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON16_UP                                           74
 
 //画面历史记录-线性核查中按钮Button16按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-线性核查_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-线性核查_BUTTON16                                               8
 
 //画面历史记录-线性核查中按钮Button17弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON17_UP                                           72
+#define  _IMG_历史记录-线性核查_BUTTON17_UP                                           74
 
 //画面历史记录-线性核查中按钮Button17按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-线性核查_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-线性核查_BUTTON17                                               9
 
 //画面历史记录-线性核查中按钮Button21弹起时的图片
-#define  _IMG_历史记录-线性核查_BUTTON21_UP                                           71
+#define  _IMG_历史记录-线性核查_BUTTON21_UP                                           73
 
 //画面历史记录-线性核查中按钮Button21按下时的图片
-#define  _IMG_历史记录-线性核查_BUTTON21_DOWN                                         71
+#define  _IMG_历史记录-线性核查_BUTTON21_DOWN                                         73
 
 #define  _BTN_历史记录-线性核查_BUTTON21                                              14
 
@@ -8089,97 +8315,97 @@
 #define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY89                                  905
 
 //画面历史记录-报警记录中按钮Button9弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON9_UP                                            72
+#define  _IMG_历史记录-报警记录_BUTTON9_UP                                            74
 
 //画面历史记录-报警记录中按钮Button9按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-报警记录_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-报警记录_BUTTON9                                               41
 
 //画面历史记录-报警记录中按钮Button10弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON10_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON10_UP                                           74
 
 //画面历史记录-报警记录中按钮Button10按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-报警记录_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-报警记录_BUTTON10                                              43
 
 //画面历史记录-报警记录中按钮Button11弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON11_UP                                           71
+#define  _IMG_历史记录-报警记录_BUTTON11_UP                                           73
 
 //画面历史记录-报警记录中按钮Button11按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON11_DOWN                                         71
+#define  _IMG_历史记录-报警记录_BUTTON11_DOWN                                         73
 
 #define  _BTN_历史记录-报警记录_BUTTON11                                              44
 
 //画面历史记录-报警记录中按钮Button12弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON12_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON12_UP                                           74
 
 //画面历史记录-报警记录中按钮Button12按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON12_DOWN                                         72
+#define  _IMG_历史记录-报警记录_BUTTON12_DOWN                                         74
 
 #define  _BTN_历史记录-报警记录_BUTTON12                                              45
 
 //画面历史记录-报警记录中按钮Button13弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON13_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON13_UP                                           74
 
 //画面历史记录-报警记录中按钮Button13按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-报警记录_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-报警记录_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY1                                     5
 
 //画面历史记录-报警记录中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-报警记录_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-报警记录_TEXT_DISPLAY1                                         75
 
 //画面历史记录-报警记录中按钮Button15弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON15_UP                                           74
+#define  _IMG_历史记录-报警记录_BUTTON15_UP                                           76
 
 //画面历史记录-报警记录中按钮Button15按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-报警记录_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-报警记录_BUTTON15                                             128
 
 //画面历史记录-报警记录中按钮Button28弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON28_UP                                           74
+#define  _IMG_历史记录-报警记录_BUTTON28_UP                                           76
 
 //画面历史记录-报警记录中按钮Button28按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-报警记录_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-报警记录_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY2                                     6
 
 //画面历史记录-报警记录中按钮Button16弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON16_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON16_UP                                           74
 
 //画面历史记录-报警记录中按钮Button16按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-报警记录_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-报警记录_BUTTON16                                               8
 
 //画面历史记录-报警记录中按钮Button14弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON14_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON14_UP                                           74
 
 //画面历史记录-报警记录中按钮Button14按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-报警记录_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-报警记录_BUTTON14                                              42
 
 //画面历史记录-报警记录中按钮Button17弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON17_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON17_UP                                           74
 
 //画面历史记录-报警记录中按钮Button17按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-报警记录_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-报警记录_BUTTON17                                              12
 
 //画面历史记录-报警记录中按钮Button21弹起时的图片
-#define  _IMG_历史记录-报警记录_BUTTON21_UP                                           72
+#define  _IMG_历史记录-报警记录_BUTTON21_UP                                           74
 
 //画面历史记录-报警记录中按钮Button21按下时的图片
-#define  _IMG_历史记录-报警记录_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-报警记录_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-报警记录_BUTTON21                                              14
 
@@ -8269,154 +8495,154 @@
 #define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY89                                  905
 
 //画面历史记录-运行日志中按钮Button9弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON9_UP                                            72
+#define  _IMG_历史记录-运行日志_BUTTON9_UP                                            74
 
 //画面历史记录-运行日志中按钮Button9按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON9_DOWN                                          72
+#define  _IMG_历史记录-运行日志_BUTTON9_DOWN                                          74
 
 #define  _BTN_历史记录-运行日志_BUTTON9                                               41
 
 //画面历史记录-运行日志中按钮Button10弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON10_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON10_UP                                           74
 
 //画面历史记录-运行日志中按钮Button10按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON10_DOWN                                         72
+#define  _IMG_历史记录-运行日志_BUTTON10_DOWN                                         74
 
 #define  _BTN_历史记录-运行日志_BUTTON10                                              43
 
 //画面历史记录-运行日志中按钮Button11弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON11_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON11_UP                                           74
 
 #define  _BTN_历史记录-运行日志_BUTTON11                                              44
 
 //画面历史记录-运行日志中按钮Button12弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON12_UP                                           71
+#define  _IMG_历史记录-运行日志_BUTTON12_UP                                           73
 
 //画面历史记录-运行日志中按钮Button12按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON12_DOWN                                         71
+#define  _IMG_历史记录-运行日志_BUTTON12_DOWN                                         73
 
 #define  _BTN_历史记录-运行日志_BUTTON12                                              45
 
 //画面历史记录-运行日志中按钮Button13弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON13_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON13_UP                                           74
 
 //画面历史记录-运行日志中按钮Button13按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON13_DOWN                                         71
+#define  _IMG_历史记录-运行日志_BUTTON13_DOWN                                         73
 
 #define  _BTN_历史记录-运行日志_BUTTON13                                               2
 
 #define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY1                                     5
 
 //画面历史记录-运行日志中文本显示Text_Display1的背景图片
-#define  _IMG_历史记录-运行日志_TEXT_DISPLAY1                                         73
+#define  _IMG_历史记录-运行日志_TEXT_DISPLAY1                                         75
 
 //画面历史记录-运行日志中按钮Button15弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON15_UP                                           74
+#define  _IMG_历史记录-运行日志_BUTTON15_UP                                           76
 
 //画面历史记录-运行日志中按钮Button15按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON15_DOWN                                         74
+#define  _IMG_历史记录-运行日志_BUTTON15_DOWN                                         76
 
 #define  _BTN_历史记录-运行日志_BUTTON15                                             128
 
 //画面历史记录-运行日志中按钮Button28弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON28_UP                                           74
+#define  _IMG_历史记录-运行日志_BUTTON28_UP                                           76
 
 //画面历史记录-运行日志中按钮Button28按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON28_DOWN                                         74
+#define  _IMG_历史记录-运行日志_BUTTON28_DOWN                                         76
 
 #define  _BTN_历史记录-运行日志_BUTTON28                                             129
 
 #define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY2                                     6
 
 //画面历史记录-运行日志中按钮Button16弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON16_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON16_UP                                           74
 
 //画面历史记录-运行日志中按钮Button16按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON16_DOWN                                         71
+#define  _IMG_历史记录-运行日志_BUTTON16_DOWN                                         73
 
 #define  _BTN_历史记录-运行日志_BUTTON16                                               8
 
 //画面历史记录-运行日志中按钮Button14弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON14_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON14_UP                                           74
 
 //画面历史记录-运行日志中按钮Button14按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON14_DOWN                                         72
+#define  _IMG_历史记录-运行日志_BUTTON14_DOWN                                         74
 
 #define  _BTN_历史记录-运行日志_BUTTON14                                              42
 
 //画面历史记录-运行日志中按钮Button17弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON17_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON17_UP                                           74
 
 //画面历史记录-运行日志中按钮Button17按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON17_DOWN                                         72
+#define  _IMG_历史记录-运行日志_BUTTON17_DOWN                                         74
 
 #define  _BTN_历史记录-运行日志_BUTTON17                                              12
 
 //画面历史记录-运行日志中按钮Button21弹起时的图片
-#define  _IMG_历史记录-运行日志_BUTTON21_UP                                           72
+#define  _IMG_历史记录-运行日志_BUTTON21_UP                                           74
 
 //画面历史记录-运行日志中按钮Button21按下时的图片
-#define  _IMG_历史记录-运行日志_BUTTON21_DOWN                                         72
+#define  _IMG_历史记录-运行日志_BUTTON21_DOWN                                         74
 
 #define  _BTN_历史记录-运行日志_BUTTON21                                              14
 
 //画面系统信息中按钮Button32按下时的图片
-#define  _IMG_系统信息_BUTTON32_DOWN                                              75
+#define  _IMG_系统信息_BUTTON32_DOWN                                              77
 
 #define  _BTN_系统信息_BUTTON32                                                  119
 
 //画面系统信息中按钮Button31按下时的图片
-#define  _IMG_系统信息_BUTTON31_DOWN                                              76
+#define  _IMG_系统信息_BUTTON31_DOWN                                              78
 
 #define  _BTN_系统信息_BUTTON31                                                  120
 
 //画面系统信息中按钮Button24弹起时的图片
-#define  _IMG_系统信息_BUTTON24_UP                                                66
+#define  _IMG_系统信息_BUTTON24_UP                                                68
 
 //画面系统信息中按钮Button24按下时的图片
-#define  _IMG_系统信息_BUTTON24_DOWN                                              67
+#define  _IMG_系统信息_BUTTON24_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON24                                                   16
 
 #define  _BTN_系统信息_BUTTON9                                                    17
 
 //画面系统信息中按钮Button10弹起时的图片
-#define  _IMG_系统信息_BUTTON10_UP                                                66
+#define  _IMG_系统信息_BUTTON10_UP                                                68
 
 //画面系统信息中按钮Button10按下时的图片
-#define  _IMG_系统信息_BUTTON10_DOWN                                              67
+#define  _IMG_系统信息_BUTTON10_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON10                                                   18
 
 //画面系统信息中按钮Button12弹起时的图片
-#define  _IMG_系统信息_BUTTON12_UP                                                78
+#define  _IMG_系统信息_BUTTON12_UP                                                80
 
 //画面系统信息中按钮Button12按下时的图片
-#define  _IMG_系统信息_BUTTON12_DOWN                                              79
+#define  _IMG_系统信息_BUTTON12_DOWN                                              81
 
 #define  _BTN_系统信息_BUTTON12                                                   14
 
 //画面系统信息中按钮Button13弹起时的图片
-#define  _IMG_系统信息_BUTTON13_UP                                                66
+#define  _IMG_系统信息_BUTTON13_UP                                                68
 
 //画面系统信息中按钮Button13按下时的图片
-#define  _IMG_系统信息_BUTTON13_DOWN                                              67
+#define  _IMG_系统信息_BUTTON13_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON13                                                   15
 
 //画面系统信息中按钮Button14弹起时的图片
-#define  _IMG_系统信息_BUTTON14_UP                                                66
+#define  _IMG_系统信息_BUTTON14_UP                                                68
 
 //画面系统信息中按钮Button14按下时的图片
-#define  _IMG_系统信息_BUTTON14_DOWN                                              67
+#define  _IMG_系统信息_BUTTON14_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON14                                                   19
 
 //画面系统信息中按钮Button15弹起时的图片
-#define  _IMG_系统信息_BUTTON15_UP                                                78
+#define  _IMG_系统信息_BUTTON15_UP                                                80
 
 //画面系统信息中按钮Button15按下时的图片
-#define  _IMG_系统信息_BUTTON15_DOWN                                              79
+#define  _IMG_系统信息_BUTTON15_DOWN                                              81
 
 #define  _BTN_系统信息_BUTTON15                                                   20
 
@@ -8433,32 +8659,32 @@
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY6                                          6
 
 //画面系统信息中文本显示Text_Display6的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY6                                              75
+#define  _IMG_系统信息_TEXT_DISPLAY6                                              77
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY11                                         7
 
 //画面系统信息中文本显示Text_Display11的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY11                                             81
+#define  _IMG_系统信息_TEXT_DISPLAY11                                             83
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY12                                         8
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY13                                         9
 
 //画面系统信息中文本显示Text_Display13的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY13                                             81
+#define  _IMG_系统信息_TEXT_DISPLAY13                                             83
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY14                                        10
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY15                                        11
 
 //画面系统信息中文本显示Text_Display15的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY15                                             81
+#define  _IMG_系统信息_TEXT_DISPLAY15                                             83
 
 //画面系统信息中按钮Button17弹起时的图片
-#define  _IMG_系统信息_BUTTON17_UP                                                66
+#define  _IMG_系统信息_BUTTON17_UP                                                68
 
 //画面系统信息中按钮Button17按下时的图片
-#define  _IMG_系统信息_BUTTON17_DOWN                                              67
+#define  _IMG_系统信息_BUTTON17_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON17                                                   21
 
@@ -8469,87 +8695,87 @@
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY16                                       900
 
 //画面系统信息中按钮Button11按下时的图片
-#define  _IMG_系统信息_BUTTON11_DOWN                                              84
+#define  _IMG_系统信息_BUTTON11_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON11                                                  104
 
 //画面系统信息中按钮Button16弹起时的图片
-#define  _IMG_系统信息_BUTTON16_UP                                                84
+#define  _IMG_系统信息_BUTTON16_UP                                                86
 
 //画面系统信息中按钮Button16按下时的图片
-#define  _IMG_系统信息_BUTTON16_DOWN                                              84
+#define  _IMG_系统信息_BUTTON16_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON16                                                  106
 
 //画面系统信息中按钮Button18弹起时的图片
-#define  _IMG_系统信息_BUTTON18_UP                                                84
+#define  _IMG_系统信息_BUTTON18_UP                                                86
 
 //画面系统信息中按钮Button18按下时的图片
-#define  _IMG_系统信息_BUTTON18_DOWN                                              84
+#define  _IMG_系统信息_BUTTON18_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON18                                                  107
 
 //画面系统信息中按钮Button19弹起时的图片
-#define  _IMG_系统信息_BUTTON19_UP                                                84
+#define  _IMG_系统信息_BUTTON19_UP                                                86
 
 //画面系统信息中按钮Button19按下时的图片
-#define  _IMG_系统信息_BUTTON19_DOWN                                              84
+#define  _IMG_系统信息_BUTTON19_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON19                                                  108
 
 //画面系统信息中按钮Button20弹起时的图片
-#define  _IMG_系统信息_BUTTON20_UP                                                84
+#define  _IMG_系统信息_BUTTON20_UP                                                86
 
 //画面系统信息中按钮Button20按下时的图片
-#define  _IMG_系统信息_BUTTON20_DOWN                                              84
+#define  _IMG_系统信息_BUTTON20_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON20                                                  109
 
 //画面系统信息中按钮Button21弹起时的图片
-#define  _IMG_系统信息_BUTTON21_UP                                                84
+#define  _IMG_系统信息_BUTTON21_UP                                                86
 
 //画面系统信息中按钮Button21按下时的图片
-#define  _IMG_系统信息_BUTTON21_DOWN                                              84
+#define  _IMG_系统信息_BUTTON21_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON21                                                  110
 
 //画面系统信息中按钮Button22弹起时的图片
-#define  _IMG_系统信息_BUTTON22_UP                                                84
+#define  _IMG_系统信息_BUTTON22_UP                                                86
 
 //画面系统信息中按钮Button22按下时的图片
-#define  _IMG_系统信息_BUTTON22_DOWN                                              84
+#define  _IMG_系统信息_BUTTON22_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON22                                                  114
 
 //画面系统信息中按钮Button23弹起时的图片
-#define  _IMG_系统信息_BUTTON23_UP                                                84
+#define  _IMG_系统信息_BUTTON23_UP                                                86
 
 //画面系统信息中按钮Button23按下时的图片
-#define  _IMG_系统信息_BUTTON23_DOWN                                              84
+#define  _IMG_系统信息_BUTTON23_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON23                                                  115
 
 //画面系统信息中按钮Button25弹起时的图片
-#define  _IMG_系统信息_BUTTON25_UP                                                84
+#define  _IMG_系统信息_BUTTON25_UP                                                86
 
 //画面系统信息中按钮Button25按下时的图片
-#define  _IMG_系统信息_BUTTON25_DOWN                                              84
+#define  _IMG_系统信息_BUTTON25_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON25                                                  116
 
 //画面系统信息中按钮Button26弹起时的图片
-#define  _IMG_系统信息_BUTTON26_UP                                                84
+#define  _IMG_系统信息_BUTTON26_UP                                                86
 
 //画面系统信息中按钮Button26按下时的图片
-#define  _IMG_系统信息_BUTTON26_DOWN                                              84
+#define  _IMG_系统信息_BUTTON26_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON26                                                  117
 
 //画面系统信息中按钮Button27弹起时的图片
-#define  _IMG_系统信息_BUTTON27_UP                                                84
+#define  _IMG_系统信息_BUTTON27_UP                                                86
 
 //画面系统信息中按钮Button27按下时的图片
-#define  _IMG_系统信息_BUTTON27_DOWN                                              84
+#define  _IMG_系统信息_BUTTON27_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON27                                                  118
 
@@ -8558,29 +8784,29 @@
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY21                                        27
 
 //画面系统信息中文本显示Text_Display21的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY21                                             81
+#define  _IMG_系统信息_TEXT_DISPLAY21                                             83
 
 //画面系统信息中按钮Button28弹起时的图片
-#define  _IMG_系统信息_BUTTON28_UP                                                84
+#define  _IMG_系统信息_BUTTON28_UP                                                86
 
 //画面系统信息中按钮Button28按下时的图片
-#define  _IMG_系统信息_BUTTON28_DOWN                                              84
+#define  _IMG_系统信息_BUTTON28_DOWN                                              86
 
 #define  _BTN_系统信息_BUTTON28                                                  140
 
 //画面系统信息中按钮Button29弹起时的图片
-#define  _IMG_系统信息_BUTTON29_UP                                                66
+#define  _IMG_系统信息_BUTTON29_UP                                                68
 
 //画面系统信息中按钮Button29按下时的图片
-#define  _IMG_系统信息_BUTTON29_DOWN                                              67
+#define  _IMG_系统信息_BUTTON29_DOWN                                              69
 
 #define  _BTN_系统信息_BUTTON29                                                   22
 
 //画面系统信息中按钮Button30弹起时的图片
-#define  _IMG_系统信息_BUTTON30_UP                                                78
+#define  _IMG_系统信息_BUTTON30_UP                                                80
 
 //画面系统信息中按钮Button30按下时的图片
-#define  _IMG_系统信息_BUTTON30_DOWN                                              79
+#define  _IMG_系统信息_BUTTON30_DOWN                                              81
 
 #define  _BTN_系统信息_BUTTON30                                                   23
 
@@ -8686,17 +8912,17 @@
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY1                                          2
 
 //画面密码设置中文本显示Text_Display1的背景图片
-#define  _IMG_密码设置_TEXT_DISPLAY1                                              86
+#define  _IMG_密码设置_TEXT_DISPLAY1                                              88
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY3                                          3
 
 //画面密码设置中文本显示Text_Display3的背景图片
-#define  _IMG_密码设置_TEXT_DISPLAY3                                              86
+#define  _IMG_密码设置_TEXT_DISPLAY3                                              88
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY4                                          4
 
 //画面密码设置中文本显示Text_Display4的背景图片
-#define  _IMG_密码设置_TEXT_DISPLAY4                                              86
+#define  _IMG_密码设置_TEXT_DISPLAY4                                              88
 
 #define  _TXT_DIS__密码设置_TEXT_DISPLAY5                                          6
 
@@ -8707,12 +8933,12 @@
 #define  _TXT_DIS__登录系统_TEXT_DISPLAY2                                          1
 
 //画面登录系统中文本显示Text_Display2的背景图片
-#define  _IMG_登录系统_TEXT_DISPLAY2                                              86
+#define  _IMG_登录系统_TEXT_DISPLAY2                                              88
 
 #define  _TXT_DIS__登录系统_TEXT_DISPLAY1                                          2
 
 //画面登录系统中文本显示Text_Display1的背景图片
-#define  _IMG_登录系统_TEXT_DISPLAY1                                              86
+#define  _IMG_登录系统_TEXT_DISPLAY1                                              88
 
 #define  _BTN_登录系统_BUTTON2                                                     3
 
@@ -8755,7 +8981,7 @@
 #define  _BTN_自定义全键盘_BUTTON1                                                   3
 
 //全局图片自定义键盘-按下.png
-#define  _IMG_自定义键盘-按下_PNG                                                    89
+#define  _IMG_自定义键盘-按下_PNG                                                    91
 
 #define  _BTN_自定义全键盘_BUTTON2                                                   4
 
@@ -8860,12 +9086,12 @@
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY1                                          5
 
 //画面无线连接中文本显示Text_Display1的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY1                                              91
+#define  _IMG_无线连接_TEXT_DISPLAY1                                              93
 
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY3                                          9
 
 //画面无线连接中文本显示Text_Display3的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY3                                              91
+#define  _IMG_无线连接_TEXT_DISPLAY3                                              93
 
 #define  _BTN_无线连接_BUTTON2                                                    10
 
@@ -8936,7 +9162,7 @@
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY18                                        42
 
 //画面无线连接中文本显示Text_Display18的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY18                                             91
+#define  _IMG_无线连接_TEXT_DISPLAY18                                             93
 
 //画面远程升级中按钮Button37弹起时的图片
 #define  _IMG_远程升级_BUTTON37_UP                                                14
@@ -8957,48 +9183,48 @@
 #define  _BTN_远程升级_BUTTON24                                                    6
 
 //画面远程升级中按钮Button2弹起时的图片
-#define  _IMG_远程升级_BUTTON2_UP                                                 95
+#define  _IMG_远程升级_BUTTON2_UP                                                 97
 
 //画面远程升级中按钮Button2按下时的图片
-#define  _IMG_远程升级_BUTTON2_DOWN                                               96
+#define  _IMG_远程升级_BUTTON2_DOWN                                               98
 
 #define  _BTN_远程升级_BUTTON2                                                     7
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY1                                          2
 
 //画面远程升级中文本显示Text_Display1的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY1                                              97
+#define  _IMG_远程升级_TEXT_DISPLAY1                                              99
 
 //画面远程升级中按钮Button3弹起时的图片
-#define  _IMG_远程升级_BUTTON3_UP                                                 95
+#define  _IMG_远程升级_BUTTON3_UP                                                 97
 
 //画面远程升级中按钮Button3按下时的图片
-#define  _IMG_远程升级_BUTTON3_DOWN                                               96
+#define  _IMG_远程升级_BUTTON3_DOWN                                               98
 
 #define  _BTN_远程升级_BUTTON3                                                     8
 
 //画面远程升级中按钮Button4弹起时的图片
-#define  _IMG_远程升级_BUTTON4_UP                                                 95
+#define  _IMG_远程升级_BUTTON4_UP                                                 97
 
 //画面远程升级中按钮Button4按下时的图片
-#define  _IMG_远程升级_BUTTON4_DOWN                                               96
+#define  _IMG_远程升级_BUTTON4_DOWN                                               98
 
 #define  _BTN_远程升级_BUTTON4                                                     9
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY2                                          5
 
 //画面远程升级中文本显示Text_Display2的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY2                                              97
+#define  _IMG_远程升级_TEXT_DISPLAY2                                              99
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY3                                          4
 
 //画面远程升级中文本显示Text_Display3的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY3                                              97
+#define  _IMG_远程升级_TEXT_DISPLAY3                                              99
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY5                                          1
 
 //画面远程升级中文本显示Text_Display5的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY5                                              97
+#define  _IMG_远程升级_TEXT_DISPLAY5                                              99
 
 #define  _SELECTOR_远程升级_SELECTOR1                                              3
 
@@ -9021,7 +9247,7 @@
 #define  _TXT_DIS__密码对话框_TEXT_DISPLAY1                                         2
 
 //画面密码对话框中文本显示Text_Display1的背景图片
-#define  _IMG_密码对话框_TEXT_DISPLAY1                                             86
+#define  _IMG_密码对话框_TEXT_DISPLAY1                                             88
 
 #define  _BTN_密码对话框_BUTTON2                                                    3
 
@@ -9046,7 +9272,7 @@
 #define  _TXT_DIS__流程复制_TEXT_DISPLAY2                                          4
 
 //画面流程复制中文本显示Text_Display2的背景图片
-#define  _IMG_流程复制_TEXT_DISPLAY2                                              98
+#define  _IMG_流程复制_TEXT_DISPLAY2                                             100
 
 #define  _BTN_流程复制_BUTTON2                                                     5
 

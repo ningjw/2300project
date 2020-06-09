@@ -553,7 +553,7 @@ function on_init()
     
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
-
+    
     SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
     UsbPath = "";
     on_sd_inserted(SdPath);
@@ -1192,14 +1192,14 @@ end
 uart_free_protocol = 1;
 
 uartSendTab = {
-    getSCSoftVer = {[0] = 238, 3, 16, 3, 0, 3, 0, 0, len = 6, note = {[CHN] = "获取软件版本", [ENG] = "Get Soft Ver." } },
-    getSCHardVer = {[0] = 238, 3, 16, 2, 0, 3, 0, 0, len = 6, note = {[CHN] = "获取硬件版本", [ENG] = "Get Hard Ver." } },
-    getTemp      = {[0] = 238, 3, 16, 10, 0, 1, 0, 0, len = 6, note = {[CHN] = "测量池温度", [ENG] = "Get Temperature" } },
-    getVoltage   = {[0] = 238, 3, 16, 12, 0, 1, 0, 0, len = 6, note = {[CHN] = "光电管电压", [ENG] = "Get Voltage" } },
-    setLedCurrnet= {[0] = 238, 3, 16, 13, 0, 1, 0, 0, len = 6, note = {[CHN] = "设置LED电流", [ENG] = "Set Led Current" } },
-    openLed      = {[0] = 238, 6, 16, 14, 0, 1, 0, 0, len = 6, note = {[CHN] = "开LED", [ENG] = "Open Led" } },
-    closeLed     = {[0] = 238, 6, 16, 14, 0, 0, 0, 0, len = 6, note = {[CHN] = "关LED", [ENG] = "Close Led" } },
-    updateCalcSoft={[0] = 238, 6, 16, 4, 0, 0, 0, 0, len = 6, note = {[CHN] = "更新计算板", [ENG] = "Update Calc. BD." } },
+    getSCSoftVer = {[0] = 0xE1, 3, 16, 3, 0, 3, 0, 0, len = 6, note = {[CHN] = "获取软件版本", [ENG] = "Get Soft Ver." } },
+    getSCHardVer = {[0] = 0xE1, 3, 16, 2, 0, 3, 0, 0, len = 6, note = {[CHN] = "获取硬件版本", [ENG] = "Get Hard Ver." } },
+    getTemp      = {[0] = 0xE1, 3, 16, 10, 0, 1, 0, 0, len = 6, note = {[CHN] = "测量池温度", [ENG] = "Get Temperature" } },
+    getVoltage   = {[0] = 0xE1, 3, 16, 12, 0, 1, 0, 0, len = 6, note = {[CHN] = "光电管电压", [ENG] = "Get Voltage" } },
+    setLedCurrnet= {[0] = 0xE1, 3, 16, 13, 0, 1, 0, 0, len = 6, note = {[CHN] = "设置LED电流", [ENG] = "Set Led Current" } },
+    openLed      = {[0] = 0xE1, 6, 16, 14, 0, 1, 0, 0, len = 6, note = {[CHN] = "开LED", [ENG] = "Open Led" } },
+    closeLed     = {[0] = 0xE1, 6, 16, 14, 0, 0, 0, 0, len = 6, note = {[CHN] = "关LED", [ENG] = "Close Led" } },
+    updateCalcSoft={[0] = 0xE1, 6, 16, 4, 0, 0, 0, 0, len = 6, note = {[CHN] = "更新计算板", [ENG] = "Update Calc. BD." } },
     
     getDrvVer    = {[0] = 224, 7, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "驱动版本号", [ENG] = "Get Drver BD. Ver" } },
     openValco    = {[0] = 224, 39, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "开十通阀", [ENG] = "Open Valco" } },
@@ -3270,10 +3270,10 @@ AnalysisTypeMenuId = 108;
 AnalysisTypeTextId = 22;
 
 INIT_BtStartId = 1;
-INIT_BtEndId = 21;
-INIT_TextStartId = 22;
-INIT_TextEndId = 23;
-INIT_AnalysisWayTextId = 22;
+INIT_BtEndId = 10;
+INIT_TextStartId = 11;
+INIT_TextEndId = 11;
+
 --该函数在on_control_notify中进行调用（当需要选择流程时）
 function set_screen_actionNumber(screen, actionNumber)
     DestScreen = screen;
@@ -3306,18 +3306,18 @@ function excute_init_process(paraTab)
     --------------------------------------------------------------
     if Sys.actionSubStep == 1 then
         if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀复位
-            control_valco(tonumber(paraTab[23]));--id为23的控件为通道号
+            control_valco(tonumber(paraTab[11]));--id为23的控件为通道号
             start_wait_time(1);
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
         --------------------------------------------------------------
     elseif Sys.actionSubStep == 2 then
-        if paraTab[2] == ENABLE_STRING then--判断是否需要对阀进行复位(读取参数)
-            for i = 1, 16, 1 do
-                Sys.valveIdTab[i] = paraTab[i + 5];--将阀状态保存到valveIdTab中,如果值为1.0表示需要复位,如果值为0.0则不需要
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对电磁阀进行复位(读取参数)
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i - 6];--将阀状态保存到valveIdTab中,如果值为1.0表示需要复位,如果值为0.0则不需要
             end
             Sys.valveOperate = ValveStatus[Sys.language].close;--阀关闭
-            Sys.waitTime = 8;
+            Sys.waitTime = 6;
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
         --------------------------------------------------------------
@@ -3330,32 +3330,22 @@ function excute_init_process(paraTab)
         end
         --------------------------------------------------------------
     elseif Sys.actionSubStep == 4 then
-        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位,则先使能注射泵
+        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵进行复位,则先使能注射泵
             enable_inject1();
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 2;
         end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
     elseif Sys.actionSubStep == 5 then
-        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位
+        if paraTab[3] == ENABLE_STRING then--判断是否需要对注射泵1进行复位,执行复位操作
             start_wait_time(8);
             reset_inject1();
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
-        --------------------------------------------------------------
-    elseif Sys.actionSubStep == 5 then
-        if paraTab[4] == ENABLE_STRING then--判断是否需要对注射泵2进行复位
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        end
-        --------------------------------------------------------------
+    --------------------------------------------------------------
     elseif Sys.actionSubStep == 6 then
         if paraTab[4] == ENABLE_STRING then--判断是否需要对消解进行复位
-            Sys.actionSubStep = Sys.actionSubStep + 1;
-        else
-            Sys.actionSubStep = Sys.actionSubStep + 1;
+            on_uart_send_data(uartSendTab.stopDispel, NEED_REPLY);
         end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
         --------------------------------------------------------------
     elseif Sys.actionSubStep == 7 then--结束
         Sys.actionSubStep = FINISHED;
@@ -4593,7 +4583,7 @@ function calc_analysis_result(type)
     c = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].cId));
     d = tonumber(get_text(RANGE_SET_SCREEN, RangeTab[Sys.rangetypeId].dId));
     print(string.format("a=%f,b=%f,c=%f,d=%f,x=%f", a, b, c, d, x));
-    -- Sys.result = a *math.pow(x, 3) + b * math.pow(x, 2) + c * x + d;
+    Sys.result = a *math.pow(x, 3) + b * math.pow(x, 2) + c * x + d;
     Sys.result = GetPreciseDecimal(Sys.result, tonumber(get_text(RUN_CONTROL_SCREEN,DecimalTextId)))--保留小数点后四位
 end
 
@@ -4684,14 +4674,140 @@ end
 --  执行等待时间流程
 --***********************************************************************************************
 function excute_wait_time_process(paraTab)
-    if Sys.actionSubStep == 1 then
-        start_wait_time(tonumber(paraTab[1]));
+    
+    if UartArg.lock == LOCKED or Sys.waitTimeFlag == SET then--串口锁定或者正在等待超时.
+        return;
+    end
+    -----------------------------------------------------------------
+    if Sys.actionSubStep == 1 then--开启定时器
+        start_e_wait_time(Sys.signalMinTime);--等待最小的定时器时间
         Sys.actionSubStep = Sys.actionSubStep + 1;
     elseif Sys.actionSubStep == 2 then
-        if Sys.waitTimeFlag == RESET then
-            Sys.actionSubStep = FINISHED
+        if paraTab[1] == ENABLE_STRING then--判断是否需要对十通阀操作
+            control_valco(tonumber(paraTab[20]));--通道号
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 3 then--
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作,在此配置参数
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].open;
+            Sys.waitTime = 2;--等待时间
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 4 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(开阀)操作,在此执行开阀操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 5 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[3] == ENABLE_STRING then
+            Sys.injectId = tonumber(paraTab[21])
+            Sys.injectSpeed = tonumber(paraTab[22]);
+            if paraTab[23] == InjectPara[Sys.language][2] then--加标体积 
+                Sys.injectScale = Sys.recoveryVa * 10;
+            else
+                Sys.injectScale = tonumber(paraTab[24]) * 10;
+            end
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 6 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i-3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].close;
+            Sys.waitTime = 0
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 7 then
+        if paraTab[2] == ENABLE_STRING then--判断是否需要对输出1进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 8 then
+        if paraTab[4] == ENABLE_STRING then--判断是否需要对十通阀操作
+            control_valco(tonumber(paraTab[25]));
+            start_wait_time(2);
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 9 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作,在此设置参数
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i+3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].open;
+            Sys.waitTime = 2
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 10 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(开阀)操作,在此执行开阀操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 11 then--判断对注射泵的操作(注射泵1与注射泵2只能选择一个)
+        if paraTab[6] == ENABLE_STRING then
+            Sys.injectId = tonumber(paraTab[26]);
+            Sys.injectSpeed = tonumber(paraTab[27]);
+            if paraTab[28] == InjectPara[Sys.language][2] then--加标体积 
+                Sys.injectScale = Sys.recoveryVa * 10;
+            else
+                Sys.injectScale = tonumber(paraTab[29]) * 10;
+            end
+            Sys.waitTime = 10;
+            Sys.driverStep1Func = control_inject1;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 12 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            for i = 11, 16, 1 do
+                Sys.valveIdTab[i] = paraTab[i+3];
+            end
+            Sys.valveOperate = ValveStatus[Sys.language].close;
+            Sys.waitTime = 0;
+        end
+        Sys.actionSubStep = Sys.actionSubStep + 1;
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 13 then
+        if paraTab[5] == ENABLE_STRING then--判断是否需要对输出2进行(关阀)操作
+            Sys.driverStep1Func = control_multi_valve;
+            driver[Sys.driverStep]();--该函数执行完成后Sys.actionSubStep会加1
+        else
+            Sys.actionSubStep = Sys.actionSubStep + 1;
+        end
+        -----------------------------------------------------------------
+    elseif Sys.actionSubStep == 14 then--判断等待时间是否到了
+        if Sys.eWaitTimeFlag == RESET then--等待时间到
+            Sys.actionSubStep = FINISHED;
+        else
+            Sys.actionSubStep = 2;
         end
     end
+    
     return Sys.actionSubStep;
 end
 
@@ -5178,7 +5294,7 @@ function hand_control_inject1(sta)
 
     if Sys.processStep == 1 then--第一步: 使能注射泵
         enable_inject1();
-        ShowSysCurrentAction("手动操作-移动注射泵");
+        ShowSysCurrentAction("移动注射泵");
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then --第二步:设置注射泵速度
         set_inject1_speed(tonumber(get_text(HAND_OPERATE1_SCREEN, HandInject1SpdId)));
@@ -5247,7 +5363,7 @@ function hand_set_led_current()
     end
 
     if Sys.processStep == 1 then--第一步: 发送串口指令设置LED电流
-        ShowSysCurrentAction("手动操作-设置LED电流");
+        ShowSysCurrentAction("设置LED电流");
         local ledCurrentValue = tonumber(get_text(HAND_OPERATE2_SCREEN, HandLedCurrentTextId));
         ledCurrentValue = ledCurrentValue * 2048 / 50;
         ledCurrentValue = math.floor(ledCurrentValue + 0.5);--四舍五入
@@ -5275,7 +5391,7 @@ function hand_get_voltage()
     end
 
     if Sys.processStep == 1 then--第一步: 发送串口指令获取电压
-        ShowSysCurrentAction("手动操作-获取电压");
+        ShowSysCurrentAction("获取电压");
         on_uart_send_data(uartSendTab.getVoltage, NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then--第二步: 解析电压值并进行显示
@@ -5303,7 +5419,7 @@ function hand_get_temperature()
     end
 
     if Sys.processStep == 1 then--第一步: 发送串口指令获取电压
-        ShowSysCurrentAction("手动操作-获取温度");
+        ShowSysCurrentAction("获取温度");
         on_uart_send_data(uartSendTab.getDsTemp, NEED_REPLY);
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then--第二步: 解析电压值并进行显示
@@ -6740,19 +6856,8 @@ function changeCfgFileLanguage(language)
                 
                 local contentString = GetSubString(ActionStrTab[j], "<content>", "</content>");
                 local contentTab = split(contentString, ",")--将读出的字符串按逗号分割,并以此存入tab表
-                ----------判断为初始化,还需要翻译初始化里的<content>------------
-                if typeTab[1] == ActionItem[destLanguage][1] then
-                    if contentTab[INIT_AnalysisWayTextId] == AnalysisWay[srcLanguage].colorimetry then
-                        contentTab[INIT_AnalysisWayTextId] = AnalysisWay[destLanguage].colorimetry
-                    elseif contentTab[INIT_AnalysisWayTextId] == AnalysisWay[srcLanguage].electrode then
-                        contentTab[INIT_AnalysisWayTextId] = AnalysisWay[destLanguage].electrode
-                    end
-                    contentString = "";
-                    for k = 1, INIT_TextEndId, 1 do
-                        contentString = contentString .. contentTab[k] .. ",";
-                    end
                     ----------判断为计算,还需要翻译计算里的<content>----------------
-                elseif typeTab[1] == ActionItem[destLanguage][6] then
+                if typeTab[1] == ActionItem[destLanguage][6] then
                     if contentTab[CALCULATE_CalcWayTextId] == CalcWay[srcLanguage].log then
                         contentTab[CALCULATE_CalcWayTextId] = CalcWay[destLanguage].log
                     elseif contentTab[CALCULATE_CalcWayTextId] == CalcWay[srcLanguage].diff then

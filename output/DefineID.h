@@ -142,6 +142,9 @@
 //创建画面流程复制的命令索引ID
 #define  _SCREEN_流程复制                                                         47
 
+//创建画面服务器设置的命令索引ID
+#define  _SCREEN_服务器设置                                                        48
+
 #define  _RTC_首页_RTC1                                                        111
 
 #define  _RTC_首页_RTC2                                                        112
@@ -7515,9 +7518,6 @@
 
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY15                                         2
 
-//画面输入输出中文本显示Text_Display15的背景图片
-#define  _IMG_输入输出_TEXT_DISPLAY15                                             10
-
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY3                                          3
 
 //画面输入输出中文本显示Text_Display3的背景图片
@@ -7615,10 +7615,6 @@
 #define  _IMG_输入输出_BUTTON12_DOWN                                              87
 
 #define  _BTN_输入输出_BUTTON12                                                   28
-
-#define  _MENU_输入输出_MENU1                                                     18
-
-#define  _BTN_输入输出_BUTTON15                                                   20
 
 #define  _TXT_DIS__输入输出_TEXT_DISPLAY7                                        901
 
@@ -9283,6 +9279,14 @@
 
 #define  _BTN_系统信息_BUTTON8                                                    66
 
+//画面系统信息中按钮Button33弹起时的图片
+#define  _IMG_系统信息_BUTTON33_UP                                                78
+
+//画面系统信息中按钮Button33按下时的图片
+#define  _IMG_系统信息_BUTTON33_DOWN                                              79
+
+#define  _BTN_系统信息_BUTTON33                                                   30
+
 //画面密码设置中按钮Button3弹起时的图片
 #define  _IMG_密码设置_BUTTON3_UP                                                 15
 
@@ -9669,4 +9673,24 @@
 #define  _BTN_流程复制_BUTTON2                                                     5
 
 #define  _BTN_流程复制_BUTTON4                                                     6
+
+//画面服务器设置中按钮Button3弹起时的图片
+#define  _IMG_服务器设置_BUTTON3_UP                                                15
+
+//画面服务器设置中按钮Button3按下时的图片
+#define  _IMG_服务器设置_BUTTON3_DOWN                                              20
+
+#define  _BTN_服务器设置_BUTTON3                                                   99
+
+//画面服务器设置中按钮Button1弹起时的图片
+#define  _IMG_服务器设置_BUTTON1_UP                                                15
+
+//画面服务器设置中按钮Button1按下时的图片
+#define  _IMG_服务器设置_BUTTON1_DOWN                                              20
+
+#define  _BTN_服务器设置_BUTTON1                                                   98
+
+#define  _TXT_DIS__服务器设置_TEXT_DISPLAY1                                         2
+
+#define  _TXT_DIS__服务器设置_TEXT_DISPLAY2                                         1
 

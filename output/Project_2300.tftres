@@ -48,6 +48,7 @@
         <page name="远程升级" id="45" />
         <page name="密码对话框" id="46" />
         <page name="流程复制" id="47" />
+        <page name="服务器设置" id="48" />
     </pages>
     <images>
         <image id="0" url="d:\ningjw\2300project\Images\蓝色图标2.jpg" effect_width="106" effect_height="50" />
@@ -159,19 +160,21 @@
         <image id="106" url="d:\ningjw\2300project\Images\input.png" effect_width="96" effect_height="35" />
         <image id="107" url="d:\ningjw\2300project\Images\流程方块.png" effect_width="150" effect_height="35" />
         <image id="108" url="d:\ningjw\2300project\Images\input.png" effect_width="95" effect_height="35" />
-        <image id="109" url="d:\ningjw\2300project\Images\input.png" effect_width="150" effect_height="40" />
+        <image id="109" url="d:\ningjw\2300project\Images\input2.png" effect_width="150" effect_height="40" />
         <image id="110" url="d:\ningjw\2300project\Images\联系我们.png" effect_width="493" effect_height="276" />
         <image id="111" url="d:\ningjw\2300project\Images\自定义键盘-弹起.jpg" effect_width="600" effect_height="350" />
         <image id="112" url="d:\ningjw\2300project\Images\自定义键盘-按下.png" effect_width="600" effect_height="350" />
         <image id="113" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="318" />
         <image id="114" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="40" />
-        <image id="115" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="67" effect_height="40" />
-        <image id="116" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="67" effect_height="40" />
+        <image id="115" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="67" effect_height="40" />
+        <image id="116" url="d:\ningjw\2300project\Images\Bright2 Button.jpg" effect_width="67" effect_height="40" />
         <image id="117" url="d:\ningjw\2300project\Images\wifi列表.png" effect_width="232" effect_height="320" />
-        <image id="118" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="80" effect_height="35" />
-        <image id="119" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="80" effect_height="35" />
+        <image id="118" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="80" effect_height="35" />
+        <image id="119" url="d:\ningjw\2300project\Images\Bright2 Button.jpg" effect_width="80" effect_height="35" />
         <image id="120" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="200" effect_height="35" />
         <image id="121" url="d:\ningjw\2300project\Images\input.png" effect_width="78" effect_height="30" />
+        <image id="122" url="d:\ningjw\2300project\Images\input2.png" effect_width="178" effect_height="40" />
+        <image id="123" url="d:\ningjw\2300project\Images\input2.png" effect_width="179" effect_height="40" />
     </images>
     <waves />
 </Resource>

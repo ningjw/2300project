@@ -55,7 +55,7 @@ WIFI_CONNECT_SCREEN = 44;
 REMOTE_UPDATE_SCREEN = 45;
 PASSWORD_DIALOG_SCREEN = 46;
 PROCESS_COPY_SCREEN = 47;
-
+SERVER_SET_SCREEN = 48;
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
 PublicTab = {
     [1] = MAIN_SCREEN,
@@ -379,11 +379,13 @@ Sys = {
     linearX = {},--线性核查标准浓度
     linearCorrelation = 0,--线性相关系数
     linearRatioDensity = {0, 0.2, 0.4, 0.6, 0.8},
-    linearProcessStep = 1;
-    linearStartStep = 1;
+    linearProcessStep = 1,
+    linearStartStep = 1,
 
     controledRangeId,--反控模式下设置的量程
     controledProcessTypeId,--反控模式设置的流程在ProcessItem表中对应的下标
+
+    uploadScreenShootCnt = 0,
 }
 
 --工作状态
@@ -528,6 +530,7 @@ ActionStrTab = {};
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
+
     print(_VERSION);
     uart_set_timeout(2000, 500); --设置串口超时, 接收总超时2000ms, 字节间隔超时200ms
     start_timer(0, 100, 1, 0); --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
@@ -535,7 +538,8 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-
+    
+    
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
@@ -557,7 +561,7 @@ function on_init()
     -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
     -- UsbPath = "";
     -- on_sd_inserted(SdPath);
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
 end
 
@@ -698,7 +702,7 @@ function on_systick()
     end
 
     --判断wifi连接状态
-    if string.len(Sys.ssid) > 0 then
+    if string.len(Sys.ssid) > 0 and get_current_screen() == WIFI_CONNECT_SCREEN then
         Sys.wifi_connect = get_network_state() --获取网络状态
         wifimode, secumode, ssid, password = get_wifi_cfg() --获取WIFI配置
         local dhcp, ipaddr, netmask, gateway, dns = get_network_cfg() --获取ip地址
@@ -712,8 +716,33 @@ function on_systick()
     end
 
     --判断触摸屏更新进度
-    local state, process = get_upgrade_state()                    --获取更新状态与进度      
-    set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
+    if get_current_screen() == REMOTE_UPDATE_SCREEN then
+        local state, process = get_upgrade_state()                    --获取更新状态与进度      
+        set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
+    end
+
+    --定时上传截图
+    Sys.uploadScreenShootCnt = Sys.uploadScreenShootCnt + 1;
+    if  Sys.uploadScreenShootCnt >= 5 then
+        Sys.uploadScreenShootCnt = 0;
+        Sys.wifi_connect = get_network_state() --获取网络状态
+        if Sys.wifi_connect == 5  then--有无线,且连接上TCP服务器
+            local picFileHex = {[0]=0}
+            screen_shoot("shoot.jpg", 0, 0, 600, 1000, 70)
+            -- local picFile = io.open("shoot.jpg","rb");
+            -- if picFile ~= nil then
+            --     local picFileLen = picFile:seek("end");
+            --     picFile:seek("set")                           --把文件位置定位到开头
+                -- picFileHex = picFile:read(picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
+                -- picFile:close()                              --关闭文本
+                for i=0, 1000, 1 do
+                    picFileHex[i] = math.fmod(i,256);
+                end
+                client_send_data(picFileHex);
+                client_send_data(picFileHex);
+            -- end
+        end
+    end
 end
 
 --***********************************************************************************************
@@ -792,6 +821,8 @@ function on_control_notify(screen, control, value)
         password_dialog_screen_control_notify(screen, control, value);
     elseif screen ==PROCESS_COPY_SCREEN then--流程复制
         process_copy_control_notify(screen, control, value);
+    elseif screen == SERVER_SET_SCREEN then--服务器设置
+        server_set_control_notify(screen, control, value);
     end
 
 end
@@ -857,6 +888,8 @@ function on_sd_inserted(dir)
 
     --初始化Modebus寄存器
     modebus_regester_init();
+    --初始化底部状态栏的模式
+    ShowSysCurrentMode(get_text(RUN_CONTROL_SCREEN, RunTypeID));
 
     ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
 end
@@ -883,9 +916,8 @@ function sys_init()
         return;
     end
 
-    
     if Sys.processStep == 1 then --第一步:使能注射泵1
-        ShowSysCurrentAction(TipsTab[Sys.language].sysInit);
+        ShowSysCurrentProcess(TipsTab[Sys.language].sysInit);
         enable_inject1();
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 2 then--第二步：获取驱动板版本号
@@ -951,7 +983,7 @@ function sys_init()
         Sys.processStep = Sys.processStep + 1;
     elseif Sys.processStep == 9 then --第九步:判断是否需要进行排空清洗
         set_enable(RUN_CONTROL_SCREEN, RunStopBtId, ENABLE)--初始化完成，使能开始按钮
-        ShowSysCurrentAction(TipsTab[Sys.language].null);
+        ShowSysCurrentProcess(TipsTab[Sys.language].null);
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
 
@@ -1201,21 +1233,21 @@ uartSendTab = {
     closeLed     = {[0] = 0xE1, 6, 16, 14, 0, 0, 0, 0, len = 6, note = {[CHN] = "关LED", [ENG] = "Close Led" } },
     updateCalcSoft={[0] = 0xE1, 6, 16, 4, 0, 0, 0, 0, len = 6, note = {[CHN] = "更新计算板", [ENG] = "Update Calc. BD." } },
     
-    getDrvVer    = {[0] = 224, 7, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "驱动版本号", [ENG] = "Get Drver BD. Ver" } },
-    openValco    = {[0] = 224, 39, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "开十通阀", [ENG] = "Open Valco" } },
-    openV11      = {[0] = 224, 8, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "开阀11", [ENG] = "Open valve 11" } },
-    closeV11     = {[0] = 224, 8, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "关阀11", [ENG] = "Close valve 11" } },
-    openV12      = {[0] = 224, 9, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "开阀12", [ENG] = "Open valve 12" } },
-    closeV12     = {[0] = 224, 9, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "关阀12", [ENG] = "Close valve 12" } },
-    enInject1    = {[0] = 224, 15, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "使能注射泵", [ENG] = "Enbale injector" } },
-    mvInject1To  = {[0] = 224, 13, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "移动注射泵", [ENG] = "Move injector" } },
-    setInject1Spd= {[0] = 224, 14, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "设置注射泵速度", [ENG] = "Set injector speed" } },
-    rstInject1   = {[0] = 224, 13, 1, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "复位注射泵", [ENG] = "Reset injector" } },
+    getDrvVer    = {[0] = 0xE0, 7, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "驱动版本号", [ENG] = "Get Drver BD. Ver" } },
+    openValco    = {[0] = 0xE0, 39, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "开十通阀", [ENG] = "Open Valco" } },
+    openV11      = {[0] = 0xE0, 8, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "开阀11", [ENG] = "Open valve 11" } },
+    closeV11     = {[0] = 0xE0, 8, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "关阀11", [ENG] = "Close valve 11" } },
+    openV12      = {[0] = 0xE0, 9, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "开阀12", [ENG] = "Open valve 12" } },
+    closeV12     = {[0] = 0xE0, 9, 0, 0, 0, 0, 0, 0, len = 6, note = {[CHN] = "关阀12", [ENG] = "Close valve 12" } },
+    enInject1    = {[0] = 0xE0, 15, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "使能注射泵", [ENG] = "Enbale injector" } },
+    mvInject1To  = {[0] = 0xE0, 13, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "移动注射泵", [ENG] = "Move injector" } },
+    setInject1Spd= {[0] = 0xE0, 14, 0, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "设置注射泵速度", [ENG] = "Set injector speed" } },
+    rstInject1   = {[0] = 0xE0, 13, 1, 1, 0, 0, 0, 0, len = 6, note = {[CHN] = "复位注射泵", [ENG] = "Reset injector" } },
     
-    setPwm       = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "设置4-20mA输出",[ENG] = "Set Output "}},
-    setPwm4mA    = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正4mA输出",[ENG] = "Set 4mA Adj. "}},
-    setPwm20mA   = {[0] = 226, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正20mA输出",[ENG] = "Set 20mA Adj. "}},
-    getIOVer     = {[0] = 226, 7, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "输入输出板版本",[ENG] = "Get I/O Bd. Ver."}},
+    setPwm       = {[0] = 0xE2, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "设置4-20mA输出",[ENG] = "Set Output "}},
+    setPwm4mA    = {[0] = 0xE2, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正4mA输出",[ENG] = "Set 4mA Adj. "}},
+    setPwm20mA   = {[0] = 0xE2, 0, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "校正20mA输出",[ENG] = "Set 20mA Adj. "}},
+    getIOVer     = {[0] = 0xE2, 7, 0, 0, 0, 0, 0, 0, len = 6, note={[CHN] = "输入输出板版本",[ENG] = "Get I/O Bd. Ver."}},
 
     getDsTemp    ={[0] = 0xE4, 0x03, 0, 0x06, 0, 2, 0, 0, len = 6,note={[CHN] = "获取消解温度",[ENG] = "Get Dispel Temp."}},
     getDsHardVer ={[0] = 0xE4, 0x03, 0, 0x00, 0, 2, 0, 0, len = 6,note={[CHN] = "获取消解版本",[ENG] = "Get Dispel Ver."}},
@@ -1587,7 +1619,6 @@ function on_uart_recv_data(packet)
     end
 
     --判断第0个字节(地址)
-    print(packet[0].."?="..tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)))
     if packet[0] == tonumber(get_text(IN_OUT_SCREEN, IOSET_ComputerAddr)) then--上位机发送的串口数据
         ComputerControl(packet)
     elseif packet[0] == UartArg.reply_data[0] and packet[1] == UartArg.reply_data[1] then --仪器各模块返回的数据
@@ -1678,7 +1709,7 @@ end
 
 
 --[[-----------------------------------------------------------------------------------------------------------------
-    首页/状态栏显示函数
+    首页
 --------------------------------------------------------------------------------------------------------------------]]
 LastAnalysisTimeId = 20;   --分析时间
 LastAnalyteId = 17;        --分析物
@@ -1690,10 +1721,12 @@ LastResultE2Id = 26;     --E2
 ProgressBarId = 14--进度条，范围0-100
 DispelTempId = 10;
 SysWorkStatusId = 901;   --工作状态
-SysCurrentActionId = 902;--当前动作
+SysCurrentProcessId = 902;--当前动作
 SysUserNameId = 903      --显示用户
 SysAlarmId = 904;        --显示当前告警信息
 SysTipsId = 905;         --界面底部用于显示提示信息的文本id
+SysRunModeId = 906;      --界面底部用于显示当前模式的文本id
+SysCurrentActionId = 907;--界面底部用于显示当前动作的文本id
 
 StopSystemDialogMenuId = 3;
 StartTimeId = 4;
@@ -1733,8 +1766,17 @@ function SetSysWorkStatus(status)
     for i = 1, #PublicTab, 1 do
         set_text(PublicTab[i], SysWorkStatusId, status);
         if status == WorkStatus[Sys.language].stop or status == WorkStatus[Sys.language].readyRun then
-            set_text(PublicTab[i], SysCurrentActionId, TipsTab[Sys.language].null);
+            set_text(PublicTab[i], SysCurrentProcessId, TipsTab[Sys.language].null);
         end
+    end
+end
+
+--***********************************************************************************************
+--  在底部的状态栏显示当前流程
+--***********************************************************************************************
+function ShowSysCurrentProcess(processName)
+    for i = 1, #PublicTab, 1 do
+        set_text(PublicTab[i], SysCurrentProcessId, processName);
     end
 end
 
@@ -1747,6 +1789,15 @@ function ShowSysCurrentAction(action)
     end
 end
 
+
+--***********************************************************************************************
+--  在底部的状态栏显示当前模式
+--***********************************************************************************************
+function ShowSysCurrentMode(mode)
+    for i = 1, #PublicTab, 1 do
+        set_text(PublicTab[i], SysRunModeId, mode);
+    end
+end
 
 --***********************************************************************************************
 --  在底部的状态栏显示告警信息
@@ -1855,6 +1906,7 @@ function run_control_notify(screen, control, value)
     --运行方式---------------------------------------------------------------------
     elseif control == RunTypeMenuId then
         setModebusRunMode();
+        ShowSysCurrentMode(get_text(RUN_CONTROL_SCREEN, RunTypeID));
         if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then--判断为反控, 隐藏运行按钮
             set_visiable(RUN_CONTROL_SCREEN, RunStopBtId, 0);
         else
@@ -2503,7 +2555,8 @@ function excute_process()
         Sys.actionType    = tab[1];--获取动作类型
         Sys.contentTabStr = GetSubString(Sys.actionIdTab[Sys.actionStep], "<content>", "</content>");--再截取<content>标签中的内容
         Sys.contentTab    = split(Sys.contentTabStr, ",");--分割字符串,并将字符串存入tab数组
-        ShowSysCurrentAction(Sys.processName .. ":" .. Sys.actionNameTab[Sys.actionStep]);--显示流程名称-动作名称
+        ShowSysCurrentProcess(Sys.processName );--显示流程名称
+        ShowSysCurrentAction(Sys.actionNameTab[Sys.actionStep]);--显示动作名称
         if Sys.actionType == ActionItem[Sys.language][1] then
             Sys.actionFunction = excute_init_process;--执行 初始化流程
         elseif Sys.actionType == ActionItem[Sys.language][2] then
@@ -2640,6 +2693,7 @@ end
 --***********************************************************************************************
 function SystemStop(stopType)
     SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
+    ShowSysCurrentProcess(TipsTab[Sys.language].null);--将当前流程显示为"无"
     ShowSysCurrentAction(TipsTab[Sys.language].null);--将当前动作显示为"无"
     ShowSysAlarm(TipsTab[Sys.language].null);--清空报警
     ShowSysTips("");
@@ -3068,9 +3122,7 @@ function process_edit_control_notify(screen, control, value)
         end
         change_screen(DestProcessSetScreen);
     elseif (control - 100) >= TabAction[1].typeId and (control - 100) <= TabAction[#TabAction].typeId then--当点击"动作类型"下面的按钮时
-        if BLANK_SPACE == get_text(screen, control - 100) then
-            action_select_set(screen, control - 100, control - 400);
-        end
+        action_select_set(screen, control - 100, control - 400);
     elseif control >= TabAction[1].editId and control <= TabAction[#TabAction].editId and value == ENABLE then--当点击"编辑"按钮时
         if get_text(screen, control + 200) ~= BLANK_SPACE then--如果设置了动作类型,(编辑按钮的id+200等于动作名称id)
             set_edit_screen(get_text(screen, control + 200), screen, control);--control+200表示对应的"动作类型"id
@@ -5789,7 +5841,7 @@ function checkHistoryFile()
         file = io.open(SdPath.."record/Calibration", "w+");--打开并清空该文件
     end
     file:close();
-
+    
     file = io.open(SdPath.."record/Recovery");
     if file == nil then
         file = io.open(SdPath.."record/Recovery", "w+");--打开并清空该文件
@@ -6052,6 +6104,7 @@ function system_info_control_notify(screen, control, value)
             Sys.language = CHN;
             set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);
             set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);
+            ShowSysCurrentProcess(TipsTab[Sys.language].null);
             ShowSysCurrentAction(TipsTab[Sys.language].null);
             ShowSysTips(TipsTab[Sys.language].null);
             SetSysWorkStatus(WorkStatus[Sys.language].stop);
@@ -6070,6 +6123,7 @@ function system_info_control_notify(screen, control, value)
             Sys.language = ENG;
             set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);
             set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE);
+            ShowSysCurrentProcess(TipsTab[Sys.language].null);
             ShowSysCurrentAction(TipsTab[Sys.language].null);
             ShowSysAlarm(TipsTab[Sys.language].null);
             SetSysWorkStatus(WorkStatus[Sys.language].stop);
@@ -6534,6 +6588,27 @@ function UpdataDriverBoard()
 
     --关闭文件
     drvFile:close();
+end
+
+--[[-----------------------------------------------------------------------------------------------------------------
+连接TCP服务器
+--------------------------------------------------------------------------------------------------------------------]]
+function server_set_control_notify(screen, control, value)
+    if control == SureButtonId and value == ENABLE then --确认按钮
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
+            local ip = get_text(screen,1);
+            local port = get_text(screen,2);
+            set_network_service_cfg(0, 1, port, ip);--设置网络服务参数
+            change_screen(SYSTEM_INFO_SCREEN);
+        end
+    elseif control == CancelButtonId then --取消按钮
+        change_screen(SYSTEM_INFO_SCREEN);
+    end
+end
+
+--作为客户端, 接受到服务器的数据后, 会调用该函数
+function on_client_recv_data(packet)
+    client_send_data(packet);
 end
 
 

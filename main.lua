@@ -56,6 +56,8 @@ REMOTE_UPDATE_SCREEN = 45;
 PASSWORD_DIALOG_SCREEN = 46;
 PROCESS_COPY_SCREEN = 47;
 SERVER_SET_SCREEN = 48;
+REAGENT_SELECT_SCREEN = 49;
+
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
 PublicTab = {
     [1] = MAIN_SCREEN,
@@ -386,6 +388,10 @@ Sys = {
     controledProcessTypeId,--反控模式设置的流程在ProcessItem表中对应的下标
 
     uploadScreenShootCnt = 0,
+    picFileLen = 0,--用于保存图片数据大小
+    picFileHex = {},--用于保存图片数据
+    picIndex = 0,--在传输数据时用于指示当前发送哪一包图片数据了
+    picTotalPack = 0,--一张图片数据需要分多少个包发送
 }
 
 --工作状态
@@ -530,7 +536,6 @@ ActionStrTab = {};
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
-
     print(_VERSION);
     uart_set_timeout(2000, 500); --设置串口超时, 接收总超时2000ms, 字节间隔超时200ms
     start_timer(0, 100, 1, 0); --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
@@ -538,8 +543,7 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-    
-    
+
     Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
@@ -558,9 +562,9 @@ function on_init()
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     
-    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    -- UsbPath = "";
-    -- on_sd_inserted(SdPath);
+    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    UsbPath = "";
+    on_sd_inserted(SdPath);
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
 end
@@ -661,6 +665,8 @@ end
 --定时器1: 3ms超时中断, 主要用于判断串口数据回复是否超时
 --定时器2: 用于读取E1/E2信号时的超时判断; 用于流程控制中的超时判断
 --定时器3: 调用ShowSysTips显示提示后, 该提示只显示5秒钟
+--定时器4: 在测量电位E1/E2时, 用于定时最小时间与最大时间
+--定时器5: 用于定时上传图片数据
 --***********************************************************************************************
 function on_timer(timer_id)
     if timer_id == 0 then --定时器0,定时时间到
@@ -677,6 +683,23 @@ function on_timer(timer_id)
         ShowSysTips("");
     elseif timer_id == 4 then
         Sys.eWaitTimeFlag = RESET;
+    elseif timer_id == 5 then--每10ms发送一包数据
+        local tcpSendBuf = {};
+        if Sys.picIndex == (Sys.picTotalPack-1) then--最后一包
+            for i = 0, math.fmod( Sys.picFileLen,1000)-1, 1 do
+                tcpSendBuf[i] = Sys.picFileHex[i + Sys.picIndex * 1000];
+            end
+            client_send_data(tcpSendBuf)
+            Sys.picIndex = 0;
+            stop_timer(5);--所有数据都已经发送完成,停止该定时器
+        elseif Sys.picIndex < (Sys.picTotalPack-1) then
+            for i = 0, 999, 1 do
+                tcpSendBuf[i] = Sys.picFileHex[i + Sys.picIndex * 1000];
+            end
+            client_send_data(tcpSendBuf)
+            Sys.picIndex = Sys.picIndex + 1;
+        end
+        
     end
 end
 
@@ -720,27 +743,27 @@ function on_systick()
         local state, process = get_upgrade_state()                    --获取更新状态与进度      
         set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
     end
-
+    
     --定时上传截图
     Sys.uploadScreenShootCnt = Sys.uploadScreenShootCnt + 1;
     if  Sys.uploadScreenShootCnt >= 5 then
         Sys.uploadScreenShootCnt = 0;
         Sys.wifi_connect = get_network_state() --获取网络状态
         if Sys.wifi_connect == 5  then--有无线,且连接上TCP服务器
-            local picFileHex = {[0]=0}
-            screen_shoot("shoot.jpg", 0, 0, 600, 1000, 70)
-            -- local picFile = io.open("shoot.jpg","rb");
-            -- if picFile ~= nil then
-            --     local picFileLen = picFile:seek("end");
-            --     picFile:seek("set")                           --把文件位置定位到开头
-                -- picFileHex = picFile:read(picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
-                -- picFile:close()                              --关闭文本
-                for i=0, 1000, 1 do
-                    picFileHex[i] = math.fmod(i,256);
-                end
-                client_send_data(picFileHex);
-                client_send_data(picFileHex);
-            -- end
+            screen_shoot("shoot.jpg", 0, 0, 600, 1000, 60)
+            local picFile = io.open("shoot.jpg", "rb");--二进制方式打开文件
+            Sys.picFileLen = picFile:seek("end");--获取文件长度
+            Sys.picTotalPack = math.ceil(Sys.picFileLen / 1000);
+            ShowSysTips("截图文件大小:"..Sys.picFileLen..";包个数:"..Sys.picTotalPack);
+            picFile:seek("set")                           --把文件位置定位到开头
+            local picFileStr = picFile:read(Sys.picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
+            picFile:close();
+            --将读取到的数据进行格式转换
+            for i = 1, Sys.picFileLen, 1 do
+                Sys.picFileHex[i-1] = string.byte(picFileStr, i, i)
+            end
+            Sys.picIndex = 0;
+            start_timer(5, 10, 1, 0); --开启定时器5，超时时间 10ms, 1->使用倒计时方式,0->表示无限重复
         end
     end
 end
@@ -6593,6 +6616,7 @@ end
 --[[-----------------------------------------------------------------------------------------------------------------
 连接TCP服务器
 --------------------------------------------------------------------------------------------------------------------]]
+--在服务器设置界面点击确认按钮与取消按钮
 function server_set_control_notify(screen, control, value)
     if control == SureButtonId and value == ENABLE then --确认按钮
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
@@ -6608,7 +6632,7 @@ end
 
 --作为客户端, 接受到服务器的数据后, 会调用该函数
 function on_client_recv_data(packet)
-    client_send_data(packet);
+    -- client_send_data(packet);
 end
 
 

@@ -151,11 +151,11 @@
         <image id="96" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="90" effect_height="40" />
         <image id="97" url="d:\ningjw\2300project\Images\按钮按下.JPG" effect_width="90" effect_height="40" />
         <image id="98" url="d:\ningjw\2300project\Images\按钮.JPG" effect_width="60" effect_height="40" />
-        <image id="99" url="d:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
-        <image id="100" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="311" effect_height="35" />
-        <image id="101" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="229" effect_height="35" />
-        <image id="102" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="110" effect_height="35" />
-        <image id="103" url="d:\ningjw\2300project\Images\Bright2 Button.jpg" effect_width="110" effect_height="35" />
+        <image id="99" url="d:\ningjw\2300project\Images\长输入框.png" effect_width="311" effect_height="35" />
+        <image id="100" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="229" effect_height="35" />
+        <image id="101" url="d:\ningjw\2300project\Images\蓝色图标.jpg" effect_width="110" effect_height="35" />
+        <image id="102" url="d:\ningjw\2300project\Images\Bright2 Button.jpg" effect_width="110" effect_height="35" />
+        <image id="103" url="d:\ningjw\2300project\Images\input.png" effect_width="94" effect_height="35" />
         <image id="104" url="d:\ningjw\2300project\Images\input.png" effect_width="93" effect_height="35" />
         <image id="105" url="d:\ningjw\2300project\Images\input.png" effect_width="105" effect_height="35" />
         <image id="106" url="d:\ningjw\2300project\Images\input.png" effect_width="97" effect_height="35" />

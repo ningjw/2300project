@@ -686,7 +686,7 @@ function on_timer(timer_id)
     elseif timer_id == 5 then--每10ms发送一包数据
         local tcpSendBuf = {};
         if Sys.picIndex == (Sys.picTotalPack-1) then--最后一包
-            for i = 0, math.fmod( Sys.picFileLen,1000)-1, 1 do
+            for i = 0, math.fmod(#Sys.picFileHex, 1000), 1 do
                 tcpSendBuf[i] = Sys.picFileHex[i + Sys.picIndex * 1000];
             end
             client_send_data(tcpSendBuf)
@@ -751,18 +751,34 @@ function on_systick()
         Sys.wifi_connect = get_network_state() --获取网络状态
         if Sys.wifi_connect == 5  then--有无线,且连接上TCP服务器
             screen_shoot("shoot.jpg", 0, 0, 600, 1000, 60)
+            Sys.picFileHex = {};
             local picFile = io.open("shoot.jpg", "rb");--二进制方式打开文件
             Sys.picFileLen = picFile:seek("end");--获取文件长度
-            Sys.picTotalPack = math.ceil(Sys.picFileLen / 1000);
-            ShowSysTips("截图文件大小:"..Sys.picFileLen..";包个数:"..Sys.picTotalPack);
+            
             picFile:seek("set")                           --把文件位置定位到开头
             local picFileStr = picFile:read(Sys.picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
             picFile:close();
-            --将读取到的数据进行格式转换
-            for i = 1, Sys.picFileLen, 1 do
-                Sys.picFileHex[i-1] = string.byte(picFileStr, i, i)
+
+            local code = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6101;PW=123456;MN=3456789ab;Flag=0;CP=&&DataInfo=",
+                   Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
+            local index = string.len(code);
+            for i=1,index,1 do
+                Sys.picFileHex[i-1] = string.byte(code, i, i)
             end
-            Sys.picIndex = 0;
+            
+            for i = 1, Sys.picFileLen, 1 do
+                Sys.picFileHex[index+i-1] = string.byte(picFileStr, i, i)--将读取到的数据进行格式转换
+            end
+            index = string.len(code) + Sys.picFileLen
+            Sys.picFileHex[index] = 0x26
+            Sys.picFileHex[index+1] = 0x26
+            Sys.picFileHex[index+2] = 0xFF
+            Sys.picFileHex[index+3] = 0xFF
+            Sys.picFileHex[index+4] = 0x0D
+            Sys.picFileHex[index+5] = 0x0A
+            
+            Sys.picTotalPack = math.ceil(#Sys.picFileHex / 1000);
+            ShowSysTips("截图数据:"..Sys.picFileLen..";包个数:"..Sys.picTotalPack);
             start_timer(5, 10, 1, 0); --开启定时器5，超时时间 10ms, 1->使用倒计时方式,0->表示无限重复
         end
     end

@@ -8983,13 +8983,10 @@
 
 #define  _BTN_历史记录-运行日志_BUTTON8                                               66
 
-//画面系统信息中按钮Button32按下时的图片
-#define  _IMG_系统信息_BUTTON32_DOWN                                              99
-
 #define  _BTN_系统信息_BUTTON32                                                  119
 
 //画面系统信息中按钮Button31按下时的图片
-#define  _IMG_系统信息_BUTTON31_DOWN                                             100
+#define  _IMG_系统信息_BUTTON31_DOWN                                              99
 
 #define  _BTN_系统信息_BUTTON31                                                  120
 
@@ -9012,10 +9009,10 @@
 #define  _BTN_系统信息_BUTTON10                                                   18
 
 //画面系统信息中按钮Button12弹起时的图片
-#define  _IMG_系统信息_BUTTON12_UP                                               102
+#define  _IMG_系统信息_BUTTON12_UP                                               101
 
 //画面系统信息中按钮Button12按下时的图片
-#define  _IMG_系统信息_BUTTON12_DOWN                                             103
+#define  _IMG_系统信息_BUTTON12_DOWN                                             102
 
 #define  _BTN_系统信息_BUTTON12                                                   14
 
@@ -9036,10 +9033,10 @@
 #define  _BTN_系统信息_BUTTON14                                                   19
 
 //画面系统信息中按钮Button15弹起时的图片
-#define  _IMG_系统信息_BUTTON15_UP                                               102
+#define  _IMG_系统信息_BUTTON15_UP                                               101
 
 //画面系统信息中按钮Button15按下时的图片
-#define  _IMG_系统信息_BUTTON15_DOWN                                             103
+#define  _IMG_系统信息_BUTTON15_DOWN                                             102
 
 #define  _BTN_系统信息_BUTTON15                                                   20
 
@@ -9056,7 +9053,7 @@
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY6                                          6
 
 //画面系统信息中文本显示Text_Display6的背景图片
-#define  _IMG_系统信息_TEXT_DISPLAY6                                              99
+#define  _IMG_系统信息_TEXT_DISPLAY6                                             103
 
 #define  _TXT_DIS__系统信息_TEXT_DISPLAY11                                         7
 
@@ -9200,10 +9197,10 @@
 #define  _BTN_系统信息_BUTTON29                                                   22
 
 //画面系统信息中按钮Button30弹起时的图片
-#define  _IMG_系统信息_BUTTON30_UP                                               102
+#define  _IMG_系统信息_BUTTON30_UP                                               101
 
 //画面系统信息中按钮Button30按下时的图片
-#define  _IMG_系统信息_BUTTON30_DOWN                                             103
+#define  _IMG_系统信息_BUTTON30_DOWN                                             102
 
 #define  _BTN_系统信息_BUTTON30                                                   23
 

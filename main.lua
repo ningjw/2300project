@@ -533,7 +533,16 @@ ActionStrTab = {};
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
 function on_init()
+    local testFile = io.open("B:/test", "r");  --打开并清空该文件
+    if testFile == nil then--如果没有该文件则返回
+        ShowSysTips("读取test文件失败");
+    else
+        ShowSysTips("读取test文件成功");
+    end
     print(_VERSION);
+    for i=0,124,1 do
+        load_image(i,0);
+    end
     uart_set_timeout(2000, 500); --设置串口超时, 接收总超时2000ms, 字节间隔超时200ms
     start_timer(0, 100, 1, 0); --开启定时器 0，超时时间 100ms,1->使用倒计时方式,0->表示无限重复
     for i = 1, MaxAction, 1 do
@@ -789,7 +798,7 @@ function on_systick()
             
             Sys.picTotalPack = math.ceil(#Sys.picFileHex / 1000);
             ShowSysTips("发送截图:"..#Sys.picFileHex..";包个数:"..Sys.picTotalPack);
-            start_timer(5, 15, 1, 0); --开启定时器5，超时时间 15ms, 1->使用倒计时方式,0->表示无限重复
+            start_timer(5, 20, 1, 0); --开启定时器5，超时时间 15ms, 1->使用倒计时方式,0->表示无限重复
         end
     end
 end
@@ -6593,17 +6602,24 @@ function on_client_recv_data(packet)
     if CN == "6200" then
         Sys.remoteControled = true;
         ShowSysTips("开始远程控制")
+        local ret = string.format("##0101QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6200;PW=123456;MN=2410_001;Flag=0;CP=&&ExeRtn=1&&FFFF\r\n",
+                        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
+        local retHex = {};
+        for i=1, string.len(ret), 1 do
+            retHex[i-1] = string.byte(ret, i, i)
+        end
+        client_send_data(retHex);
     elseif CN == "6201" then
         Sys.remoteControled = false;
         ShowSysTips("结束远程控制")
     elseif CN == "6202" then
-        local XPos = tonumber(GetSubString2(packetStr,"XPos=",";"))
-        local YPos = tonumber(GetSubString2(packetStr,"XPos=","&&"))
-        ShowSysTips("鼠标坐标:"..XPos..",".."YPos");
+        local XPos = tonumber(GetSubString2(packetStr,"XPos=",";")) * 600
+        local YPos = tonumber(GetSubString2(packetStr,"YPos=","&&")) * 1000
+        ShowSysTips("XPos="..XPos.."......".."YPos="..YPos);
         if XPos <= 600 and YPos <= 1000 then
-            if get_current_screen == MAIN_SCREEN then
+            -- if get_current_screen == MAIN_SCREEN then
                 change_screen(RUN_CONTROL_SCREEN);
-            end
+            -- end
         end
     end
 end

@@ -152,19 +152,19 @@
 
 #define  _RTC_首页_RTC2                                                        112
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY2                                           20
+#define  _TXT_DIS__首页_TEXT_DISPLAY2                                            1
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY3                                           18
+#define  _TXT_DIS__首页_TEXT_DISPLAY3                                            3
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY4                                           19
+#define  _TXT_DIS__首页_TEXT_DISPLAY4                                            4
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY6                                           17
+#define  _TXT_DIS__首页_TEXT_DISPLAY6                                            2
 
-#define  _PROGRESS_首页_PROGRESS1                                               14
+#define  _PROGRESS_首页_PROGRESS1                                              214
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY11                                          25
+#define  _TXT_DIS__首页_TEXT_DISPLAY11                                           5
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY12                                          26
+#define  _TXT_DIS__首页_TEXT_DISPLAY12                                           6
 
 #define  _TXT_DIS__首页_TEXT_DISPLAY16                                         900
 
@@ -176,13 +176,13 @@
 //画面首页中按钮Button1按下时的图片
 #define  _IMG_首页_BUTTON1_DOWN                                                  1
 
-#define  _BTN_首页_BUTTON1                                                       1
+#define  _BTN_首页_BUTTON1                                                     114
 
-#define  _MENU_首页_MENU1                                                        3
+#define  _MENU_首页_MENU1                                                      113
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY1                                            4
+#define  _TXT_DIS__首页_TEXT_DISPLAY1                                            8
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY5                                            6
+#define  _TXT_DIS__首页_TEXT_DISPLAY5                                            9
 
 #define  _TXT_DIS__首页_TEXT_DISPLAY7                                          901
 
@@ -194,7 +194,7 @@
 
 #define  _TXT_DIS__首页_TEXT_DISPLAY89                                         905
 
-#define  _TXT_DIS__首页_TEXT_DISPLAY14                                          10
+#define  _TXT_DIS__首页_TEXT_DISPLAY14                                           7
 
 #define  _TXT_DIS__首页_TEXT_DISPLAY13                                         906
 
@@ -334,6 +334,8 @@
 
 #define  _BTN_运行控制_BUTTON8                                                   208
 
+#define  _MENU_运行控制_MENU5                                                    207
+
 #define  _TXT_DIS__运行控制_TEXT_DISPLAY7                                        901
 
 #define  _TXT_DIS__运行控制_TEXT_DISPLAY8                                        903
@@ -347,8 +349,6 @@
 #define  _TXT_DIS__运行控制_TEXT_DISPLAY5                                        906
 
 #define  _TXT_DIS__运行控制_TEXT_DISPLAY6                                        907
-
-#define  _MENU_运行控制_MENU5                                                    207
 
 //画面运行控制-周期设置中按钮Button3按下时的图片
 #define  _IMG_运行控制-周期设置_BUTTON3_DOWN                                          15
@@ -1378,20 +1378,6 @@
 
 #define  _BTN_流程设置1_BUTTON60                                                  41
 
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY1                                       906
-
-#define  _TXT_DIS__流程设置1_TEXT_DISPLAY15                                      907
-
 //画面流程设置1中按钮Button1弹起时的图片
 #define  _IMG_流程设置1_BUTTON1_UP                                                14
 
@@ -1455,6 +1441,20 @@
 #define  _IMG_流程设置1_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程设置1_BUTTON8                                                   12
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY1                                       906
+
+#define  _TXT_DIS__流程设置1_TEXT_DISPLAY15                                      907
 
 //画面流程设置2中图片Image2使用的图片
 #define  _IMG_流程设置2_IMAGE2                                                    23
@@ -1804,20 +1804,6 @@
 
 #define  _TXT_DIS__流程设置2_TEXT_DISPLAY19                                      365
 
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY1                                       906
-
-#define  _TXT_DIS__流程设置2_TEXT_DISPLAY15                                      907
-
 //画面流程设置2中按钮Button1弹起时的图片
 #define  _IMG_流程设置2_BUTTON1_UP                                                14
 
@@ -1881,6 +1867,20 @@
 #define  _IMG_流程设置2_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程设置2_BUTTON8                                                   12
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY1                                       906
+
+#define  _TXT_DIS__流程设置2_TEXT_DISPLAY15                                      907
 
 //画面流程编辑1中图片Image1使用的图片
 #define  _IMG_流程编辑1_IMAGE1                                                     2
@@ -2274,20 +2274,6 @@
 
 #define  _BTN_流程编辑1_BUTTON42                                                  19
 
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY31                                      907
-
 //画面流程编辑1中按钮Button1弹起时的图片
 #define  _IMG_流程编辑1_BUTTON1_UP                                                14
 
@@ -2351,6 +2337,20 @@
 #define  _IMG_流程编辑1_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程编辑1_BUTTON8                                                   14
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__流程编辑1_TEXT_DISPLAY31                                      907
 
 //画面流程编辑2中图片Image1使用的图片
 #define  _IMG_流程编辑2_IMAGE1                                                     2
@@ -2750,20 +2750,6 @@
 
 #define  _BTN_流程编辑2_BUTTON42                                                  19
 
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY31                                      907
-
 //画面流程编辑2中按钮Button1弹起时的图片
 #define  _IMG_流程编辑2_BUTTON1_UP                                                14
 
@@ -2827,6 +2813,20 @@
 #define  _IMG_流程编辑2_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程编辑2_BUTTON8                                                   14
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__流程编辑2_TEXT_DISPLAY31                                      907
 
 //画面流程编辑3中图片Image1使用的图片
 #define  _IMG_流程编辑3_IMAGE1                                                     2
@@ -3223,20 +3223,6 @@
 
 #define  _BTN_流程编辑3_BUTTON42                                                  19
 
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY31                                      907
-
 //画面流程编辑3中按钮Button1弹起时的图片
 #define  _IMG_流程编辑3_BUTTON1_UP                                                14
 
@@ -3300,6 +3286,20 @@
 #define  _IMG_流程编辑3_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程编辑3_BUTTON8                                                   14
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__流程编辑3_TEXT_DISPLAY31                                      907
 
 //画面流程编辑4中图片Image1使用的图片
 #define  _IMG_流程编辑4_IMAGE1                                                     2
@@ -3699,20 +3699,6 @@
 
 #define  _BTN_流程编辑4_BUTTON42                                                  19
 
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY31                                      907
-
 //画面流程编辑4中按钮Button1弹起时的图片
 #define  _IMG_流程编辑4_BUTTON1_UP                                                14
 
@@ -3776,6 +3762,20 @@
 #define  _IMG_流程编辑4_BUTTON8_DOWN                                              13
 
 #define  _BTN_流程编辑4_BUTTON8                                                   20
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__流程编辑4_TEXT_DISPLAY31                                      907
 
 //画面流程设置-初始化中按钮Button37弹起时的图片
 #define  _IMG_流程设置-初始化_BUTTON37_UP                                            15
@@ -6327,28 +6327,9 @@
 
 #define  _BTN_量程设置_BUTTON42                                                   50
 
-//画面量程设置中按钮Button61按下时的图片
-#define  _IMG_量程设置_BUTTON61_DOWN                                              62
-
-#define  _BTN_量程设置_BUTTON61                                                  297
-
 #define  _TXT_DIS__量程设置_TEXT_DISPLAY38                                        19
 
 #define  _MENU_量程设置_MENU1                                                     26
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY7                                        901
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY8                                        903
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY9                                        902
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY10                                       904
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY89                                       905
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY30                                       906
-
-#define  _TXT_DIS__量程设置_TEXT_DISPLAY31                                       907
 
 //画面量程设置中按钮Button1弹起时的图片
 #define  _IMG_量程设置_BUTTON1_UP                                                 14
@@ -6413,6 +6394,22 @@
 #define  _IMG_量程设置_BUTTON8_DOWN                                               13
 
 #define  _BTN_量程设置_BUTTON8                                                    34
+
+#define  _BTN_量程设置_BUTTON61                                                  297
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY7                                        901
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY8                                        903
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY9                                        902
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY10                                       904
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY89                                       905
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY13                                       906
+
+#define  _TXT_DIS__量程设置_TEXT_DISPLAY14                                       907
 
 //画面量程选择中按钮Button3弹起时的图片
 #define  _IMG_量程选择_BUTTON3_UP                                                 15
@@ -6718,20 +6715,6 @@
 //画面手动操作1中图片Image1使用的图片
 #define  _IMG_手动操作1_IMAGE1                                                     2
 
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__手动操作1_TEXT_DISPLAY31                                      907
-
 //画面手动操作1中按钮Button1弹起时的图片
 #define  _IMG_手动操作1_BUTTON1_UP                                                14
 
@@ -6849,6 +6832,20 @@
 
 #define  _BTN_手动操作1_BUTTON15                                                  26
 
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY4                                       906
+
+#define  _TXT_DIS__手动操作1_TEXT_DISPLAY5                                       907
+
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY2                                         2
 
 #define  _TXT_DIS__手动操作2_TEXT_DISPLAY5                                         6
@@ -6940,20 +6937,6 @@
 //画面手动操作2中图片Image1使用的图片
 #define  _IMG_手动操作2_IMAGE1                                                     2
 
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__手动操作2_TEXT_DISPLAY31                                      907
-
 //画面手动操作2中按钮Button1弹起时的图片
 #define  _IMG_手动操作2_BUTTON1_UP                                                14
 
@@ -7030,6 +7013,20 @@
 #define  _IMG_手动操作2_BUTTON24_DOWN                                             80
 
 #define  _BTN_手动操作2_BUTTON24                                                  72
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY4                                       906
+
+#define  _TXT_DIS__手动操作2_TEXT_DISPLAY12                                      907
 
 #define  _RTC_手动操作3_RTC1                                                     224
 
@@ -7197,20 +7194,6 @@
 
 #define  _BTN_手动操作3_BUTTON9                                                   45
 
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__手动操作3_TEXT_DISPLAY31                                      907
-
 //画面手动操作3中按钮Button1弹起时的图片
 #define  _IMG_手动操作3_BUTTON1_UP                                                14
 
@@ -7363,6 +7346,20 @@
 
 #define  _BTN_手动操作3_BUTTON16                                                 205
 
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__手动操作3_TEXT_DISPLAY31                                      907
+
 #define  _RECORD_手动操作4_RECORD1                                                 1
 
 #define  _RTC_手动操作4_RTC1                                                     224
@@ -7405,20 +7402,6 @@
 
 //画面手动操作4中图片Image1使用的图片
 #define  _IMG_手动操作4_IMAGE1                                                     2
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY7                                       901
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY8                                       903
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY9                                       902
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY10                                      904
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY89                                      905
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY30                                      906
-
-#define  _TXT_DIS__手动操作4_TEXT_DISPLAY31                                      907
 
 //画面手动操作4中按钮Button1弹起时的图片
 #define  _IMG_手动操作4_BUTTON1_UP                                                14
@@ -7483,6 +7466,20 @@
 #define  _IMG_手动操作4_BUTTON8_DOWN                                              13
 
 #define  _BTN_手动操作4_BUTTON8                                                   66
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY7                                       901
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY8                                       903
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY9                                       902
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY10                                      904
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY89                                      905
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY30                                      906
+
+#define  _TXT_DIS__手动操作4_TEXT_DISPLAY31                                      907
 
 #define  _RTC_输入输出_RTC1                                                      111
 
@@ -7595,20 +7592,6 @@
 
 #define  _BTN_输入输出_BUTTON12                                                   28
 
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY7                                        901
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY8                                        903
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY9                                        902
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY10                                       904
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY89                                       905
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY30                                       906
-
-#define  _TXT_DIS__输入输出_TEXT_DISPLAY31                                       907
-
 //画面输入输出中按钮Button1弹起时的图片
 #define  _IMG_输入输出_BUTTON1_UP                                                 14
 
@@ -7693,6 +7676,20 @@
 #define  _IMG_输入输出_BUTTON18_DOWN                                              87
 
 #define  _BTN_输入输出_BUTTON18                                                   38
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY7                                        901
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY8                                        903
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY9                                        902
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY10                                       904
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY89                                       905
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY30                                       906
+
+#define  _TXT_DIS__输入输出_TEXT_DISPLAY31                                       907
 
 #define  _RECORD_历史记录-分析记录_RECORD1                                            32
 
@@ -7782,20 +7779,6 @@
 
 #define  _BTN_历史记录-分析记录_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY31                                  907
-
 //画面历史记录-分析记录中按钮Button1弹起时的图片
 #define  _IMG_历史记录-分析记录_BUTTON1_UP                                            14
 
@@ -7859,6 +7842,20 @@
 #define  _IMG_历史记录-分析记录_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-分析记录_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-分析记录_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-核查记录_RECORD1                                            32
 
@@ -7966,20 +7963,6 @@
 
 #define  _BTN_历史记录-核查记录_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY31                                  907
-
 //画面历史记录-核查记录中按钮Button1弹起时的图片
 #define  _IMG_历史记录-核查记录_BUTTON1_UP                                            14
 
@@ -8043,6 +8026,20 @@
 #define  _IMG_历史记录-核查记录_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-核查记录_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-核查记录_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-校准记录_RECORD1                                            32
 
@@ -8150,20 +8147,6 @@
 
 #define  _BTN_历史记录-校准记录_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY31                                  907
-
 //画面历史记录-校准记录中按钮Button1弹起时的图片
 #define  _IMG_历史记录-校准记录_BUTTON1_UP                                            14
 
@@ -8227,6 +8210,20 @@
 #define  _IMG_历史记录-校准记录_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-校准记录_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-校准记录_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-加标回收_RECORD1                                            32
 
@@ -8322,20 +8319,6 @@
 
 #define  _BTN_历史记录-加标回收_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY31                                  907
-
 //画面历史记录-加标回收中按钮Button1弹起时的图片
 #define  _IMG_历史记录-加标回收_BUTTON1_UP                                            14
 
@@ -8399,6 +8382,20 @@
 #define  _IMG_历史记录-加标回收_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-加标回收_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-加标回收_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-线性核查_RECORD1                                            32
 
@@ -8503,20 +8500,6 @@
 
 #define  _BTN_历史记录-线性核查_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY31                                  907
-
 //画面历史记录-线性核查中按钮Button1弹起时的图片
 #define  _IMG_历史记录-线性核查_BUTTON1_UP                                            14
 
@@ -8580,6 +8563,20 @@
 #define  _IMG_历史记录-线性核查_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-线性核查_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-线性核查_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-报警记录_RECORD1                                            32
 
@@ -8687,20 +8684,6 @@
 
 #define  _BTN_历史记录-报警记录_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY31                                  907
-
 //画面历史记录-报警记录中按钮Button1弹起时的图片
 #define  _IMG_历史记录-报警记录_BUTTON1_UP                                            14
 
@@ -8764,6 +8747,20 @@
 #define  _IMG_历史记录-报警记录_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-报警记录_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-报警记录_TEXT_DISPLAY31                                  907
 
 #define  _RECORD_历史记录-运行日志_RECORD1                                            32
 
@@ -8871,20 +8868,6 @@
 
 #define  _BTN_历史记录-运行日志_BUTTON21                                              14
 
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY7                                   901
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY8                                   903
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY9                                   902
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY10                                  904
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY89                                  905
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY30                                  906
-
-#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY31                                  907
-
 //画面历史记录-运行日志中按钮Button1弹起时的图片
 #define  _IMG_历史记录-运行日志_BUTTON1_UP                                            14
 
@@ -8948,6 +8931,20 @@
 #define  _IMG_历史记录-运行日志_BUTTON8_DOWN                                          13
 
 #define  _BTN_历史记录-运行日志_BUTTON8                                               66
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY7                                   901
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY8                                   903
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY9                                   902
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY10                                  904
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY89                                  905
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY30                                  906
+
+#define  _TXT_DIS__历史记录-运行日志_TEXT_DISPLAY31                                  907
 
 #define  _BTN_系统信息_BUTTON32                                                  119
 
@@ -9175,20 +9172,6 @@
 
 #define  _RECORD_系统信息_RECORD5                                                 25
 
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY7                                        901
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY8                                        903
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY9                                        902
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY10                                       904
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY89                                       905
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY30                                       906
-
-#define  _TXT_DIS__系统信息_TEXT_DISPLAY31                                       907
-
 //画面系统信息中按钮Button1弹起时的图片
 #define  _IMG_系统信息_BUTTON1_UP                                                 14
 
@@ -9262,6 +9245,20 @@
 #define  _BTN_系统信息_BUTTON33                                                   30
 
 #define  _RECORD_系统信息_RECORD1                                                 26
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY7                                        901
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY8                                        903
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY9                                        902
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY10                                       904
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY89                                       905
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY30                                       906
+
+#define  _TXT_DIS__系统信息_TEXT_DISPLAY31                                       907
 
 //画面密码设置中按钮Button3弹起时的图片
 #define  _IMG_密码设置_BUTTON3_UP                                                 15

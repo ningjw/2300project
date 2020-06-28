@@ -403,6 +403,8 @@ Sys = {
     picIndex = 0,--在传输数据时用于指示当前发送哪一包图片数据了
     picTotalPack = 0,--一张图片数据需要分多少个包发送
     remoteControled = false,
+
+    timeCntOfIdle = 0,
 }
 
 --工作状态
@@ -561,11 +563,11 @@ function on_init()
     
     record_control_check();--检测历史记录空间中保存的参数
     
-    SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员(调试时使用的代码)
+    SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     
-    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
-    on_sd_inserted(SdPath);
+    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    -- on_sd_inserted(SdPath);
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
 end
@@ -664,67 +666,30 @@ function record_control_check()
         Sys.lastInfo[lastStatus] = CHN --系统状态
         saveLastInfo()
 
-        for i=1,8,1 do--运行控制界面信息
-            Sys.runCtrlInfo[i] = get_text(RUN_CONTROL_SCREEN, i)
-        end
         saveRunCtrlInfo()
 
         --运行控制-周期设置界面
-        for i=1,7,1 do
-            Sys.runCtrlPeriodInfo[i] = get_value(RUN_CONTROL_PERIOD_SCREEN, i)
-        end
-        for i=8,35,1 do
-            Sys.runCtrlPeriodInfo[i] = get_text(RUN_CONTROL_PERIOD_SCREEN, i)
-        end
         saveRunCtrlPeriodInfo()
 
         --运行控制-手动设置界面
-        for i=1,6,1 do
-            Sys.runCtrlHandInfo[i] = get_text(RUN_CONTROL_HAND_SCREEN, i)
-        end
         saveRunCtrlHandInfo()
 
         --运行控制-定时设置界面
-        for i=1,24,1 do
-            Sys.runCtrlTimedInfo[i] = get_text(RUN_CONTROL_TIMED_SCREEN, i)
-        end
         saveRunCtrlTimedInfo()
 
         --流程设置界面参数
-        for i = 1, 12, 1 do
-            Sys.processTypeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)  --流程类型选择
-            Sys.processNameInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)  --流程名称
-            Sys.processRangeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)--流程量程
-        end
-        for i = 13, 24, 1 do
-            Sys.processTypeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) --流程类型选择
-            Sys.processNameInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId) --流程名称
-            Sys.processRangeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)--流程量程
-        end
         saveProcessSetInfo();
 
         --量程设置界面参数
-        for i=1,19,1 do
-            Sys.rangeSetInfo[i] = get_text(RANGE_SET_SCREEN, i)
-        end
         saveRangeSetInfo();
 
         --手动设置2界面参数
-        for i=1,10,1 do
-            Sys.handOperation2Info[i] = get_text(HAND_OPERATE2_SCREEN, i)
-        end
         saveHandOperation2Info();
 
         --手动设置3
-        for i=1,30,1 do
-            Sys.handOperation3Info[i] = get_text(HAND_OPERATE3_SCREEN, i)
-        end
         saveHandOperation3Info();
 
         --输入输出
-        for i=1,12,1 do
-            Sys.inOutInfo[i] = get_text(IN_OUT_SCREEN, i)
-        end
         saveInOutInfo();
     end
     
@@ -874,6 +839,11 @@ function on_systick()
     ModeBus[0x1081] = dayHour--日时
     ModeBus[0x1082] = minSec--分秒
     
+    Sys.timeCntOfIdle = Sys.timeCntOfIdle + 1;
+    if Sys.timeCntOfIdle > 3600 then--
+        SetSysUser(SysUser[Sys.language].operator); --一小时后,自动切换为操作员
+    end
+
     if Sys.status == WorkStatus[Sys.language].readyRun then           --当系统处于待机状态时,
         process_ready_run(processId);
     end
@@ -1082,7 +1052,7 @@ function on_sd_inserted(dir)
     checkHistoryFile();--检测并创建空的历史记录文件
     
     --初始化Modebus寄存器
-    modebus_regester_init();
+    -- modebus_regester_init();
     
     ShowSysTips(TipsTab[Sys.language].insertSd .. SdPath);
 end
@@ -1737,25 +1707,21 @@ function ComputerControl(package)
                         local freq = package[9] * 256 + package[10];
                         set_text(RUN_CONTROL_PERIOD_SCREEN,9,freq)
                         ModeBus[0x1089] = freq
-                        Sys.runCtrlPeriodInfo[9] = freq;
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x10 then--设置零点核查频次
                         local freq = package[9] * 256 + package[10];
                         sget_text(RUN_CONTROL_PERIOD_SCREEN,16,freq)
                         ModeBus[0x108A] = freq
-                        Sys.runCtrlPeriodInfo[16] = freq;
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x11 then--设置量程核查频次
                         local freq = package[9] * 256 + package[10];
                         get_text(RUN_CONTROL_PERIOD_SCREEN,14,freq)
                         ModeBus[0x108B] = freq
-                        Sys.runCtrlPeriodInfo[14] = freq;
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x12 then--设置标样核查频次
                         local freq = package[9] * 256 + package[10];
                         get_text(RUN_CONTROL_PERIOD_SCREEN,18,freq)
                         ModeBus[0x108C] = freq--标样核查频率
-                        Sys.runCtrlPeriodInfo[18] = freq;
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x13 then--启动标定(校准)
                         Sys.controledProcessTypeId = 2;
@@ -1905,15 +1871,19 @@ end
 
 --[[首页------------------------------------------------------------------------------------------------------------]]
 
-LastAnalysisTimeId = 20;   --分析时间
-LastAnalyteId = 17;        --分析物
-LastResultId = 18; --分析结果
-LastResultUnitId = 19;   --单位
-LastResultE1Id = 25;     --E1
-LastResultE2Id = 26;     --E2
--- NextProcessTimeTextId = 2  --下次启动时间
-ProgressBarId = 14--进度条，范围0-100
-DispelTempId = 10;
+LastAnalysisTimeId = 1;   --分析时间
+LastAnalyteId = 2;        --分析物
+LastResultId = 3; --分析结果
+LastResultUnitId = 4;   --单位
+LastResultE1Id = 5;     --E1
+LastResultE2Id = 6;     --E2
+DispelTempId = 7;
+StartTimeId = 8;
+NextStartTimeId = 9;
+
+ProgressBarId = 214--进度条，范围0-100
+StopSystemDialogMenuId = 113;
+
 SysWorkStatusId = 901;   --工作状态
 SysCurrentProcessId = 902;--当前动作
 SysUserNameId = 903      --显示用户
@@ -1921,10 +1891,6 @@ SysAlarmId = 904;        --显示当前告警信息
 SysTipsId = 905;         --界面底部用于显示提示信息的文本id
 SysRunModeId = 906;      --界面底部用于显示当前模式的文本id
 SysCurrentActionId = 907;--界面底部用于显示当前动作的文本id
-
-StopSystemDialogMenuId = 3;
-StartTimeId = 4;
-NextStartTimeId = 6;
 
 function main_control_notify(screen, control, value)
     if control == StopSystemDialogMenuId and value == ENABLE then
@@ -2074,8 +2040,6 @@ DecimalTextId = 8;--小数位数设置
 RunTypeMenuId = 243;--运行方式菜单
 RunStopBtId = 229;--运行状态切换按钮"初始化""停止"按钮
 RunModeSetBtId = 25; --运行模式设置按钮
-RUNCTRL_TextSid = 1;
-RUNCTRL_TextEid = 8;
 
 --***********************************************************************************************
 --用户通过触摸修改控件后，执行此回调函数。
@@ -2120,7 +2084,7 @@ function run_control_notify(screen, control, value)
         set_text(MAIN_SCREEN, LastAnalyteId, get_text(RUN_CONTROL_SCREEN, control));
         Sys.runCtrlInfo[2] = get_text(RUN_CONTROL_SCREEN, 2);
     elseif control == CodeSetId then --因子编码
-        local code = tonumber(value);
+        local code = tonumber(get_text(screen,3));
         Sys.runCtrlInfo[3] = code;
         ModeBus[0x1000] = right_shift(code,16);
         ModeBus[0x1001] = math.fmod(code, 65536);
@@ -2964,7 +2928,7 @@ function run_control_period_notify(screen, control, value)
         change_screen(RUN_CONTROL_SCREEN);
     elseif control >= RUNCTRL_PEROID_TextSid+100 and control <= RUNCTRL_PEROID_TextEid+100 then
         process_name_select_set(screen, control-100);
-    elseif control == 9 then
+    elseif control == 9 then--水样分析频率
         ModeBus[0x1085] = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,9))
     end
 end
@@ -5589,6 +5553,7 @@ function hand_set_led_current()
     elseif Sys.processStep == 3 then--第三步:结束
         ShowSysCurrentAction(TipsTab[Sys.language].null);
         Sys.processStep = 1;
+        saveHandOperation2Info();
         Sys.hand_control_func = nil;
     end
 end
@@ -6257,7 +6222,6 @@ function system_info_control_notify(screen, control, value)
             ShowSysCurrentAction(TipsTab[Sys.language].null);
             ShowSysTips(TipsTab[Sys.language].null);
             SetSysWorkStatus(WorkStatus[Sys.language].stop);
-
             if Sys.userName == SysUser[ENG].maintainer then
                 SetSysUser(SysUser[CHN].maintainer);
             else
@@ -6785,6 +6749,7 @@ function changeCfgFileLanguage(language)
     elseif Sys.runCtrlInfo[1] == WorkType[srcLanguage].timed then--定时
         Sys.runCtrlInfo[1] = WorkType[destLanguage].timed;
     end
+    ShowSysCurrentMode(Sys.runCtrlInfo[1]);
     --离线模式开关
     if Sys.runCtrlInfo[4] == OnOffStatus[srcLanguage].open then
         Sys.runCtrlInfo[4] = OnOffStatus[srcLanguage].open
@@ -7324,6 +7289,11 @@ end
 --  保存运行控制界面参数
 --***********************************************************************************************
 function saveRunCtrlInfo()
+
+    for i=1,8,1 do--运行控制界面信息
+        Sys.runCtrlInfo[i] = get_text(RUN_CONTROL_SCREEN, i)
+    end
+
     local record = "";
     for i=1, #Sys.runCtrlInfo, 1 do
         record = record..Sys.runCtrlInfo[i]..","
@@ -7336,6 +7306,12 @@ end
 --  保存运行控制-周期设置参数
 --***********************************************************************************************
 function saveRunCtrlPeriodInfo()
+    for i=1,7,1 do
+        Sys.runCtrlPeriodInfo[i] = get_value(RUN_CONTROL_PERIOD_SCREEN, i)
+    end
+    for i=8,35,1 do
+        Sys.runCtrlPeriodInfo[i] = get_text(RUN_CONTROL_PERIOD_SCREEN, i)
+    end
     local record = "";
     for i=1, #Sys.runCtrlPeriodInfo, 1 do
         record = record..Sys.runCtrlPeriodInfo[i]..","
@@ -7347,6 +7323,10 @@ end
 --  保存运行控制-手动设置参数
 --***********************************************************************************************
 function saveRunCtrlHandInfo()
+    for i=1,6,1 do
+        Sys.runCtrlHandInfo[i] = get_text(RUN_CONTROL_HAND_SCREEN, i)
+    end
+
     local record = "";
     for i=1, #Sys.runCtrlHandInfo, 1 do
         record = record..Sys.runCtrlHandInfo[i]..","
@@ -7358,6 +7338,9 @@ end
 --  保存运行控制-定时设置参数
 --***********************************************************************************************
 function saveRunCtrlTimedInfo()
+    for i=1,24,1 do
+        Sys.runCtrlTimedInfo[i] = get_text(RUN_CONTROL_TIMED_SCREEN, i)
+    end
     local record = "";
     for i=1, #Sys.runCtrlTimedInfo, 1 do
         record = record..Sys.runCtrlTimedInfo[i]..","
@@ -7369,6 +7352,17 @@ end
 --  保存流程设置1/2参数
 --***********************************************************************************************
 function saveProcessSetInfo()
+    for i = 1, 12, 1 do
+        Sys.processTypeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)  --流程类型选择
+        Sys.processNameInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)  --流程名称
+        Sys.processRangeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)--流程量程
+    end
+    for i = 13, 24, 1 do
+        Sys.processTypeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) --流程类型选择
+        Sys.processNameInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId) --流程名称
+        Sys.processRangeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)--流程量程
+    end
+
     local type = ""
     local name = ""
     local range = ""
@@ -7387,6 +7381,10 @@ end
 --  保存量程设置参数
 --***********************************************************************************************
 function saveRangeSetInfo()
+    for i=1,19,1 do
+        Sys.rangeSetInfo[i] = get_text(RANGE_SET_SCREEN, i)
+    end
+
     local record = ""
     --量程设置界面参数
     for i=1,19,1 do
@@ -7400,6 +7398,9 @@ end
 --  保存手动操作2界面参数
 --***********************************************************************************************
 function saveHandOperation2Info()
+    for i=1,10,1 do
+        Sys.handOperation2Info[i] = get_text(HAND_OPERATE2_SCREEN, i)
+    end
     local record = ""
     --量程设置界面参数
     for i=1,10,1 do
@@ -7413,6 +7414,9 @@ end
 --  保存手动操作3界面参数
 --***********************************************************************************************
 function saveHandOperation3Info()
+    for i=1,30,1 do
+        Sys.handOperation3Info[i] = get_text(HAND_OPERATE3_SCREEN, i)
+    end
     local record = ""
     --量程设置界面参数
     for i=1,30,1 do
@@ -7425,6 +7429,10 @@ end
 --  保存输入输出界面参数
 --***********************************************************************************************
 function saveInOutInfo()
+    for i=1,12,1 do
+        Sys.inOutInfo[i] = get_text(IN_OUT_SCREEN, i)
+    end
+
     local record = ""
     --量程设置界面参数
     for i=1,12,1 do

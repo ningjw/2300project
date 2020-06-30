@@ -4175,6 +4175,8 @@
 
 #define  _BTN_流程设置-注射泵_BUTTON12                                              142
 
+#define  _BTN_流程设置-注射泵_BUTTON13                                              130
+
 #define  _BTN_流程设置-注射泵加液_BUTTON16                                             17
 
 //画面流程设置-注射泵加液中按钮Button15弹起时的图片

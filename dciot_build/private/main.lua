@@ -134,6 +134,7 @@ NEED_REPLY = 1;--串口数据需要回复
 
 CHK_RUN = 1;--检测权限时,只检测是否运行
 CHK_RUN_USER = 2;--检测权限时,除了需要检测是否在运行中, 还需要检测用户是否为管理员或者运维员
+CHK_USER = 3;--检测权限时,只检测用户权限
 
 --processIdType:
 processId = 0;
@@ -145,14 +146,6 @@ linearProcessId = 4;
 --stopType
 stopByNormal = 0;
 stopByClickButton = 1;
-
-Direction = {
-    [CHN] = { FWD = "正转", REV = "反转" },
-    [ENG] = { FWD = "CW", REV = "CCW" },
-}
-
-
-
 
 --提示信息
 TipsTab = {
@@ -367,7 +360,7 @@ Sys = {
     ReadyToReadConfigFile = false, --导入配置文件后,不能第一时间读取,需要过一段时间,该变量用于指示配置文件已经导入,可以延时读取了
 
     info = {},--用于记录密码,一起序列号,一起型号等系统信息
-    lastInfo = {},--用于记录上次结果,在开机的时候进行显示
+    mainScreenInfo = {},--用于记录上次结果,在开机的时候进行显示
     wifiInfo = {},--用于记录wifi名,wifi密码,TCP服务器地址,TCP服务器端口
     runCtrlInfo = {},--用于记录运行控制界面的信息
     runCtrlPeriodInfo = {},
@@ -380,6 +373,7 @@ Sys = {
     handOperation2Info = {},
     handOperation3Info = {},
     inOutInfo = {},
+    statusInfo = {},
     suddenPwrOff = false,--该变量用于判断是否需要运行"运行控制"界面中的"异常断电"流程
 
     recoveryM1 = 0,--加标回收第一次结果
@@ -566,7 +560,7 @@ function on_init()
     SetSysUser(SysUser[Sys.language].maintainer);     --开机之后默认为运维员
     --   SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
     
-    -- SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
+    SdPath = "";--这里复一个空字符串,是为了在电脑端调试时不报SdPath为nil的错误
     -- on_sd_inserted(SdPath);
     -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
     -- Sys.hand_control_func = UpdataDriverBoard;--开机读取升级文件(调试时使用的代码)
@@ -579,10 +573,10 @@ end
 --***********************************************************************************************
 function setTextToBlankSpace()
     for i = 1, 12, 1 do
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, BLANK_SPACE);
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, BLANK_SPACE);
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i + 12].typeId, BLANK_SPACE);
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i + 12].nameId, BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId, BLANK_SPACE);
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId, BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].typeId, BLANK_SPACE);
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].nameId, BLANK_SPACE);
         set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, BLANK_SPACE);
         set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, BLANK_SPACE);
         set_text(PROCESS_EDIT2_SCREEN, TabAction[i + 12].typeId, BLANK_SPACE);
@@ -645,7 +639,7 @@ function record_control_check()
         set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);                          
         set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE);                           
     end
-
+    
     ----------------------------------------------------------------------------
     Sys.wifiInfo = split(record_read(SYSTEM_INFO_SCREEN,SysPrivateInfoRId , 1) , ",")
     set_text(WIFI_CONNECT_SCREEN, 1, Sys.wifiInfo[1]);--wifi名称
@@ -659,46 +653,26 @@ function record_control_check()
         for i=1,20,1 do
             record_add(SYSTEM_INFO_SCREEN, SysPublicInfoRId, "");
         end
-        Sys.lastInfo[lastTime] = "0000-00-00  00:00"--时间
-        Sys.lastInfo[lastResult] = "0.0"--结果
-        Sys.lastInfo[lastE1] = "0.0"--E1
-        Sys.lastInfo[lastE2] = "0.0"--E2
-        Sys.lastInfo[lastStatus] = CHN --系统状态
-        saveLastInfo()
 
-        saveRunCtrlInfo()
-
-        --运行控制-周期设置界面
-        saveRunCtrlPeriodInfo()
-
-        --运行控制-手动设置界面
-        saveRunCtrlHandInfo()
-
-        --运行控制-定时设置界面
-        saveRunCtrlTimedInfo()
-
-        --流程设置界面参数
-        saveProcessSetInfo();
-
-        --量程设置界面参数
-        saveRangeSetInfo();
-
-        --手动设置2界面参数
-        saveHandOperation2Info();
-
-        --手动设置3
-        saveHandOperation3Info();
-
-        --输入输出
-        saveInOutInfo();
+        saveMainScreenInfo()--首页
+        saveRunCtrlInfo()--运行控制
+        saveRunCtrlPeriodInfo()--运行控制-周期设置界面
+        saveRunCtrlHandInfo()--运行控制-手动设置界面
+        saveRunCtrlTimedInfo()--运行控制-定时设置界面
+        saveProcessSetInfo();--流程设置界面参数
+        saveRangeSetInfo();--量程设置界面参数
+        saveHandOperation2Info();--手动设置2界面参数
+        saveHandOperation3Info();--手动设置3
+        saveInOutInfo();--输入输出
+        saveStatusInfo();--状态
     end
     
     ----------------------------------------------------------------------------
-    Sys.lastInfo = split(record_read(SYSTEM_INFO_SCREEN, SysPublicInfoRId , 0) , ",")
-    set_text(MAIN_SCREEN, LastAnalysisTimeId, Sys.lastInfo[lastTime]);--显示时间
-    set_text(MAIN_SCREEN, LastResultId, Sys.lastInfo[lastResult]);--显示结果
-    set_text(MAIN_SCREEN, LastResultE1Id, Sys.lastInfo[lastE1]);--显示E1
-    set_text(MAIN_SCREEN, LastResultE2Id, Sys.lastInfo[lastE2]);--显示E2
+    Sys.mainScreenInfo = split(record_read(SYSTEM_INFO_SCREEN, SysPublicInfoRId , 0) , ",")
+    set_text(MAIN_SCREEN, LastAnalysisTimeId, Sys.mainScreenInfo[lastTime]);--显示时间
+    set_text(MAIN_SCREEN, LastResultId, Sys.mainScreenInfo[lastResult]);--显示结果
+    set_text(MAIN_SCREEN, LastResultE1Id, Sys.mainScreenInfo[lastE1]);--显示E1
+    set_text(MAIN_SCREEN, LastResultE2Id, Sys.mainScreenInfo[lastE2]);--显示E2
 
     --在显示运行控制界面的信息----------------------------------------------------------
     Sys.runCtrlInfo = split(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 1) , ",")
@@ -732,14 +706,14 @@ function record_control_check()
     Sys.processNameInfo = split(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 6) , ",")
     Sys.processRangeInfo = split(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 7) , ",")
     for i = 1, 12, 1 do
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
     end
     for i = 13, 24, 1 do
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
     end
 
     --量程设置
@@ -763,6 +737,9 @@ function record_control_check()
     for i=1,12,1 do
         set_text(IN_OUT_SCREEN, i, Sys.inOutInfo[i])
     end
+
+    --读取断电前的状态信息
+    Sys.statusInfo = split(record_read(SYSTEM_INFO_SCREEN, SysPublicInfoRId , 12) , ",")
 
     --反控模式下,隐藏开始按钮
     if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
@@ -999,6 +976,8 @@ function on_control_notify(screen, control, value)
         process_copy_control_notify(screen, control, value);
     elseif screen == SERVER_SET_SCREEN then--服务器设置
         server_set_control_notify(screen, control, value);
+    elseif screen == REAGENT_SELECT_SCREEN then
+        reagent_select_control_notify(screen, control, value);
     end
 
 end
@@ -1022,8 +1001,10 @@ function on_screen_change(screen)
         goto_WifiConnect();
     elseif screen == PASSWORD_DIALOG_SCREEN then --密码对话框
         goto_dialog_screen();
-    elseif screen == RUN_CONTROL_PERIOD_SCREEN then --跳转到周期设置界面
+    elseif screen == RUN_CONTROL_PERIOD_SCREEN then--跳转到周期设置界面
         goto_period_mode_set_screen();
+    elseif screen == REAGENT_SELECT_SCREEN then--跳转到试剂选择按钮
+        goto_ReagentSelect();
     end
 end
 
@@ -1050,7 +1031,7 @@ end
 function on_sd_inserted(dir)
     SdPath = dir;--保存SD卡的路径
     checkHistoryFile();--检测并创建空的历史记录文件
-    
+
     --初始化Modebus寄存器
     modebus_regester_init();
     
@@ -1064,7 +1045,6 @@ function on_sd_removed()
     ShowSysTips(TipsTab[Sys.language].pullOutSd..SdPath);
     SdPath = nil;
 end
-
 
 --[[系统初始化函数------------------------------------------------------------------------------------]]
 
@@ -1149,17 +1129,26 @@ function sys_init()
         Sys.processStep = 1;
         Sys.hand_control_func = nil;
 
-        if Sys.lastInfo[lastStatus] == WorkStatus[Sys.language].run and --上次断电时为运行状态
-           getProcessIdByName(get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId)) ~= 0 then --设置了异常断电流程
-            Sys.suddenPwrOff = true;
-            ShowSysTips("执行异常断电流程");
+        --上次断电时为运行状态且设置为异常断电后执行排空清洗函数
+        if Sys.statusInfo[1] == WorkStatus[Sys.language].run and 
+           get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId) == SuddenPowerOff[Sys.language].clean then 
+                Sys.suddenPwrOff = true;
+                ShowSysTips("执行异常断电流程");
+                SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+        --上次断电时为        
+        elseif Sys.statusInfo[1] ~= WorkStatus[Sys.language].stop and
+               get_text(RUN_CONTROL_SCREEN,SuddenPwrOffProcessId) == SuddenPowerOff[Sys.language].recovery then
             SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
+            
         end
     end
 end
 
 --[[ModeBus寄存器设置----------------------------------------------------------------------------------]]
 
+--***********************************************************************************************
+--初始化ModeBus寄存器区域
+--***********************************************************************************************
 --***********************************************************************************************
 --初始化ModeBus寄存器区域
 --***********************************************************************************************
@@ -1237,22 +1226,10 @@ function modebus_regester_init()
 end
 
 --***********************************************************************************************
---保存ModeBus文件
---***********************************************************************************************
-function SaveModeBusToFile()
-    local file = io.open(SdPath .. "record/ModeBus", "w+");--打开并清空该文件
-    --将ModeBus的测量数据区/状态告警区/关键参数区保持到ModeBus文件当中
-    for i = 0x1000, 0x10FF, 1 do
-        file:write(ModeBus[i]);
-        file:write(",")
-    end
-    file:close();
-end
-
---***********************************************************************************************
 --设置测量数据区
 --***********************************************************************************************
 function SetModebusResultArea()
+
     local hexResult = FloatToHex(Sys.result);
     local value,yearMon,dayHour,minSec;
     yearMon = Decimal_BCD(Sys.dateTime.year%100) *256 + Decimal_BCD(Sys.dateTime.mon)
@@ -1328,7 +1305,6 @@ function SetModebusResultArea()
     value = Sys.absorbancy;
     ModeBus[0x10C6] = math.fmod(value, 65536);--吸光度
     ModeBus[0x10C7] = math.modf(value/65536);--吸光度
-    SaveModeBusToFile()
 end
 
 --***********************************************************************************************
@@ -1366,7 +1342,6 @@ end
 function setModebusRunMode()
     if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then
         ModeBus[0x1084] = 1;
-        
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
         ModeBus[0x1084] = 2;
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then
@@ -1374,9 +1349,20 @@ function setModebusRunMode()
     elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].controlled then
         ModeBus[0x1084] = 4;
     end
-    SaveModeBusToFile()
 end
 
+--***********************************************************************************************
+--设置当前日期/时间寄存器
+--***********************************************************************************************
+function setModebusDateTime()
+    local value,yearMon,dayHour,minSec;
+    yearMon = Decimal_BCD(Sys.dateTime.year%100) *256 + Decimal_BCD(Sys.dateTime.mon)
+    dayHour = Decimal_BCD(Sys.dateTime.day) * 256 + Decimal_BCD(Sys.dateTime.hour)
+    minSec  = Decimal_BCD(Sys.dateTime.min) * 256 + Decimal_BCD(Sys.dateTime.sec)
+    ModeBus[0x1080] = yearMon--年月
+    ModeBus[0x1081] = dayHour--日时
+    ModeBus[0x1082] = minSec--分秒
+end
 
 --[[串口收发-------------------------------------------------------------------------------------------------------]]
 
@@ -1564,17 +1550,22 @@ function ComputerControl(package)
     replayData[1] = package[1];--功能码
     if crcL == package[#package-1] and crcH == package[#package] then
         --判断第1个字节(读或写)
-        if package[1] == 3 then----读单个寄存器地址
+        if package[1] == 3 then----读寄存器地址
             local register = package[2] * 256 + package[3]--寄存器地址
             local number   = package[4] * 256 + package[5]--寄存器个数
             
+            SetModebusSysStatus();--设置Modebus系统状态区
+            setModebusRunMode();--设置Modebus运行模式区
+            setModebusDateTime();--设置日期时间寄存器
+
+
             replayData[2] = number * 2;
             for i = register, register+number-1, 1 do
                 replayData[#replayData +1] = math.modf( ModeBus[i]/256)
                 replayData[#replayData +1] = math.fmod(ModeBus[i],256)
             end
             print("register="..string.format("0x%02X",register))
-        elseif package[1] == 6 then--写单个寄存器地址
+        elseif package[1] == 6 then--写寄存器地址
             -- if package[3] == 4 then--开始分析
             --     SetSysWorkStatus(WorkStatus[Sys.language].readyRun);--设置为待机状态
             --     process_ready_run(processId);--开始运行前的一些初始化操作
@@ -1586,7 +1577,7 @@ function ComputerControl(package)
             
                 
             end
-        elseif package[1] == 0x10 then--写多个寄存器或者控制命令区
+        elseif package[1] == 0x10 then--控制命令区
             local register = package[2] * 256 + package[3]--寄存器地址
             local number   = package[4] * 256 + package[5]--寄存器个数
             
@@ -1914,13 +1905,6 @@ end
 --  设置工作状态
 --***********************************************************************************************
 function SetSysWorkStatus(status)
-
-    --状态有改变,将当前状态更新到记录控件
-    if Sys.status ~= status then
-        Sys.lastInfo[lastStatus] = status
-        saveLastInfo()
-    end
-
     Sys.status = status;--设置系统状态为运行
     --在底部的状态栏显示工作状态:停止/运行/待机
     for i = 1, #PublicTab, 1 do
@@ -1929,6 +1913,7 @@ function SetSysWorkStatus(status)
             set_text(PublicTab[i], SysCurrentProcessId, TipsTab[Sys.language].null);
         end
     end
+    saveStatusInfo()
 end
 
 --***********************************************************************************************
@@ -2116,7 +2101,7 @@ function getProcessIdByName(processName)
     end
     --遍历流程1-12, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
     for i = 1, 12, 1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId), processName, 1) ~= nil then
             processId = i;
             break;
         end
@@ -2124,7 +2109,7 @@ function getProcessIdByName(processName)
     if processId == 0 then
         --遍历流程13-24, 找到运行控制界面中设置的流程名称,在流程设置1界面中对应的流程序号
         for i = 13, 24, 1 do
-            if string.find(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then
+            if string.find(get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId), processName, 1) ~= nil then
                 processId = i;
                 break;
             end
@@ -2377,16 +2362,16 @@ function get_auto_range_process_id()
 
     --查找类型为分析且量程为destRangeId的 流程的id
     for i = 1, 12, 1 do
-        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
-        tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)) == destRangeId then--量程为目的量程
+        if get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
+        tonumber(get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId)) == destRangeId then--量程为目的量程
             processId = i;
             break;
         end
     end
     if processId == 0 then--在流程设置1界面未找到符合条件的流程, 则在流程设置2界面继续查找
         for i = 13, 24, 1 do
-            if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
-            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)) == destRangeId then--量程为目的量程
+            if get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId) == ProcessItem[Sys.language][1] and--类型为分析
+            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].rangeId)) == destRangeId then--量程为目的量程
                 processId = i;
                 break;
             end
@@ -2409,16 +2394,16 @@ function get_controled_process_id()
 
     --查找类型为分析且量程为destRangeId的 流程的id
     for i = 1, 12, 1 do
-        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
-        tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
+        if get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
+        tonumber(get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
             processId = i;
             break;
         end
     end
     if processId == 0 then--在流程设置1界面未找到符合条件的流程, 则在流程设置2界面继续查找
         for i = 13, 24, 1 do
-            if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
-            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
+            if get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId) == ProcessItem[Sys.language][Sys.controledProcessTypeId] and--类型为分析
+            tonumber(get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].rangeId)) == Sys.controledRangeId then--量程为目的量程
                 processId = i;
                 break;
             end
@@ -2527,15 +2512,15 @@ end
 function set_process_edit_state(state)
     --------------------------------流程设置1/2/3界面的参数------------------------------
     for i = 1, 12, 1 do
-        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, state);
-        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].nameId, state);
-        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId, state);
-        set_enable(PROCESS_SET1_SCREEN, ProcessTab[i].deleteId, state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId, state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId, state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId, state);
+        set_enable(PROCESS_SET1_SCREEN, ProcessSetTab[i].deleteId, state);
 
-        set_enable(PROCESS_SET2_SCREEN, ProcessTab[i + 12].typeId, state);
-        set_enable(PROCESS_SET2_SCREEN, ProcessTab[i + 12].nameId, state);
-        set_enable(PROCESS_SET2_SCREEN, ProcessTab[i + 12].rangeId, state);
-        set_enable(PROCESS_SET2_SCREEN, ProcessTab[i + 12].deleteId, state);
+        set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].typeId, state);
+        set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].nameId, state);
+        set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].rangeId, state);
+        set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].deleteId, state);
 
         set_enable(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, state);
         set_enable(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, state);
@@ -2582,9 +2567,9 @@ function LoadActionStr(index)
     Sys.processTag = getTagByProcessType(Sys.processType);
     -- print("流程Id="..index.."类型="..Sys.processType.." 名称="..Sys.processName.. " 量程="..Sys.processRange);
     if index <= 12 then
-        Sys.rangetypeId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessTab[index].rangeId));
+        Sys.rangetypeId = tonumber(get_text(PROCESS_SET1_SCREEN, ProcessSetTab[index].rangeId));
     elseif index <= 24 then
-        Sys.rangetypeId = tonumber(get_text(PROCESS_SET2_SCREEN, ProcessTab[index].rangeId));
+        Sys.rangetypeId = tonumber(get_text(PROCESS_SET2_SCREEN, ProcessSetTab[index].rangeId));
     end
 
     --统计action个数,给Sys.actionTotal变量,以及SystemArg.actionTab赋值 ----------------------
@@ -2696,7 +2681,6 @@ function process_ready_run(processIdType)
         set_text(MAIN_SCREEN, StartTimeId, string.format("%d-%02d-%02d  %02d:%02d",--显示本次启动流程的时间
                  Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,Sys.startTime.hour, Sys.startTime.min));
         SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,定时器中断中检测到运行状态后,会跳转到excute_process??数执行流??
-        SetModebusSysStatus();--设置Modebus
     end
 end
 
@@ -3027,7 +3011,7 @@ end
 
 --[[流程设置1/2-----------------------------------------------------------------------------------------------------]]
 --流程设置表中各控件Id,注意selecId与nameId的数学关系:typeId = nameId + 100, typeId = deleteId + 50 等等
-ProcessTab = {
+ProcessSetTab = {
 [1] = { typeId = 301, nameId = 201, rangeId = 351, deleteId = 251, editId = 51 },
 [2] = { typeId = 302, nameId = 202, rangeId = 352, deleteId = 252, editId = 52 },
 [3] = { typeId = 303, nameId = 203, rangeId = 353, deleteId = 253, editId = 53 },
@@ -3068,13 +3052,33 @@ function process_set12_control_notify(screen, control, value)
 
     if control == ProcessSaveBtId then -- 保存
         saveProcessSetInfo();
-        --导入按钮----------------------------------------------------------------------
+    --导入按钮----------------------------------------------------------------------
     elseif control == InportBtId then --
         if UsbPath ~= nil and SdPath ~= nil then
             ShowSysTips(TipsTab[Sys.language].importing);
             for i = 0, 24, 1 do--依次导出文件"0"~"24"
                 ConfigFileCopy(UsbPath .. "config/" .. i, SdPath .. "config/"..i);--将Sd卡中的配置文件导入都系统
             end
+            --流程设置
+            local fileRead = io.open(SdPath .. "config/0");
+            if fileRead then
+                Sys.processTypeInfo = split(fileRead:read(),",")
+                Sys.processNameInfo = split(fileRead:read(),",")
+                Sys.processRangeInfo = split(fileRead:read(),",")
+                fileRead:close();
+                for i = 1, 12, 1 do
+                    set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+                    set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
+                    set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
+                end
+                for i = 13, 24, 1 do
+                    set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+                    set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId, Sys.processNameInfo[i]);  --把数据显示到文本框中
+                    set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].rangeId, Sys.processRangeInfo[i]);  --把数据显示到文本框中
+                end
+                saveProcessSetInfo();
+            end
+           
             on_init();
             Sys.hand_control_func = nil;
             SystemStop(stopByNormal);
@@ -3085,28 +3089,38 @@ function process_set12_control_notify(screen, control, value)
         --导出按钮----------------------------------------------------------------------
     elseif control == ExportBtId then --(将流程配置导出到SD卡中)
         if UsbPath ~= nil and SdPath ~= nil then
+            --将流程类型/流程名称等设置写入文件0,方便导出
+            local file = io.open(SdPath.."config/0", "w")
+            if file then
+                file:write(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 5).."\n")
+                file:write(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 6).."\n")
+                file:write(record_read(SYSTEM_INFO_SCREEN,SysPublicInfoRId , 7).."\n")
+                file:close();
+            end
+
             ShowSysTips(TipsTab[Sys.language].exporting);
             for i = 0, 24, 1 do--依次导出文件"0"~"24"
                 ConfigFileCopy(SdPath .. "config/" .. i, UsbPath .. "config/"..i);--将文件导出到config文件中,配置文件名为0~24
             end
-            ShowSysTips(TipsTab[Sys.language].exported);
+            record_export( SYSTEM_INFO_SCREEN ,SysPublicInfoRId);
+            ShowSysTips(TipsTab[Sys.language].exported)
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
         end;
     --设置流程名称--------------------------------------------------------------------
-    elseif control >= ProcessTab[1].nameId and control <= ProcessTab[24].nameId then
+    elseif control >= ProcessSetTab[1].nameId and control <= ProcessSetTab[24].nameId then
 
     --设置流程类型--------------------------------------------------------------------
-    elseif control >= ProcessTab[1].typeId and control <= ProcessTab[24].typeId then
+    elseif control >= ProcessSetTab[1].typeId and control <= ProcessSetTab[24].typeId then
 
     ------------------------------------------------------------------------
-    elseif (control - 100) >= ProcessTab[1].typeId and (control - 100) <= ProcessTab[24].typeId then --这里是流程类型下的各个按钮
+    elseif (control - 100) >= ProcessSetTab[1].typeId and (control - 100) <= ProcessSetTab[24].typeId then --这里是流程类型下的各个按钮
         process_type_select_set(screen, control - 100);
         --量程选择----------------------------------------------------------------------
-    elseif (control - 100) >= ProcessTab[1].rangeId and (control - 100) <= ProcessTab[24].rangeId then
+    elseif (control - 100) >= ProcessSetTab[1].rangeId and (control - 100) <= ProcessSetTab[24].rangeId then
         range_select_set(screen, control - 100);
         --删除按钮----------------------------------------------------------------------
-    elseif control >= ProcessTab[1].deleteId and control <= ProcessTab[24].deleteId and value == ENABLE then
+    elseif control >= ProcessSetTab[1].deleteId and control <= ProcessSetTab[24].deleteId and value == ENABLE then
         if get_text(screen, control - 50) ~= BLANK_SPACE then --名称不为空格
             if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
                 set_return_screen_control(screen, control);
@@ -3114,7 +3128,7 @@ function process_set12_control_notify(screen, control, value)
             change_screen(DIALOG_SCREEN);
         end
         --查看按钮----------------------------------------------------------------------
-    elseif control >= ProcessTab[1].editId and control <= ProcessTab[24].editId and get_text(screen, control + 250) ~= BLANK_SPACE and value == ENABLE then
+    elseif control >= ProcessSetTab[1].editId and control <= ProcessSetTab[24].editId and get_text(screen, control + 250) ~= BLANK_SPACE and value == ENABLE then
         
         local processName = get_text(screen, control + 150);
         set_text(PROCESS_EDIT1_SCREEN, ProcessSelectId, processName);--设置流程编辑1/2/3/4界面的流程名称
@@ -3125,14 +3139,14 @@ function process_set12_control_notify(screen, control, value)
         ReadActionToTabAndScreen(SdPath.."config/"..(control-50));--将配置文件读取到ActionStrTab表与界面中
 
         change_screen(PROCESS_EDIT1_SCREEN);--跳转到流程编辑1界面
-        if control <= ProcessTab[12].editId then--设置当点击流程编辑1界面中的向前按钮时,需要返回哪一个界面
+        if control <= ProcessSetTab[12].editId then--设置当点击流程编辑1界面中的向前按钮时,需要返回哪一个界面
             DestProcessSetScreen = PROCESS_SET1_SCREEN;
         else
             DestProcessSetScreen = PROCESS_SET2_SCREEN;
         end
     --复制按钮----------------------------------------------------------------------------
     elseif control == ProcessCopyBtId and value == ENABLE then
-        if operate_permission_detect(CHK_USER) == ENABLE then--检测权限
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             change_screen(PROCESS_COPY_SCREEN);
             set_visiable(PROCESS_COPY_SCREEN, 5, 0)
             set_visiable(PROCESS_COPY_SCREEN, 6, 0)
@@ -3576,6 +3590,8 @@ function process_inject_control_notify(screen, control, value)
         end
     elseif control == CancelButtonId then --取消按钮
         change_screen(DestScreen);
+    elseif control == 130 then --试剂选择
+        reagent_select_set(screen, control-100);
     end
 end
 
@@ -3711,15 +3727,23 @@ function excute_inject_process(paraTab)
         -----------------------------------------------------------------
     elseif Sys.actionSubStep == 13 then--判断该步骤用了多少试剂
         if paraTab[7] == ENABLE_STRING then
-            local index = tonumber(paraTab[30])
-            local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId));--获取试剂当前余量
-            reagentRemain = reagentRemain - tonumber(paraTab[31]);--计算出最新的试剂余量
-            if reagentRemain < 0 then
-                reagentRemain = 0;
+            local index = 0;
+            for i=1,6,1 do
+                if paraTab[30] == get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId) then
+                    index = i;
+                    break
+                end
             end
-            print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
-            set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
-            saveHandOperation3Info();--保存界面的数据到配置文件
+            if index ~= 0 then
+                local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId));--获取试剂当前余量
+                reagentRemain = reagentRemain - tonumber(paraTab[31]);--计算出最新的试剂余量
+                if reagentRemain < 0 then
+                    reagentRemain = 0;
+                end
+                print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
+                set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
+                saveHandOperation3Info();--保存界面的数据到配置文件
+            end
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
         -----------------------------------------------------------------
@@ -3890,15 +3914,23 @@ function excute_inject_add_process(paraTab)
         -----------------------------------------------------------------
     elseif Sys.actionSubStep == 13 then--判断该步骤用了多少试剂
         if paraTab[9] == ENABLE_STRING then
-            local index = tonumber(paraTab[62])
-            local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId));--获取试剂当前余量
-            reagentRemain = reagentRemain - tonumber(paraTab[61]);--计算出最新的试剂余量
-            if reagentRemain < 0 then
-                reagentRemain = 0;
+            local index = 0;
+            for i=1,6,1 do
+                if paraTab[30] == get_text(HAND_OPERATE3_SCREEN, ReagentTab[i].nameId) then
+                    index = i;
+                    break
+                end
             end
-            print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
-            set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
-            saveHandOperation2Info();--保存界面的数据到配置文件
+            if index ~= 0 then
+                local reagentRemain = tonumber(get_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId));--获取试剂当前余量
+                reagentRemain = reagentRemain - tonumber(paraTab[31]);--计算出最新的试剂余量
+                if reagentRemain < 0 then
+                    reagentRemain = 0;
+                end
+                print("消耗试剂" .. index .. ":" .. reagentRemain .. "mL");
+                set_text(HAND_OPERATE3_SCREEN, ReagentTab[index].remainId, reagentRemain);--更新界面上的试剂余量显示
+                saveHandOperation3Info();--保存界面的数据到配置文件
+            end
         end
         Sys.actionSubStep = Sys.actionSubStep + 1;
         -----------------------------------------------------------------
@@ -4515,10 +4547,6 @@ function excute_calculate_process(paraTab)
         end
     end
 
-
-    --设置Modebus测量数据区
-    SetModebusResultArea();
-
     --在主界面进行显示结果与时间
     if Sys.calculateType == CalcType[Sys.language][1] or Sys.calculateType == CalcType[Sys.language][3] then--当前计算为分析或者核查
         set_text(MAIN_SCREEN, LastResultId, Sys.result);
@@ -4528,6 +4556,11 @@ function excute_calculate_process(paraTab)
     local sTime = string.format("%d-%02d-%02d %02d:%02d", Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,
     Sys.startTime.hour, Sys.startTime.min);
     set_text(MAIN_SCREEN, LastAnalysisTimeId, sTime);
+
+    saveMainScreenInfo();--保存首页信息
+
+    SetModebusResultArea();--设置Modebus测量数据区
+
     print("执行完成计算流程");
 
     return FINISHED;
@@ -5198,7 +5231,8 @@ function process_type_select_control_notify(screen, control, value)
             if ProcessTypeSelectItem ~= nil then
                 set_text(DestScreen, DestControl, ProcessItem[Sys.language][ProcessTypeSelectItem]);--DestControl对应流程选择
                 if DestScreen == PROCESS_SET1_SCREEN or DestScreen == PROCESS_SET2_SCREEN then
-                    set_text(DestScreen, DestControl - 100, ProcessItem[Sys.language][ProcessTypeSelectItem] .. (DestControl - 300));--DestControl-100对应流程名称
+                    --流程名称 = 流程类型+量程
+                    set_text(DestScreen, DestControl-100, get_text(DestScreen,DestControl)..get_text(DestScreen,DestControl+50));
                 end
             end
             saveProcessSetInfo();
@@ -5255,17 +5289,17 @@ function goto_ProcessNameSelect()
 
     local processFile = nil;
     for i = 1, 12, 1 do
-        if get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId) ~= BLANK_SPACE then--获取名称长度,当名称长度不为0时表示有效
+        if get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId) ~= BLANK_SPACE then--获取名称长度,当名称长度不为0时表示有效
             NumberOfProcess = NumberOfProcess + 1;--个数+1
-            set_text(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId))--为该文本?蛏柚梦谋?
+            set_text(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId))--为该文本?蛏柚梦谋?
             set_visiable(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, 1);--显示id为NumberOfProcess的文本
             set_visiable(PROCESS_NAME_SELECT_SCREEN, 100 + NumberOfProcess, 1);--显示与该文本框对应的按钮
         end
     end
     for i = 13, 24, 1 do
-        if get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) ~= BLANK_SPACE then--获取名称长度,当名称长度不为0时表示有效
+        if get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId) ~= BLANK_SPACE then--获取名称长度,当名称长度不为0时表示有效
             NumberOfProcess = NumberOfProcess + 1;--个数+1
-            set_text(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId))--为该文本?蛏柚梦谋?
+            set_text(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId))--为该文本?蛏柚梦谋?
             set_visiable(PROCESS_NAME_SELECT_SCREEN, NumberOfProcess, 1);--显示id为NumberOfProcess的文本
             set_visiable(PROCESS_NAME_SELECT_SCREEN, 100 + NumberOfProcess, 1);--显示与该文本框对应的按钮
         end
@@ -5281,6 +5315,43 @@ function goto_ProcessNameSelect()
         set_visiable(PROCESS_NAME_SELECT_SCREEN, TipsTextId, 1);
     end
 end
+
+--[[试剂选择--------------------------------------------------------------------------------------------------------]]
+--该函数在on_control_notify中进行调用（当需要选择流程时）
+function reagent_select_set(screen, control)
+    DestScreen = screen;
+    DestControl = control;
+end
+
+--用户通过触摸修改控件后，执行此回调函数。
+--点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
+function reagent_select_control_notify(screen, control, value)
+    if control >= FirstButtonId and control <= LastButtonId then
+        ReagentSelecItem = control - 100;--control-100 = 与该按钮重合的文本框id
+    elseif control == SureButtonId and value == ENABLE then --确认按钮,返回之前的界面
+        if ReagentSelecItem ~= nil then --ReagentSelecItem默认为nil,如果选择了某个流程则该值不为nil
+            set_text(DestScreen, DestControl, get_text(REAGENT_SELECT_SCREEN, ReagentSelecItem));
+            saveProcessSetInfo();
+        end
+        change_screen(DestScreen);
+    elseif control == CancelButtonId then --取消按钮
+        change_screen(DestScreen);
+    end
+end
+
+
+
+
+--当画面切换时，执行此回调函数，screen为目标画面。
+function goto_ReagentSelect()
+    set_text(REAGENT_SELECT_SCREEN, 1, get_text(HAND_OPERATE3_SCREEN, 9))
+    set_text(REAGENT_SELECT_SCREEN, 2, get_text(HAND_OPERATE3_SCREEN, 13))
+    set_text(REAGENT_SELECT_SCREEN, 3, get_text(HAND_OPERATE3_SCREEN, 17))
+    set_text(REAGENT_SELECT_SCREEN, 4, get_text(HAND_OPERATE3_SCREEN, 21))
+    set_text(REAGENT_SELECT_SCREEN, 5, get_text(HAND_OPERATE3_SCREEN, 25))
+    set_text(REAGENT_SELECT_SCREEN, 6, get_text(HAND_OPERATE3_SCREEN, 29))
+end
+
 
 
 --[[动作选择--------------------------------------------------------------------------------------------------------]]
@@ -5394,6 +5465,10 @@ function range_select_control_notify(screen, control, value)
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             change_screen(DestScreen);
             set_text(DestScreen, DestControl, RangeSelectItem);
+            if DestScreen == PROCESS_SET1_SCREEN or DestScreen == PROCESS_SET2_SCREEN then
+                --流程名称= 流程类型+量程
+                set_text(DestScreen, DestControl-150, get_text(DestScreen,DestControl-50)..get_text(DestScreen,DestControl));
+            end
         end
     elseif control == CancelButtonId then--取消按钮
         change_screen(DestScreen);
@@ -5790,15 +5865,6 @@ function add_history_record(screen)
             historyOrder = 1;
         end
     end
-
-    --首页的记录保存到记录空间当中,断电重启后会读取该记录当中的内容
-    if screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN then
-        Sys.lastInfo[lastTime] = date.." "..time
-        Sys.lastInfo[lastResult] = Sys.result
-        Sys.lastInfo[lastE1] = Sys.signalE1
-        Sys.lastInfo[lastE2] = Sys.signalE2
-        saveLastInfo()
-    end
     
     if screen == HISTORY_ANALYSIS_SCREEN then--分析历史
         signalHistoryContent = (historyOrder + 1) .. ";" .. date .. ";" .. time .. ";" ..--序号,日期,时间
@@ -5942,43 +6008,43 @@ function checkHistoryFile()
     local file;
     file = io.open(SdPath .. "record/Analysis");
     if file == nil then
-        file = io.open(SdPath .. "record/Analysis", "w+");--打开并清空该文件
+        file = io.open(SdPath .. "record/Analysis", "w");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Check");
     if file == nil then
-        file = io.open(SdPath.."record/Check", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Check", "w");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Calibration");
     if file == nil then
-        file = io.open(SdPath.."record/Calibration", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Calibration", "w");--打开并清空该文件
     end
     file:close();
     
     file = io.open(SdPath.."record/Recovery");
     if file == nil then
-        file = io.open(SdPath.."record/Recovery", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Recovery", "w");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Linear");
     if file == nil then
-        file = io.open(SdPath.."record/Linear", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Linear", "w");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/Alarm");
     if file == nil then
-        file = io.open(SdPath.."record/Alarm", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/Alarm", "w");--打开并清空该文件
     end
     file:close();
 
     file = io.open(SdPath.."record/log");
     if file == nil then
-        file = io.open(SdPath.."record/log", "w+");--打开并清空该文件
+        file = io.open(SdPath.."record/log", "w");--打开并清空该文件
     end
     file:close();
 
@@ -6031,7 +6097,7 @@ end
 --***********************************************************************************************
 function clearHistoryFile(screen)
     local filePath = getFilePathByScreen(screen)
-    local file = io.open(filePath, "w+");--打开并清空该文件
+    local file = io.open(filePath, "w");--打开并清空该文件
     set_text(screen, HistoryTotalPage, 1);--设置总页数为1
     file:close();
 end
@@ -6116,39 +6182,6 @@ function exportHistory(screen)
 end
 
 
---***********************************************************************************************
---按行读取文件, 将每一行的数据都放入tab中.
---***********************************************************************************************
-function readFileToTab(filePath)
-    local fileTab = {}
-    local fileRead = io.open(filePath);
-    if fileRead then
-        local line = fileRead:read()
-        while line do
-            table.insert(fileTab, line);
-            line = fileRead:read();
-        end
-        fileRead:close();
-    end
-    
-    return fileTab;
-end
-
---***********************************************************************************************
---将Tab中的数据,按行写入文件当中
---***********************************************************************************************
-function writeTabToFile(filePath, fileTab)
-    local fileWrite = io.open(filePath, "w")
-    if fileWrite then
-        for i, line in ipairs(fileTab) do
-            fileWrite:write(line)
-            fileWrite:write("\n")
-        end
-        fileWrite:close();
-    end
-end
-
-
 --[[系统信息--------------------------------------------------------------------------------------------------------]]
 SetEquipmentTypeTextId = 1;
 SerialNumberTextId = 2;
@@ -6222,7 +6255,6 @@ function system_info_control_notify(screen, control, value)
             ShowSysCurrentAction(TipsTab[Sys.language].null);
             ShowSysTips(TipsTab[Sys.language].null);
             SetSysWorkStatus(WorkStatus[Sys.language].stop);
-
             if Sys.userName == SysUser[ENG].maintainer then
                 SetSysUser(SysUser[CHN].maintainer);
             else
@@ -6407,25 +6439,29 @@ end
 
 --***********************************************************************************************
 --[操作权限检测
---para CHK_RUN=只检测是否在运行中; CHK_RUN_USER=同时检测是否在运行中与用户权限
+--para CHK_RUN = 只检测是否在运行中; CHK_RUN_USER =同时检测是否在运行中与用户权限
 --***********************************************************************************************
 function operate_permission_detect(para)
-    if Sys.status == WorkStatus[Sys.language].run then --系统运行中,不可执行该操作
-        ShowSysTips(TipsTab[Sys.language].stopFirst);
-        return DISABLE;
+    if para == CHK_USER then--只检测用户权限
+        if Sys.userName == SysUser[Sys.language].operator then
+            ShowSysTips(TipsTab[Sys.language].NoPermission);--无权限
+            return DISABLE;
+        end
+    elseif para == CHK_RUN then--只检测是否在运行中
+        if Sys.status == WorkStatus[Sys.language].run then --系统运行中,不可执行该操作
+            ShowSysTips(TipsTab[Sys.language].stopFirst);
+            return DISABLE;
+        end
+    else--同时检测用户权限与是否在运行中
+        if Sys.userName == SysUser[Sys.language].operator then
+            ShowSysTips(TipsTab[Sys.language].NoPermission);--无权限
+            return DISABLE;
+        end
+        if Sys.status == WorkStatus[Sys.language].run then --系统运行中,不可执行该操作
+            ShowSysTips(TipsTab[Sys.language].stopFirst);
+            return DISABLE;
+        end
     end
-
-    --只检测是否在运行中
-    if para == 1 then
-        return ENABLE
-    end
-
-    --检测用户权限
-    if Sys.userName == SysUser[Sys.language].operator then
-        ShowSysTips(TipsTab[Sys.language].NoPermission);--无权限
-        return DISABLE;
-    end
-
     return ENABLE;
 end
 
@@ -6750,6 +6786,7 @@ function changeCfgFileLanguage(language)
     elseif Sys.runCtrlInfo[1] == WorkType[srcLanguage].timed then--定时
         Sys.runCtrlInfo[1] = WorkType[destLanguage].timed;
     end
+    ShowSysCurrentMode(Sys.runCtrlInfo[1]);
     --离线模式开关
     if Sys.runCtrlInfo[4] == OnOffStatus[srcLanguage].open then
         Sys.runCtrlInfo[4] = OnOffStatus[srcLanguage].open
@@ -6804,10 +6841,10 @@ function changeCfgFileLanguage(language)
         set_text(RUN_CONTROL_SCREEN, i, Sys.runCtrlInfo[i])
     end
     for i = 1, 12, 1 do--刷新流程设置界面的流程名称
-        set_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
     end
     for i = 13, 24, 1 do--刷新流程设置界面的流程名称
-        set_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
+        set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId, Sys.processTypeInfo[i]);  --把数据显示到文本框中
     end
     for i=1,6,1 do--刷新手动操作3界面
         set_text(HAND_OPERATE3_SCREEN, i, Sys.handOperation3Info[i])
@@ -6871,14 +6908,14 @@ end
 function getFileNameByProcessName(processName)
     local fileName = 0;
     for i = 1, 12, 1 do
-        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
+        if string.find(get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
             fileName = i;
             break;
         end
     end
 
     for i = 13, 24, 1 do
-        if string.find(get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
+        if string.find(get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId), processName, 1) ~= nil then--找到当前流程名对应的序号
             fileName = i;
             break;
         end
@@ -7273,12 +7310,16 @@ function saveWifiInfo()
 end
 
 --***********************************************************************************************
---  保存上次关机时的信息到记录空间
+--  保存首页的信息到记录空间
 --***********************************************************************************************
-function saveLastInfo()
+function saveMainScreenInfo()
+    for i=1,9,1 do--首页信息
+        Sys.mainScreenInfo[i] = get_text(MAIN_SCREEN, i)
+    end
+
     local record = "";
-    for i=1, #Sys.lastInfo, 1 do
-        record = record..Sys.lastInfo[i]..","
+    for i=1, #Sys.mainScreenInfo, 1 do
+        record = record..Sys.mainScreenInfo[i]..","
     end
     record_modify(SYSTEM_INFO_SCREEN, SysPublicInfoRId, 0, record);
 end
@@ -7353,14 +7394,14 @@ end
 --***********************************************************************************************
 function saveProcessSetInfo()
     for i = 1, 12, 1 do
-        Sys.processTypeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].typeId)  --流程类型选择
-        Sys.processNameInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].nameId)  --流程名称
-        Sys.processRangeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessTab[i].rangeId)--流程量程
+        Sys.processTypeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].typeId)  --流程类型选择
+        Sys.processNameInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId)  --流程名称
+        Sys.processRangeInfo[i] = get_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].rangeId)--流程量程
     end
     for i = 13, 24, 1 do
-        Sys.processTypeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].typeId) --流程类型选择
-        Sys.processNameInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].nameId) --流程名称
-        Sys.processRangeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessTab[i].rangeId)--流程量程
+        Sys.processTypeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].typeId) --流程类型选择
+        Sys.processNameInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].nameId) --流程名称
+        Sys.processRangeInfo[i] = get_text(PROCESS_SET2_SCREEN, ProcessSetTab[i].rangeId)--流程量程
     end
 
     local type = ""
@@ -7443,8 +7484,75 @@ end
 
 
 
+--***********************************************************************************************
+--  保存系统状态
+--***********************************************************************************************
+function saveStatusInfo()
+    for i=1,7,1 do
+        Sys.statusInfo[i] = get_text(MAIN_SCREEN, 900+i)
+    end
+
+    local record = ""
+    --量程设置界面参数
+    for i=1,7,1 do
+        record = record..Sys.statusInfo[i]..","
+    end
+    record_modify(SYSTEM_INFO_SCREEN, SysPublicInfoRId, 12, record);
+end
+
 
 --[[一些实用函数-----------------------------------------------------------------------------------------------------]]
+
+--***********************************************************************************************
+--按行读取文件, 将每一行的数据都放入tab中.
+--***********************************************************************************************
+function readFileToTab(filePath)
+    local fileTab = {}
+    local fileRead = io.open(filePath);
+    if fileRead then
+        local line = fileRead:read()
+        while line do
+            table.insert(fileTab, line);
+            line = fileRead:read();
+        end
+        fileRead:close();
+    end
+    
+    return fileTab;
+end
+
+--***********************************************************************************************
+--将Tab中的数据,按行写入文件当中
+--***********************************************************************************************
+function writeTabToFile(filePath, fileTab)
+    local fileWrite = io.open(filePath, "w")
+    if fileWrite then
+        for i, line in ipairs(fileTab) do
+            fileWrite:write(line)
+            fileWrite:write("\n")
+        end
+        fileWrite:close();
+    end
+end
+
+--***********************************************************************************************
+--按行读取文件, 将最后一行的数据返回
+--***********************************************************************************************
+function readLastLineOfFile(filePath)
+    local lineStr = ""
+    local fileRead = io.open(filePath);
+    for line in fileRead:lines() do
+        lineStr = line
+    end
+    -- if fileRead then
+    --     lineStr = fileRead:read()
+    --     while lineStr do
+    --         lineStr = fileRead:read();
+    --     end
+    --     fileRead:close();
+    -- end
+    return lineStr;
+end
 
 --***********************************************************************************************
 --十进制转BCD码

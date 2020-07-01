@@ -6106,15 +6106,7 @@
 
 #define  _TXT_DIS__流程名称选择_TEXT_DISPLAY25                                      26
 
-#define  _BTN_动作选择_BUTTON8                                                     2
-
-//画面动作选择中按钮Button10弹起时的图片
-#define  _IMG_动作选择_BUTTON10_UP                                                56
-
-//画面动作选择中按钮Button10按下时的图片
-#define  _IMG_动作选择_BUTTON10_DOWN                                              57
-
-#define  _BTN_动作选择_BUTTON10                                                    5
+#define  _BTN_动作选择_BUTTON10                                                    4
 
 //画面动作选择中按钮Button11弹起时的图片
 #define  _IMG_动作选择_BUTTON11_UP                                                56
@@ -6122,7 +6114,7 @@
 //画面动作选择中按钮Button11按下时的图片
 #define  _IMG_动作选择_BUTTON11_DOWN                                              57
 
-#define  _BTN_动作选择_BUTTON11                                                    6
+#define  _BTN_动作选择_BUTTON11                                                    5
 
 //画面动作选择中按钮Button9弹起时的图片
 #define  _IMG_动作选择_BUTTON9_UP                                                 56
@@ -6130,7 +6122,7 @@
 //画面动作选择中按钮Button9按下时的图片
 #define  _IMG_动作选择_BUTTON9_DOWN                                               57
 
-#define  _BTN_动作选择_BUTTON9                                                     3
+#define  _BTN_动作选择_BUTTON9                                                     2
 
 //画面动作选择中按钮Button7弹起时的图片
 #define  _IMG_动作选择_BUTTON7_UP                                                 56
@@ -6138,7 +6130,7 @@
 //画面动作选择中按钮Button7按下时的图片
 #define  _IMG_动作选择_BUTTON7_DOWN                                               57
 
-#define  _BTN_动作选择_BUTTON7                                                     4
+#define  _BTN_动作选择_BUTTON7                                                     3
 
 //画面动作选择中按钮Button12弹起时的图片
 #define  _IMG_动作选择_BUTTON12_UP                                                56
@@ -6146,7 +6138,7 @@
 //画面动作选择中按钮Button12按下时的图片
 #define  _IMG_动作选择_BUTTON12_DOWN                                              57
 
-#define  _BTN_动作选择_BUTTON12                                                    7
+#define  _BTN_动作选择_BUTTON12                                                    6
 
 //画面动作选择中按钮Button1弹起时的图片
 #define  _IMG_动作选择_BUTTON1_UP                                                 56
@@ -6154,7 +6146,7 @@
 //画面动作选择中按钮Button1按下时的图片
 #define  _IMG_动作选择_BUTTON1_DOWN                                               57
 
-#define  _BTN_动作选择_BUTTON1                                                     8
+#define  _BTN_动作选择_BUTTON1                                                     7
 
 //画面动作选择中按钮Button2弹起时的图片
 #define  _IMG_动作选择_BUTTON2_UP                                                 56
@@ -6162,7 +6154,7 @@
 //画面动作选择中按钮Button2按下时的图片
 #define  _IMG_动作选择_BUTTON2_DOWN                                               57
 
-#define  _BTN_动作选择_BUTTON2                                                    11
+#define  _BTN_动作选择_BUTTON2                                                    10
 
 //画面动作选择中按钮Button4弹起时的图片
 #define  _IMG_动作选择_BUTTON4_UP                                                 56
@@ -6178,7 +6170,7 @@
 //画面动作选择中按钮Button13按下时的图片
 #define  _IMG_动作选择_BUTTON13_DOWN                                              57
 
-#define  _BTN_动作选择_BUTTON13                                                    9
+#define  _BTN_动作选择_BUTTON13                                                    8
 
 //画面动作选择中按钮Button3弹起时的图片
 #define  _IMG_动作选择_BUTTON3_UP                                                 15
@@ -6202,7 +6194,7 @@
 //画面动作选择中按钮Button5按下时的图片
 #define  _IMG_动作选择_BUTTON5_DOWN                                               57
 
-#define  _BTN_动作选择_BUTTON5                                                    10
+#define  _BTN_动作选择_BUTTON5                                                     9
 
 //画面量程设置中图片Image1使用的图片
 #define  _IMG_量程设置_IMAGE1                                                      2
@@ -9329,6 +9321,9 @@
 
 #define  _BTN_登录系统_BUTTON1                                                    98
 
+//画面联系我们中按钮Button1按下时的图片
+#define  _IMG_联系我们_BUTTON1_DOWN                                              110
+
 #define  _BTN_联系我们_BUTTON1                                                     2
 
 //画面对话框中按钮Button3弹起时的图片
@@ -9352,7 +9347,7 @@
 #define  _BTN_自定义全键盘_BUTTON1                                                   3
 
 //全局图片自定义键盘-按下.png
-#define  _IMG_自定义键盘-按下_PNG                                                   111
+#define  _IMG_自定义键盘-按下_PNG                                                   112
 
 #define  _BTN_自定义全键盘_BUTTON2                                                   4
 
@@ -9457,12 +9452,12 @@
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY1                                          5
 
 //画面无线连接中文本显示Text_Display1的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY1                                             113
+#define  _IMG_无线连接_TEXT_DISPLAY1                                             114
 
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY3                                          9
 
 //画面无线连接中文本显示Text_Display3的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY3                                             113
+#define  _IMG_无线连接_TEXT_DISPLAY3                                             114
 
 #define  _BTN_无线连接_BUTTON2                                                    10
 
@@ -9533,7 +9528,7 @@
 #define  _TXT_DIS__无线连接_TEXT_DISPLAY18                                        42
 
 //画面无线连接中文本显示Text_Display18的背景图片
-#define  _IMG_无线连接_TEXT_DISPLAY18                                            113
+#define  _IMG_无线连接_TEXT_DISPLAY18                                            114
 
 //画面远程升级中按钮Button37弹起时的图片
 #define  _IMG_远程升级_BUTTON37_UP                                                15
@@ -9554,48 +9549,48 @@
 #define  _BTN_远程升级_BUTTON24                                                    6
 
 //画面远程升级中按钮Button2弹起时的图片
-#define  _IMG_远程升级_BUTTON2_UP                                                117
+#define  _IMG_远程升级_BUTTON2_UP                                                118
 
 //画面远程升级中按钮Button2按下时的图片
-#define  _IMG_远程升级_BUTTON2_DOWN                                              118
+#define  _IMG_远程升级_BUTTON2_DOWN                                              119
 
 #define  _BTN_远程升级_BUTTON2                                                     7
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY1                                          2
 
 //画面远程升级中文本显示Text_Display1的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY1                                             119
+#define  _IMG_远程升级_TEXT_DISPLAY1                                             120
 
 //画面远程升级中按钮Button3弹起时的图片
-#define  _IMG_远程升级_BUTTON3_UP                                                117
+#define  _IMG_远程升级_BUTTON3_UP                                                118
 
 //画面远程升级中按钮Button3按下时的图片
-#define  _IMG_远程升级_BUTTON3_DOWN                                              118
+#define  _IMG_远程升级_BUTTON3_DOWN                                              119
 
 #define  _BTN_远程升级_BUTTON3                                                     8
 
 //画面远程升级中按钮Button4弹起时的图片
-#define  _IMG_远程升级_BUTTON4_UP                                                117
+#define  _IMG_远程升级_BUTTON4_UP                                                118
 
 //画面远程升级中按钮Button4按下时的图片
-#define  _IMG_远程升级_BUTTON4_DOWN                                              118
+#define  _IMG_远程升级_BUTTON4_DOWN                                              119
 
 #define  _BTN_远程升级_BUTTON4                                                     9
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY2                                          5
 
 //画面远程升级中文本显示Text_Display2的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY2                                             119
+#define  _IMG_远程升级_TEXT_DISPLAY2                                             120
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY3                                          4
 
 //画面远程升级中文本显示Text_Display3的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY3                                             119
+#define  _IMG_远程升级_TEXT_DISPLAY3                                             120
 
 #define  _TXT_DIS__远程升级_TEXT_DISPLAY5                                          1
 
 //画面远程升级中文本显示Text_Display5的背景图片
-#define  _IMG_远程升级_TEXT_DISPLAY5                                             119
+#define  _IMG_远程升级_TEXT_DISPLAY5                                             120
 
 #define  _SELECTOR_远程升级_SELECTOR1                                              3
 
@@ -9643,7 +9638,7 @@
 #define  _TXT_DIS__流程复制_TEXT_DISPLAY2                                          4
 
 //画面流程复制中文本显示Text_Display2的背景图片
-#define  _IMG_流程复制_TEXT_DISPLAY2                                             120
+#define  _IMG_流程复制_TEXT_DISPLAY2                                             121
 
 #define  _BTN_流程复制_BUTTON2                                                     5
 

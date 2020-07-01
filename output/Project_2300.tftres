@@ -161,20 +161,21 @@
         <image id="106" url="e:\eti_2300_ts\2300project\Images\流程方块.png" effect_width="150" effect_height="35" />
         <image id="107" url="e:\eti_2300_ts\2300project\Images\input.png" effect_width="95" effect_height="35" />
         <image id="108" url="e:\eti_2300_ts\2300project\Images\input2.png" effect_width="150" effect_height="40" />
-        <image id="109" url="e:\eti_2300_ts\2300project\Images\联系我们.png" effect_width="493" effect_height="276" />
-        <image id="110" url="e:\eti_2300_ts\2300project\Images\自定义键盘-弹起.jpg" effect_width="600" effect_height="350" />
-        <image id="111" url="e:\eti_2300_ts\2300project\Images\自定义键盘-按下.png" effect_width="600" effect_height="350" />
-        <image id="112" url="e:\eti_2300_ts\2300project\Images\wifi列表.png" effect_width="232" effect_height="318" />
-        <image id="113" url="e:\eti_2300_ts\2300project\Images\长输入框.png" effect_width="200" effect_height="40" />
-        <image id="114" url="e:\eti_2300_ts\2300project\Images\蓝色图标.jpg" effect_width="67" effect_height="40" />
-        <image id="115" url="e:\eti_2300_ts\2300project\Images\Bright2 Button.jpg" effect_width="67" effect_height="40" />
-        <image id="116" url="e:\eti_2300_ts\2300project\Images\wifi列表.png" effect_width="232" effect_height="320" />
-        <image id="117" url="e:\eti_2300_ts\2300project\Images\蓝色图标.jpg" effect_width="80" effect_height="35" />
-        <image id="118" url="e:\eti_2300_ts\2300project\Images\Bright2 Button.jpg" effect_width="80" effect_height="35" />
-        <image id="119" url="e:\eti_2300_ts\2300project\Images\长输入框.png" effect_width="200" effect_height="35" />
-        <image id="120" url="e:\eti_2300_ts\2300project\Images\input.png" effect_width="78" effect_height="30" />
-        <image id="121" url="e:\eti_2300_ts\2300project\Images\input2.png" effect_width="178" effect_height="40" />
-        <image id="122" url="e:\eti_2300_ts\2300project\Images\input2.png" effect_width="179" effect_height="40" />
+        <image id="109" url="e:\eti_2300_ts\2300project\Images\联系我们.png" effect_width="600" effect_height="1024" />
+        <image id="110" url="e:\eti_2300_ts\2300project\Images\菜单按钮一.png" effect_width="87" effect_height="30" />
+        <image id="111" url="e:\eti_2300_ts\2300project\Images\自定义键盘-弹起.jpg" effect_width="600" effect_height="350" />
+        <image id="112" url="e:\eti_2300_ts\2300project\Images\自定义键盘-按下.png" effect_width="600" effect_height="350" />
+        <image id="113" url="e:\eti_2300_ts\2300project\Images\wifi列表.png" effect_width="232" effect_height="318" />
+        <image id="114" url="e:\eti_2300_ts\2300project\Images\长输入框.png" effect_width="200" effect_height="40" />
+        <image id="115" url="e:\eti_2300_ts\2300project\Images\蓝色图标.jpg" effect_width="67" effect_height="40" />
+        <image id="116" url="e:\eti_2300_ts\2300project\Images\Bright2 Button.jpg" effect_width="67" effect_height="40" />
+        <image id="117" url="e:\eti_2300_ts\2300project\Images\wifi列表.png" effect_width="232" effect_height="320" />
+        <image id="118" url="e:\eti_2300_ts\2300project\Images\蓝色图标.jpg" effect_width="80" effect_height="35" />
+        <image id="119" url="e:\eti_2300_ts\2300project\Images\Bright2 Button.jpg" effect_width="80" effect_height="35" />
+        <image id="120" url="e:\eti_2300_ts\2300project\Images\长输入框.png" effect_width="200" effect_height="35" />
+        <image id="121" url="e:\eti_2300_ts\2300project\Images\input.png" effect_width="78" effect_height="30" />
+        <image id="122" url="e:\eti_2300_ts\2300project\Images\input2.png" effect_width="178" effect_height="40" />
+        <image id="123" url="e:\eti_2300_ts\2300project\Images\input2.png" effect_width="179" effect_height="40" />
     </images>
     <waves />
 </Resource>

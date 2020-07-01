@@ -142,6 +142,7 @@ autoRangeProcessId = 1;
 periodProcessId = 2;
 controledProcessId = 3;
 linearProcessId = 4;
+autoStdCheck = 5;
 
 --stopType
 stopByNormal = 0;
@@ -508,8 +509,8 @@ ProcessItem = {
 
 --ActionItem里面的值一定要与动作选择界面按钮中的值一一对应
 ActionItem = {
-    [CHN] = { "初始化", "注射泵", "注射泵加液体", "读取信号", "蠕动泵加液", "计算", "等待时间", "消解", "阀操作","线性核查稀释", BLANK_SPACE },
-    [ENG] = { "Initialize", "Injector", "Injector Add", "Read Signal", "Pump Add", "Calculation", "Wait Time", "Dispel", "Valve","Linear Dilution", BLANK_SPACE },
+    [CHN] = { "初始化", "注射泵加液体", "读取信号", "蠕动泵加液", "计算", "等待时间", "消解", "阀操作","线性核查稀释", BLANK_SPACE },
+    [ENG] = { "Initialize",  "Injector Add", "Read Signal", "Pump Add", "Calculation", "Wait Time", "Dispel", "Valve","Linear Dilution", BLANK_SPACE },
 };
 
 --用于保存配置文件字符串
@@ -1226,6 +1227,19 @@ function modebus_regester_init()
 end
 
 --***********************************************************************************************
+--保存ModeBus文件
+--***********************************************************************************************
+function SaveModeBusToFile()
+    local file = io.open(SdPath .. "record/ModeBus", "w+");--打开并清空该文件
+    --将ModeBus的测量数据区/状态告警区/关键参数区保持到ModeBus文件当中
+    for i = 0x1000, 0x10FF, 1 do
+        file:write(ModeBus[i]);
+        file:write(",")
+    end
+    file:close();
+end
+
+--***********************************************************************************************
 --设置测量数据区
 --***********************************************************************************************
 function SetModebusResultArea()
@@ -1305,6 +1319,8 @@ function SetModebusResultArea()
     value = Sys.absorbancy;
     ModeBus[0x10C6] = math.fmod(value, 65536);--吸光度
     ModeBus[0x10C7] = math.modf(value/65536);--吸光度
+
+    SaveModeBusToFile()
 end
 
 --***********************************************************************************************
@@ -1411,9 +1427,9 @@ uartSendTab = {
 
 UartArg = {
     repeat_times = 0, --用于记录重发次数
-    repeat_data, --用于保存本次重发数据
+    repeat_data = {}, --用于保存本次重发数据
     note = "", --用于保存串口指令说明
-    recv_data, --用于保存接收到的数据
+    recv_data = {}, --用于保存接收到的数据
     reply_data = {[0] = 0, [1] = 0 }, --用于保存需要接受到的回复数据
     reply_sta = SEND_OK;--用于指示发送的串口指令是否有正确回复
     lock = UNLOCKED, --用于指示串口是否上锁, 当发送一条需要等待回复的串口指令时,串口上锁, 当收到回复时,串口解锁
@@ -1557,7 +1573,7 @@ function ComputerControl(package)
             SetModebusSysStatus();--设置Modebus系统状态区
             setModebusRunMode();--设置Modebus运行模式区
             setModebusDateTime();--设置日期时间寄存器
-
+            SaveModeBusToFile();
 
             replayData[2] = number * 2;
             for i = register, register+number-1, 1 do
@@ -1701,7 +1717,7 @@ function ComputerControl(package)
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x10 then--设置零点核查频次
                         local freq = package[9] * 256 + package[10];
-                        sget_text(RUN_CONTROL_PERIOD_SCREEN,16,freq)
+                        set_text(RUN_CONTROL_PERIOD_SCREEN,16,freq)
                         ModeBus[0x108A] = freq
                         saveRunCtrlPeriodInfo();
                     elseif package[8] == 0x11 then--设置量程核查频次
@@ -3102,7 +3118,6 @@ function process_set12_control_notify(screen, control, value)
             for i = 0, 24, 1 do--依次导出文件"0"~"24"
                 ConfigFileCopy(SdPath .. "config/" .. i, UsbPath .. "config/"..i);--将文件导出到config文件中,配置文件名为0~24
             end
-            record_export( SYSTEM_INFO_SCREEN ,SysPublicInfoRId);
             ShowSysTips(TipsTab[Sys.language].exported)
         else
             ShowSysTips(TipsTab[Sys.language].insertSdUsb);
@@ -4584,7 +4599,7 @@ function averageSum(x, y)
     end
     averagey = averagey / Sys.linearProcessStep;--求y平均值
 
-    for i=0, i<Sys.linearProcessStep, 1 do
+    for i=1, Sys.linearProcessStep, 1 do
        sum = sum + (x[i]-averagex) * (y[i]-averagey)
     end
     return sum;
@@ -4596,12 +4611,12 @@ end
 function squareAverage(x)
     local sum = 0
     local average = 0;
-    for i=1,Sys.linearProcessStep,i do
+    for i=1,Sys.linearProcessStep,1 do
         average = average + x[i]
     end
     average = average/Sys.linearProcessStep;--取平均值
 
-    for i=0,i<Sys.linearProcessStep,1 do
+    for i=1, Sys.linearProcessStep, 1 do
         sum = sum + (x[i]-average) * (x[i]-average);--取平方差后再求和
     end
     return math.sqrt(sum)
@@ -4742,6 +4757,7 @@ function calc_calibrate_result_by_diff(n)
     end
     local detV = det(n, x);
     --   print("D = "..detV);
+    local temp = {}
     for j = 0, n - 1, 1 do
         for i = 0, n - 1, 1 do
             temp[i] = x[i][j];
@@ -5741,9 +5757,7 @@ IOSET_ComputerAddr = 1;
 --用户通过触摸修改控件后，执行此回调函数。
 --点击按钮控件，修改文本控件、修改滑动条都会触发此事件。
 function in_out_control_notify(screen, control, value)
-    if control == IOSET_BaudSelectMenuId  then
-        uart_set_baudrate(tonumber(get_text(IN_OUT_SCREEN,IOSET_BaudTextId)))
-    elseif control == 3 or control == 4 or control == 5  then--修改输出1设置
+    if control == 3 or control == 4 or control == 5  then--修改输出1设置
         local v4 = tonumber(get_text(IN_OUT_SCREEN,4))--4mA对应值
         local v20 = tonumber(get_text(IN_OUT_SCREEN,5))--20mA对应值
         local a = 16/(v20-v4);

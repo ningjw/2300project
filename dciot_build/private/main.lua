@@ -56,7 +56,7 @@ SERVER_SET_SCREEN = 47;
 REAGENT_SELECT_SCREEN = 48;
 
 --这里定义的Public table包含了有状态栏的界面, 方便更新"工作状态""当前动作""用户""报警"
-PublicTab = {
+ScreenWithMenu = {
     [1] = MAIN_SCREEN,
     [2] = RUN_CONTROL_SCREEN,
     [3] = PROCESS_SET1_SCREEN,
@@ -169,7 +169,7 @@ TipsTab = {
         NoPermission = "当前用户无权限执行该操作",
         stopFirst = "系统运行中,不可执行该操作",
         null = "无",
-        uartTimeOut = "回复超时",
+        timeOut = "超时",
         start = "开始",
         stop = "结束",
         lack = "缺",
@@ -202,7 +202,7 @@ TipsTab = {
         NoPermission = "No Permission to Exceut",
         stopFirst = "System running, stop first",
         null    = "NULL",
-        uartTimeOut = " Timeout",
+        timeOut = " Timeout",
         start = "Start",
         stop = "Stop",
         lack = "Lack of ",
@@ -419,11 +419,11 @@ Sys = {
     heartPacketTimeCnt = 9,--这里赋值为9是为了, 连上服务器后能够马上发送一条心跳包
     picFileLen = 0,--用于保存图片数据大小
     picFileHex = {},--用于保存图片数据
-    picIndex = 0,--在传输数据时用于指示当前发送哪一包图片数据了
     picTotalPack = 0,--一张图片数据需要分多少个包发送
-    remoteControled = false,
+    remoteControled = false,--用于标志当前是否为远程控制模式,是否需要实时上传当前截图给上位机显示
+    uploadingPic = false,--是否正在上传图片
 
-    timeCntOfIdle = 0,
+    timeCntOfIdle = 0,--用于定时30分钟无任何操作后,自动切换为操作员
 }
 
 --工作状态
@@ -603,11 +603,10 @@ ActionStrTab = {};
 
 --[[入口函数-----------------------------------------------------------------------------------------------]]
 
-
 --***********************************************************************************************
 --初始化函数,系统加载LUA脚本后，立即调用次回调函数
 --***********************************************************************************************
-function on_init()
+function on_init()   
     print(_VERSION);
     for i=0,120,1 do
         load_image(i,0);
@@ -650,14 +649,14 @@ function on_init()
     record_control_check();--检测历史记录空间中保存的参数
     
     SetSysUser(SysUser[Sys.language].operator);  --开机之后默认为操作员
-    Sys.hand_control_func = sys_init;--开机首先进行初始化操作
+    -- Sys.hand_control_func = sys_init;--开机首先进行初始化操作
 
     ----------------------以下为在电脑端调试时可能使用的代码------------------------------------------------
     SetSysUser(SysUser[Sys.language].maintainer); --调试时默认为运维员
 
     -- on_sd_inserted("");--调试时在启动时调用sd卡插入的回调函数, 且制定SdPath为空字符串.
 
-    --调试时需要从config/0中导入流程编辑1/2界面的设置
+    -- --调试时需要从config/0中导入流程编辑1/2界面的设置
     -- local fileRead = io.open("config/0");
     -- if fileRead then
     --     Sys.processTypeInfo = split(fileRead:read(),",")
@@ -724,17 +723,8 @@ function record_control_check()
         end
         Sys.info[AdminPwd] = "172172"--管理员密码
         Sys.info[MaintainerPwd] = "171717"--运维员密码
-        Sys.info[EquipmentType] = "2300"--仪器型号
-        Sys.info[SerialNumber] = "0000000000"--仪器序列号
-        Sys.info[SysLanguage] = CHN --系统语言
         saveSysInfo();--初始化默认系统参数
 
-        --初始化Wifi用户名,密码,TCP服务器地址与端口参数
-        Sys.wifiInfo[1] = "eti"--wifi名称
-        Sys.wifiInfo[2] = "etihuachuang2015"--wifi密码
-        Sys.wifiInfo[3] = "192.168.1.128"--TCP服务器ip地址
-        Sys.wifiInfo[4] = "132"--TCP服务器端口
-        Sys.wifiInfo[5] = "192.168.1.128"--远程升级服务器地址
         saveWifiInfo()--保存wifi以及tcp服务器相关设置
     end
 
@@ -747,8 +737,8 @@ function record_control_check()
     
     if Sys.language == CHN then--设置系统语言
         set_value(SYSTEM_INFO_SCREEN, SetChineseId, ENABLE);                           
-        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);                          
-    else                                                                               
+        set_value(SYSTEM_INFO_SCREEN, SetEnglishId, DISABLE);
+    else
         set_value(SYSTEM_INFO_SCREEN, SetChineseId, DISABLE);                          
         set_value(SYSTEM_INFO_SCREEN, SetEnglishId, ENABLE);                           
     end
@@ -760,7 +750,6 @@ function record_control_check()
     set_text(SERVER_SET_SCREEN, 1, Sys.wifiInfo[3])--TCP服务器ip地址
     set_text(SERVER_SET_SCREEN, 2, Sys.wifiInfo[4])--TCP服务器端口号
     set_text(REMOTE_UPDATE_SCREEN, 1, Sys.wifiInfo[5])--远程升级ip地址
-    
     ----------------------------------------------------------------------------
     if record_read(SYSTEM_INFO_SCREEN, SysPublicInfoRId, 0) == ""  then 
         for i=1,20,1 do
@@ -895,22 +884,14 @@ function on_timer(timer_id)
     elseif timer_id == 4 then
         Sys.eWaitTimeFlag = RESET;
     elseif timer_id == 5 then--每10ms发送一包数据
-        local tcpSendBuf = {};
-        if Sys.picIndex == (Sys.picTotalPack-1) then--最后一包
-            for i = 0, math.fmod(#Sys.picFileHex, 1000), 1 do
-                tcpSendBuf[i] = Sys.picFileHex[i + Sys.picIndex * 1000];
-            end
-            client_send_data(tcpSendBuf)
-            Sys.picIndex = 0;
-            stop_timer(5);--所有数据都已经发送完成,停止该定时器
-        elseif Sys.picIndex < (Sys.picTotalPack-1) then
-            for i = 0, 999, 1 do
-                tcpSendBuf[i] = Sys.picFileHex[i + Sys.picIndex * 1000];
-            end
-            client_send_data(tcpSendBuf)
-            Sys.picIndex = Sys.picIndex + 1;
+        Sys.wifi_connect = get_network_state() --获取网络状态
+        if Sys.wifi_connect == 0 then
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].timeOut);--wifi连接超时
         end
-        
+        if Sys.wifi_connect ~= 5 then
+            set_text(SERVER_SET_SCREEN, TcpStatusTextId, TipsTab[Sys.language].timeOut);--tcp连接超时
+            set_value(SERVER_SET_SCREEN, TcpConnectBtId, DISABLE);
+        end
     end
 end
 
@@ -924,7 +905,7 @@ function on_systick()
     Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec = get_date_time();--获取当前时间
 
     Sys.timeCntOfIdle = Sys.timeCntOfIdle + 1;
-    if Sys.timeCntOfIdle > 1800 then--
+    if Sys.timeCntOfIdle > 1800 then--30分钟无操作后, 自动切换为操作员
         SetSysUser(SysUser[Sys.language].operator); --一小时后,自动切换为操作员
     end
 
@@ -938,8 +919,6 @@ function on_systick()
             set_text(WIFI_CONNECT_SCREEN, WifiSsid, ssid);
             set_text(WIFI_CONNECT_SCREEN, WifiIpAddrId, ipaddr);
         end
-    else
-        set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].unconnected);
     end
 
     --判断触摸屏更新进度
@@ -948,56 +927,27 @@ function on_systick()
         set_value(REMOTE_UPDATE_SCREEN, RemoteUpdateTsStaId, state)  --升级状态提示
     end
     
-    --定时上传截图
     Sys.wifi_connect = get_network_state() --获取网络状态
     if Sys.wifi_connect == 5  then
+        set_value(SERVER_SET_SCREEN, TcpConnectBtId, ENABLE);
+        set_text(SERVER_SET_SCREEN, TcpStatusTextId, TipsTab[Sys.language].connected)--已连接
         Sys.heartPacketTimeCnt = Sys.heartPacketTimeCnt + 1;
-        if  Sys.heartPacketTimeCnt == 10  then
+        if Sys.remoteControled == false and Sys.heartPacketTimeCnt == 10 then--非控制模式下,才发送心跳
             Sys.heartPacketTimeCnt = 0;
-            if Sys.remoteControled == false then--非控制模式下,才发送心跳
-                local heart = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6100;PW=123456;MN=2410_001;Flag=0;CP=&&&&FFFF\r\n",
-                        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
-                local heartHex = {};
-                for i=1, string.len(heart), 1 do
-                    heartHex[i-1] = string.byte(heart, i, i)
-                end
-                ShowSysTips("发送心跳包");
-                client_send_data(heartHex);
+            local heart = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6100;PW=123456;MN=2410_001;Flag=0;CP=&&&&FFFF\r\n",
+                    Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
+            local heartHex = {};
+            for i=1, string.len(heart), 1 do
+                heartHex[i-1] = string.byte(heart, i, i)
             end
-        elseif math.fmod(Sys.heartPacketTimeCnt,3) == 0 and Sys.remoteControled == true then
-            screen_shoot("shoot.jpg", 0, 0, 600, 1000, 40)
-            Sys.picFileHex = {};
-            local picFile = io.open("shoot.jpg", "rb");--二进制方式打开文件
-            Sys.picFileLen = picFile:seek("end");--获取文件长度
-            
-            picFile:seek("set")                           --把文件位置定位到开头
-            local picFileStr = picFile:read(Sys.picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
-            picFile:close();
-            
-            local code = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6101;PW=123456;MN=2410_001;Flag=0;CP=&&DataInfo=",
-                Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
-            local index = string.len(code);
-            for i=1,index,1 do
-                Sys.picFileHex[i-1] = string.byte(code, i, i)
-            end
-            
-            for i = 1, Sys.picFileLen, 1 do
-                Sys.picFileHex[index+i-1] = string.byte(picFileStr, i, i)--将读取到的数据进行格式转换
-            end
-            index = string.len(code) + Sys.picFileLen
-            Sys.picFileHex[index] = 0x26
-            Sys.picFileHex[index+1] = 0x26
-            Sys.picFileHex[index+2] = 0x46
-            Sys.picFileHex[index+3] = 0x46
-            Sys.picFileHex[index+4] = 0x46
-            Sys.picFileHex[index+5] = 0x46
-            Sys.picFileHex[index+6] = 0x0D
-            Sys.picFileHex[index+7] = 0x0A
-            
-            Sys.picTotalPack = math.ceil(#Sys.picFileHex / 1000);
-            ShowSysTips("发送截图:"..#Sys.picFileHex..";包个数:"..Sys.picTotalPack);
-            start_timer(5, 20, 1, 0); --开启定时器5，超时时间 15ms, 1->使用倒计时方式,0->表示无限重复
+            ShowSysTips("发送心跳包");
+            client_send_data(heartHex);
+        elseif Sys.remoteControled == true and Sys.uploadingPic == false then
+            --时钟是每S都会变的,当TCP空闲时,截时钟发送给上位机
+            upload_screen_pic(490, 38, 100, 48)
         end
+    else--网络断开,反控标识设置为false
+        Sys.remoteControled = false;
     end
 end
 
@@ -1031,8 +981,6 @@ function on_control_notify(screen, control, value)
         action_select_control_notify(screen, control, value);
     elseif screen == PROCESS_INIT_SCREEN then--流程设置-开始界面
         process_init_control_notify(screen, control, value);
-    elseif screen == PROCESS_INJECT_SCREEN    then--流程设置-取样界面
-        process_inject_control_notify(screen, control, value);
     elseif screen == PROCESS_INJECT_ADD_SCREEN    then--流程设置-注射泵加液
         process_inject_add_control_notify(screen, control, value);
     elseif screen == PROCESS_PERISTALTIC_SCREEN    then--流程设置-蠕动泵加液
@@ -1083,7 +1031,6 @@ function on_control_notify(screen, control, value)
     elseif screen == REAGENT_SELECT_SCREEN then
         reagent_select_control_notify(screen, control, value);
     end
-
 end
 
 --***********************************************************************************************
@@ -2044,8 +1991,9 @@ end
 --  在底部的状态栏显示提示信息
 --***********************************************************************************************
 function ShowSysTips(tips)
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysTipsId, tips);
+    print(tips)
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysTipsId, tips);
     end
     stop_timer(3);
     start_timer(3, 5000, 1, 0) --开启定时器 3，超时时间 5000ms,1->使用倒计时方式,1->表示只执行一次
@@ -2057,10 +2005,10 @@ end
 function SetSysWorkStatus(status)
     Sys.status = status;--设置系统状态为运行
     --在底部的状态栏显示工作状态:停止/运行/待机
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysWorkStatusId, status);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysWorkStatusId, status);
         if status == WorkStatus[Sys.language].stop or status == WorkStatus[Sys.language].readyRun then
-            set_text(PublicTab[i], SysCurrentProcessId, TipsTab[Sys.language].null);
+            set_text(ScreenWithMenu[i], SysCurrentProcessId, TipsTab[Sys.language].null);
         end
     end
     saveStatusInfo()
@@ -2070,8 +2018,8 @@ end
 --  在底部的状态栏显示当前流程
 --***********************************************************************************************
 function ShowSysCurrentProcess(processName)
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysCurrentProcessId, processName);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysCurrentProcessId, processName);
     end
 end
 
@@ -2079,8 +2027,8 @@ end
 --  在底部的状态栏显示当前动作
 --***********************************************************************************************
 function ShowSysCurrentAction(action)
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysCurrentActionId, action);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysCurrentActionId, action);
     end
 end
 
@@ -2089,8 +2037,8 @@ end
 --  在底部的状态栏显示当前模式
 --***********************************************************************************************
 function ShowSysCurrentMode(mode)
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysRunModeId, mode);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysRunModeId, mode);
     end
 end
 
@@ -2098,12 +2046,12 @@ end
 --  在底部的状态栏显示告警信息
 --***********************************************************************************************
 function ShowSysAlarm(alarm)
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysAlarmId, alarm);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysAlarmId, alarm);
         if alarm == TipsTab[Sys.language].null then
-            set_fore_color(PublicTab[i], SysAlarmId, BLACK);--黑色
+            set_fore_color(ScreenWithMenu[i], SysAlarmId, BLACK);--黑色
         else
-            set_fore_color(PublicTab[i], SysAlarmId, RED);--红色
+            set_fore_color(ScreenWithMenu[i], SysAlarmId, RED);--红色
         end
     end
 end
@@ -3027,6 +2975,7 @@ end
 --stopType : SystemStop(STOP_BY_NORMAL)-跑完一次流程后正常停止 ;SystemStop(STOP_BY_CLICK_BUTTON)-通过手动点击停止按钮强制停止流程
 --***********************************************************************************************
 function SystemStop(stopType)
+    Sys.hand_control_func = nil;
     SetSysWorkStatus(WorkStatus[Sys.language].stop);--将状态栏显示为停止
     ShowSysCurrentProcess(TipsTab[Sys.language].null);--将当前流程显示为"无"
     ShowSysCurrentAction(TipsTab[Sys.language].null);--将当前动作显示为"无"
@@ -6196,8 +6145,8 @@ EquipmentTypeTextId = 900;--每个界面中的仪器型号id都是900
 
 --设置仪器型号
 function set_equipment_type()
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId));
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], EquipmentTypeTextId, get_text(SYSTEM_INFO_SCREEN, SetEquipmentTypeTextId));
     end
 end
 
@@ -6206,11 +6155,9 @@ end
 function system_info_control_notify(screen, control, value)
     if control == SetEquipmentTypeTextId then--设置仪器型号
         set_equipment_type();
-        Sys.info[EquipmentType] = get_text(screen, control)--修改记录中的仪器型号
         saveSysInfo()
         set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
     elseif control == SerialNumberTextId then
-        Sys.info[SerialNumber] = get_text(screen, control)--修改记录中的仪器型号
         saveSysInfo()
         set_enable(SYSTEM_INFO_SCREEN, control, DISABLE);
     elseif control == SetSerialNumberBtId or control == SetEquipmentTypeBtId then--设置仪器序列号或者仪器仪器型号
@@ -6242,7 +6189,6 @@ function system_info_control_notify(screen, control, value)
             else
                 SetSysUser(SysUser[CHN].administrator);
             end
-            Sys.info[SysLanguage] = CHN
             saveSysInfo()
             changeCfgFileLanguage(CHN);--将配置文件中的翻译为中文
         end
@@ -6260,7 +6206,6 @@ function system_info_control_notify(screen, control, value)
             else
                 SetSysUser(SysUser[ENG].administrator);
             end
-            Sys.info[SysLanguage] = ENG
             saveSysInfo()
             changeCfgFileLanguage(ENG);--将配置文件翻译为英文
         end
@@ -6275,8 +6220,8 @@ function SetSysUser(user)
     Sys.userName = user;
 
     --在底部的状态用户名
-    for i = 1, #PublicTab, 1 do
-        set_text(PublicTab[i], SysUserNameId, user);
+    for i = 1, #ScreenWithMenu, 1 do
+        set_text(ScreenWithMenu[i], SysUserNameId, user);
     end
 
     if Sys.userName == SysUser[Sys.language].operator then -- 操作员
@@ -6517,7 +6462,7 @@ WifiStatusTextId = 9;
 WifiConnectBtId = 10;
 WifiIpAddrId = 42;
 function wifi_connect_control_notify(screen, control, value)
-    if control == ScanBtId then
+    if control == ScanBtId then--扫描
         scan_ap_fill_list();
     elseif control >= 27 and control <= 40 then--选取热点
         Sys.ssid = get_text(WIFI_CONNECT_SCREEN, (control - 14)) --文本控件从13~26
@@ -6528,7 +6473,8 @@ function wifi_connect_control_notify(screen, control, value)
             wifiPwd = get_text(WIFI_CONNECT_SCREEN, WifiPwdId);
             set_wifi_cfg(1, 0, Sys.ssid, wifiPwd) --连接 WIFI，1 网卡模式，0 自动识别加密
             save_network_cfg();
-            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].connecting)
+            start_timer(5, 20000, 1, 1); --开启定时器5，超时时间20s,1->使用倒计时方式,1->表示只执行一次
+            set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].connecting)--连接中
         end
     elseif control == SureButtonId then
         saveWifiInfo()
@@ -6695,17 +6641,31 @@ function UpdataDriverBoard()
 end
 
 --[[连接TCP服务器----------------------------------------------------------------------------------------------------]]
+TcpConnectBtId = 10;
+TcpStatusTextId = 3;
 --在服务器设置界面点击确认按钮与取消按钮
 function server_set_control_notify(screen, control, value)
-    if control == SureButtonId and value == ENABLE then --确认按钮
+    if control == TcpConnectBtId then --连接按钮
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--检测权限
             local ip = get_text(screen,1);
             local port = get_text(screen,2);
-            set_network_service_cfg(0, 1, port, ip);--设置网络服务参数
-            save_network_cfg()
-            change_screen(SYSTEM_INFO_SCREEN);
-            saveWifiInfo()
+            if value == ENABLE then--连接
+                set_network_service_cfg(0, 1, port, ip);--设置网络服务参数
+                save_network_cfg()
+                set_text(SERVER_SET_SCREEN, TcpStatusTextId, TipsTab[Sys.language].connecting)--连接中
+                stop_timer(5)--停止超时定时器
+                start_timer(5, 20000, 1, 1); --开启定时器5，超时时间20s,1->使用倒计时方式,1->表示只执行一次
+            else--断开连接
+                set_network_service_cfg(0, 0, port, ip);--禁用网络服务
+                save_network_cfg()
+                set_text(SERVER_SET_SCREEN,TcpStatusTextId, TipsTab[Sys.language].unconnected)--状态栏显示未连接
+                set_value(SERVER_SET_SCREEN, TcpConnectBtId, DISABLE);--按钮设置为弹出状态
+                stop_timer(5)--停止超时定时器
+            end
         end
+    elseif control == SureButtonId and value == ENABLE then --确认按钮
+        saveWifiInfo()
+        change_screen(SYSTEM_INFO_SCREEN);
     elseif control == CancelButtonId then --取消按钮
         change_screen(SYSTEM_INFO_SCREEN);
     end
@@ -6728,20 +6688,214 @@ function on_client_recv_data(packet)
             retHex[i-1] = string.byte(ret, i, i)
         end
         client_send_data(retHex);
+        upload_screen_pic(0,0,600,1000)--在建立连接时,上传整个屏幕
     elseif CN == "6201" then
         Sys.remoteControled = false;
         ShowSysTips("结束远程控制")
     elseif CN == "6202" then
-        local XPos = tonumber(GetSubString2(packetStr,"XPos=",";")) * 600
-        local YPos = tonumber(GetSubString2(packetStr,"YPos=","&&")) * 1000
+        local XPos = tonumber(GetSubString2(packetStr, "XPos=",";"))-- * 600
+        local YPos = tonumber(GetSubString2(packetStr, "YPos=","&&")) --* 1000
         ShowSysTips("XPos="..XPos.."......".."YPos="..YPos);
-        if XPos <= 600 and YPos <= 1000 then
-            -- if get_current_screen == MAIN_SCREEN then
-                change_screen(RUN_CONTROL_SCREEN);
-            -- end
-        end
+        parse_xy(XPos, YPos);
     end
 end
+
+
+--截取屏幕发送给上位机
+function upload_screen_pic(x,y,w,h)
+    local onePackLen = 1024;
+    screen_shoot("shoot.jpg", x, y, w, h, 80)
+    Sys.picFileHex = {};
+    local picFile = io.open("shoot.jpg", "rb");--二进制方式打开文件
+    if picFile == nil then
+        ShowSysTips("截图失败");
+        return
+    end
+    Sys.picFileLen = picFile:seek("end");--获取文件长度
+    ShowSysTips("shoot.jpg:"..Sys.picFileLen);
+    picFile:seek("set")                           --把文件位置定位到开头
+    local picFileStr = picFile:read(Sys.picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
+    picFile:close();
+    
+    local code = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6101;PW=123456;MN=2410_001;Flag=0;CP=&&DataInfo=",
+        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
+    local index = string.len(code);
+    for i=1,index,1 do
+        Sys.picFileHex[i-1] = string.byte(code, i, i)
+    end
+    
+    for i = 1, Sys.picFileLen, 1 do
+        Sys.picFileHex[index+i-1] = string.byte(picFileStr, i, i)--将读取到的数据进行格式转换
+    end
+    index = string.len(code) + Sys.picFileLen
+    Sys.picFileHex[index] = 0x26
+    Sys.picFileHex[index+1] = 0x26
+    Sys.picFileHex[index+2] = 0x46
+    Sys.picFileHex[index+3] = 0x46
+    Sys.picFileHex[index+4] = 0x46
+    Sys.picFileHex[index+5] = 0x46
+    Sys.picFileHex[index+6] = 0x0D
+    Sys.picFileHex[index+7] = 0x0A
+    
+    Sys.picTotalPack = math.ceil(#Sys.picFileHex / onePackLen);
+    ShowSysTips("发送截图:"..#Sys.picFileHex..";包个数:"..Sys.picTotalPack);
+    local tcpSendBuf = {};
+    Sys.uploadingPic = true;
+    for picIndex = 0, Sys.picTotalPack-1, 1 do
+        if picIndex == (Sys.picTotalPack-1) then--最后一包
+            for i = 0, math.fmod(#Sys.picFileHex, onePackLen), 1 do
+                tcpSendBuf[i] = Sys.picFileHex[i + picIndex * onePackLen];
+            end
+        else
+            for i = 0, onePackLen-1, 1 do
+                tcpSendBuf[i] = Sys.picFileHex[i + picIndex * onePackLen];
+            end
+        end
+        client_send_data(tcpSendBuf)
+        tcpSendBuf = {}
+    end
+    Sys.uploadingPic = false;
+end
+
+--接受到服务器的坐标数据后, 首先调用该函数
+function parse_xy(x,y)
+    local screen = get_current_screen();
+    local flagChangeScreenMenu = RESET;
+    for i = 2, #ScreenWithMenu, 1 do
+        if screen == ScreenWithMenu[i] then
+            flagChangeScreenMenu = SET;
+        end
+    end
+    if flagChangeScreenMenu == SET then
+        click_menu_button(x,y)
+    elseif screen == MAIN_SCREEN then--首页
+        if x >= 459 and x<=(459+106) and y >= 835 and y <= (835+50) then--菜单按钮
+            change_screen(RUN_CONTROL_SCREEN);
+        end
+    elseif screen == RUN_CONTROL_SCREEN then --运行控制界面
+        
+    elseif screen == RUN_CONTROL_PERIOD_SCREEN then--运行控制-周期设置
+        
+    elseif screen == RUN_CONTROL_TIMED_SCREEN then--运行控制-定时设置
+        
+    elseif screen == RUN_CONTROL_HAND_SCREEN then--运行控制-手动设置
+        
+    elseif screen == PROCESS_TYPE_SELECT_SCREEN then --流程选择界面
+        
+    elseif screen == PROCESS_NAME_SELECT_SCREEN then--流程名称选择界面
+        
+    elseif screen == PROCESS_SET1_SCREEN or screen == PROCESS_SET2_SCREEN then --流程设置1/2界面
+        
+    elseif screen == PROCESS_EDIT1_SCREEN or screen == PROCESS_EDIT2_SCREEN or screen == PROCESS_EDIT3_SCREEN or screen == PROCESS_EDIT4_SCREEN then --流程编辑1/2/3界面
+        
+    elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
+        
+    elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
+        
+    elseif screen == PROCESS_INIT_SCREEN then--流程设置-开始界面
+        
+    elseif screen == PROCESS_INJECT_ADD_SCREEN    then--流程设置-注射泵加液
+        
+    elseif screen == PROCESS_PERISTALTIC_SCREEN    then--流程设置-蠕动泵加液
+        
+    elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
+        
+    elseif screen == PROCESS_READ_SIGNAL_SCREEN then--流程设置-读取信号
+        
+    elseif screen == PROCESS_CALCULATE_SCREEN then--流程设置-计算
+        
+    elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
+        
+    elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
+        
+    elseif screen == PROCESS_LINEAR_CHK_SET_SCREEN then--流程设置-线性核查稀释
+        
+    elseif screen == RANGE_SET_SCREEN then --量程设置
+        
+    elseif screen == HAND_OPERATE1_SCREEN then --手动操作1
+        
+    elseif screen == HAND_OPERATE2_SCREEN then --手动操作2
+        
+    elseif screen == HAND_OPERATE3_SCREEN then --手动操作3
+        
+    elseif screen == IN_OUT_SCREEN then--输入输出界面
+        
+    elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
+        
+    elseif screen == LOGIN_SYSTEM_SCREEN then--登录系统界面
+        
+    elseif screen == DIALOG_SCREEN then--对话框界面
+       
+    elseif screen == PASSWORD_SET_SCREEN then--密码设置界面
+        
+    elseif screen == WIFI_CONNECT_SCREEN then--Wifi设置界面
+        
+    elseif screen == REMOTE_UPDATE_SCREEN then
+        
+    elseif  screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or
+           screen == HISTORY_ALARM_SCREEN or screen == HISTORY_LOG_SCREEN then
+       
+    elseif screen == PASSWORD_DIALOG_SCREEN then--密码对话框界面
+        
+    elseif screen ==PROCESS_COPY_SCREEN then--流程复制
+        
+    elseif screen == SERVER_SET_SCREEN then--服务器设置
+        
+    elseif screen == REAGENT_SELECT_SCREEN then
+        
+    end
+end
+
+
+--判断为点击了菜单按钮,切换画面
+function click_menu_button(x,y)
+    local curScreen = get_current_screen()
+    local width = 40
+    local length = 100
+    local length2 = 90
+    local length3 = 120
+    if x >= 40 and x <=(40 + length) and y>=813 and y<=(813+width) then--返回首页
+        change_screen(MAIN_SCREEN)
+    elseif x >= 176 and x <=(176 + length) and y>=813 and y<=(813+width) then--运行控制
+        change_screen(RUN_CONTROL_SCREEN)
+    elseif x >= 314 and x <=(314 + length) and y>=813 and y<=(813+width) then--流程设置
+        change_screen(PROCESS_SET1_SCREEN)
+    elseif x >= 451 and x <=(451 + length) and y>=813 and y<=(813+width) then--量程设置
+        change_screen(RANGE_SET_SCREEN)
+    elseif x >= 40 and x <=(40 + length) and y>=864 and y<=(864+width) then--手工操作
+        change_screen(HAND_OPERATE1_SCREEN)
+    elseif x >= 29 and x <=(29 + length3) and y>=740 and y<=(740+width) then--手工操作-阀泵操作
+        change_screen(HAND_OPERATE1_SCREEN)
+    elseif x >= 174 and x <=(174 + length3) and y>=740 and y<=(740+width) then--手工操作-电极/温度等
+        change_screen(HAND_OPERATE2_SCREEN)
+    elseif x >= 309 and x <=(309 + length3) and y>=740 and y<=(740+width) then--手工操作-试剂余量
+        change_screen(HAND_OPERATE3_SCREEN)
+    elseif x >= 448 and x <=(448 + length3) and y>=740 and y<=(740+width) then--手工操作-通讯记录
+        change_screen(HAND_OPERATE4_SCREEN)
+    elseif x >= 176 and x <=(176 + length) and y>=864 and y<=(864+width) then--输入输出
+        change_screen(IN_OUT_SCREEN)
+    elseif x >= 314 and x <=(314 + length) and y>=864 and y<=(864+width) then--历史记录
+        change_screen(HISTORY_ANALYSIS_SCREEN)
+    elseif x >= 33 and x <=(33 + length2) and y>=695 and y<=(695+width) then--历史记录-分析
+        change_screen(HISTORY_ANALYSIS_SCREEN)
+    elseif x >= 144 and x <=(144 + length2) and y>=695 and y<=(695+width) then--历史记录-核查
+        change_screen(HISTORY_CHECK_SCREEN)
+    elseif x >= 255 and x <=(255 + length2) and y>=695 and y<=(695+width) then--历史记录-校准
+        change_screen(HISTORY_CALIBRATION_SCREEN)
+    elseif x >= 366 and x <=(366 + length2) and y>=695 and y<=(695+width) then--历史记录-报警
+        change_screen(HISTORY_ALARM_SCREEN)
+    elseif x >= 477 and x <=(477 + length2) and y>=695 and y<=(695+width) then--历史记录-日志
+        change_screen(HISTORY_LOG_SCREEN)
+    elseif x >= 31 and x <=(31 + length2) and y>=747 and y<=(747+width) then--历史记录-加标回收
+        change_screen(HISTORY_RECOVERY_SCREEN)
+    elseif x >= 142 and x <=(142 + length2) and y>=747 and y<=(747+width) then--历史记录-线性核查
+        change_screen(HISTORY_LINER_SCREEN)
+    elseif x >= 451 and x <=(451 + length) and y>=864 and y<=(864+width) then--系统信息
+        change_screen(SYSTEM_INFO_SCREEN)
+    end
+end
+
+
 
 
 --[[配置文件中英文转换函数--------------------------------------------------------------------------------------------]]
@@ -7253,6 +7407,10 @@ end
 --  保存系统信息到记录空间
 --***********************************************************************************************
 function saveSysInfo()
+    Sys.info[EquipmentType] = get_text(SYSTEM_INFO_SCREEN, 1)--仪器型号
+    Sys.info[SerialNumber] = get_text(SYSTEM_INFO_SCREEN, 2)--仪器序列号
+    Sys.info[SysLanguage] = Sys.language --系统语言
+
     local record = "";
     for i=1, #Sys.info, 1 do
         record = record..Sys.info[i]..","
@@ -7264,6 +7422,13 @@ end
 --  保存wifi相关的设置
 --***********************************************************************************************
 function saveWifiInfo()
+    --初始化Wifi用户名,密码,TCP服务器地址与端口参数
+    Sys.wifiInfo[1] = get_text(WIFI_CONNECT_SCREEN, 1)--wifi名称
+    Sys.wifiInfo[2] = get_text(WIFI_CONNECT_SCREEN, 5)--wifi密码
+    Sys.wifiInfo[3] = get_text(SERVER_SET_SCREEN, 1)--TCP服务器ip地址
+    Sys.wifiInfo[4] = get_text(SERVER_SET_SCREEN, 2)--TCP服务器端口
+    Sys.wifiInfo[5] = get_text(REMOTE_UPDATE_SCREEN, 1)--远程升级服务器地址
+
     local record = "";
     for i=1, #Sys.wifiInfo, 1 do
         record = record..Sys.wifiInfo[i]..","
@@ -7506,13 +7671,6 @@ function readLastLineOfFile(filePath)
     for line in fileRead:lines() do
         lineStr = line
     end
-    -- if fileRead then
-    --     lineStr = fileRead:read()
-    --     while lineStr do
-    --         lineStr = fileRead:read();
-    --     end
-    --     fileRead:close();
-    -- end
     return lineStr;
 end
 
@@ -7758,6 +7916,8 @@ function Frac2(x, bitNumb, flag)
     reslist = nil
     return sum, nLen
 end
+
+
 --***********************************************************************************************
 --将浮点数转换为16进制表示
 --***********************************************************************************************

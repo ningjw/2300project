@@ -33,6 +33,9 @@
         "get_ap_info",
         "set_network_service_cfg",
         "uart_send_data",
-        "set_date_time"
+        "set_date_time",
+        "parse_xy",
+        "server_set_control_notify",
+        "on_client_recv_data"
     ]
 }

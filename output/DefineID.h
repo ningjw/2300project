@@ -9204,6 +9204,19 @@
 
 #define  _TXT_DIS__服务器设置_TEXT_DISPLAY2                                         1
 
+//画面服务器设置中按钮Button2弹起时的图片
+#define  _IMG_服务器设置_BUTTON2_UP                                               112
+
+//画面服务器设置中按钮Button2按下时的图片
+#define  _IMG_服务器设置_BUTTON2_DOWN                                             113
+
+#define  _BTN_服务器设置_BUTTON2                                                   10
+
+#define  _TXT_DIS__服务器设置_TEXT_DISPLAY3                                         3
+
+//画面服务器设置中文本显示Text_Display3的背景图片
+#define  _IMG_服务器设置_TEXT_DISPLAY3                                            119
+
 //画面试剂选择中按钮Button3弹起时的图片
 #define  _IMG_试剂选择_BUTTON3_UP                                                 15
 

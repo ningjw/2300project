@@ -598,9 +598,9 @@ ConfigStr = {};
 --保存的是配置文件"1"-"24"中的某个配置文件,每个元素保存该文件中的一行,每一行表示的是一个动作
 ActionStrTab = {};
 
-
-
-
+function test(x,y,w,h)
+    print("x="..x..";y="..y)
+end
 --[[入口函数-----------------------------------------------------------------------------------------------]]
 
 --***********************************************************************************************
@@ -618,7 +618,8 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-
+    local pf = test
+    pf();
     --ModeBus表
     for i = 0x1000,0x10FF,1 do
         ModeBus[i] = 0
@@ -864,7 +865,8 @@ end
 --定时器2: 用于读取E1/E2信号时的超时判断; 用于流程控制中的超时判断
 --定时器3: 调用ShowSysTips显示提示后, 该提示只显示5秒钟
 --定时器4: 在测量电位E1/E2时, 用于定时最小时间与最大时间
---定时器5: 用于定时上传图片数据
+--定时器5: 用于判断网络连接超时
+--定时器6: 用于上传图片数据
 --***********************************************************************************************
 function on_timer(timer_id)
     if timer_id == 0 then --定时器0,定时时间到
@@ -892,6 +894,8 @@ function on_timer(timer_id)
             set_text(SERVER_SET_SCREEN, TcpStatusTextId, TipsTab[Sys.language].timeOut);--tcp连接超时
             set_value(SERVER_SET_SCREEN, TcpConnectBtId, DISABLE);
         end
+    elseif timer_id == 6 then
+        upload_screen_pic(Sys.x, Sys.y, Sys.w, Sys.h)
     end
 end
 
@@ -944,7 +948,7 @@ function on_systick()
             client_send_data(heartHex);
         elseif Sys.remoteControled == true and Sys.uploadingPic == false then
             --时钟是每S都会变的,当TCP空闲时,截时钟发送给上位机
-            upload_screen_pic(490, 38, 100, 48)
+            -- upload_screen_pic(490, 38, 100, 48)
         end
     else--网络断开,反控标识设置为false
         Sys.remoteControled = false;
@@ -2012,6 +2016,9 @@ function SetSysWorkStatus(status)
         end
     end
     saveStatusInfo()
+    if Sys.remoteControled == true then--如果当前为反控模式,状态栏有变化,需要上传
+        upload_bottom_status_area()
+    end
 end
 
 --***********************************************************************************************
@@ -2020,6 +2027,9 @@ end
 function ShowSysCurrentProcess(processName)
     for i = 1, #ScreenWithMenu, 1 do
         set_text(ScreenWithMenu[i], SysCurrentProcessId, processName);
+    end
+    if Sys.remoteControled == true then--如果当前为反控模式,状态栏有变化,需要上传
+        upload_bottom_status_area()
     end
 end
 
@@ -2030,6 +2040,9 @@ function ShowSysCurrentAction(action)
     for i = 1, #ScreenWithMenu, 1 do
         set_text(ScreenWithMenu[i], SysCurrentActionId, action);
     end
+    if Sys.remoteControled == true then
+        upload_bottom_status_area()
+    end
 end
 
 
@@ -2039,6 +2052,9 @@ end
 function ShowSysCurrentMode(mode)
     for i = 1, #ScreenWithMenu, 1 do
         set_text(ScreenWithMenu[i], SysRunModeId, mode);
+    end
+    if Sys.remoteControled == true then--如果当前为反控模式,状态栏有变化,需要上传
+        upload_bottom_status_area()
     end
 end
 
@@ -2053,6 +2069,9 @@ function ShowSysAlarm(alarm)
         else
             set_fore_color(ScreenWithMenu[i], SysAlarmId, RED);--红色
         end
+    end
+    if Sys.remoteControled == true then--如果当前为反控模式,状态栏有变化,需要上传
+        upload_bottom_status_area()
     end
 end
 
@@ -2815,6 +2834,9 @@ function process_ready_run(processIdType)
         set_text(MAIN_SCREEN, StartTimeId, string.format("%d-%02d-%02d  %02d:%02d",--显示本次启动流程的时间
                  Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,Sys.startTime.hour, Sys.startTime.min));
         SetSysWorkStatus(WorkStatus[Sys.language].run);--设置工作状态为运行,定时器中断中检测到运行状态后,会跳转到excute_process??数执行流??
+        if Sys.remoteControled == true then
+            upload_bottom_status_area()
+        end
     end
 end
 
@@ -6692,7 +6714,7 @@ function on_client_recv_data(packet)
     elseif CN == "6201" then
         Sys.remoteControled = false;
         ShowSysTips("结束远程控制")
-    elseif CN == "6202" then
+    elseif CN == "6202" and Sys.remoteControled == true then
         local XPos = tonumber(GetSubString2(packetStr, "XPos=",";"))-- * 600
         local YPos = tonumber(GetSubString2(packetStr, "YPos=","&&")) --* 1000
         ShowSysTips("XPos="..XPos.."......".."YPos="..YPos);
@@ -6703,8 +6725,7 @@ end
 
 --截取屏幕发送给上位机
 function upload_screen_pic(x,y,w,h)
-    local onePackLen = 1024;
-    screen_shoot("shoot.jpg", x, y, w, h, 80)
+    screen_shoot("shoot.jpg", x, y, w, h, 60)
     Sys.picFileHex = {};
     local picFile = io.open("shoot.jpg", "rb");--二进制方式打开文件
     if picFile == nil then
@@ -6716,9 +6737,16 @@ function upload_screen_pic(x,y,w,h)
     picFile:seek("set")                           --把文件位置定位到开头
     local picFileStr = picFile:read(Sys.picFileLen)   --从当前位置读取整个文件，并赋值到字符串中
     picFile:close();
-    
-    local code = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6101;PW=123456;MN=2410_001;Flag=0;CP=&&DataInfo=",
-        Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec);
+    if x==0 and y==0 and w == 600 and h == 800 then
+        IsFullPic = 1;
+    else
+        IsFullPic = 0;
+    end
+    PX = x/600;
+    PY = y/1000;
+    local code = string.format("##0000QN=%04d%02d%02d%02d%02d%02d000;ST=21;CN=6101;PW=123456;MN=2410_001;Flag=0;CP=&&IsFullPic=%d;PX=%.2f;PY=%.2f;DataInfo=",
+                               Sys.dateTime.year, Sys.dateTime.mon, Sys.dateTime.day,Sys.dateTime.hour, Sys.dateTime.min, Sys.dateTime.sec,
+                               IsFullPic, PX, PY);
     local index = string.len(code);
     for i=1,index,1 do
         Sys.picFileHex[i-1] = string.byte(code, i, i)
@@ -6737,8 +6765,9 @@ function upload_screen_pic(x,y,w,h)
     Sys.picFileHex[index+6] = 0x0D
     Sys.picFileHex[index+7] = 0x0A
     
-    Sys.picTotalPack = math.ceil(#Sys.picFileHex / onePackLen);
     ShowSysTips("发送截图:"..#Sys.picFileHex..";包个数:"..Sys.picTotalPack);
+    local onePackLen = 1024;
+    Sys.picTotalPack = math.ceil(#Sys.picFileHex / onePackLen);
     local tcpSendBuf = {};
     Sys.uploadingPic = true;
     for picIndex = 0, Sys.picTotalPack-1, 1 do
@@ -6755,69 +6784,418 @@ function upload_screen_pic(x,y,w,h)
         tcpSendBuf = {}
     end
     Sys.uploadingPic = false;
+
+end
+
+--10ms后开始上传截图
+function upload_pic_after_10ms(x,y,w,h)
+    Sys.x = x;
+    Sys.y = y;
+    Sys.w = w;
+    Sys.h = h;
+    start_timer(6, 10, 1, 1); --开启定时器1，超时时间 100ms, 1->使用倒计时方式,1->只进行一次
+end
+
+--10ms后开始上传中间区域
+function upload_middle_area_after_10ms()
+    Sys.x = 25;
+    Sys.y = 190;
+    Sys.w = 550;
+    Sys.h = 700;
+    start_timer(6, 10, 1, 1); --开启定时器1，超时时间 100ms, 1->使用倒计时方式,1->只进行一次
+end
+
+--发送底部状态栏区域
+function upload_bottom_status_area()
+    upload_screen_pic(0,920,600,80);
 end
 
 --接受到服务器的坐标数据后, 首先调用该函数
 function parse_xy(x,y)
     local screen = get_current_screen();
     local flagChangeScreenMenu = RESET;
-    for i = 2, #ScreenWithMenu, 1 do
+
+    for i = 2, #ScreenWithMenu, 1 do--判断是否为点击了菜单按钮
         if screen == ScreenWithMenu[i] then
             flagChangeScreenMenu = SET;
         end
     end
     if flagChangeScreenMenu == SET then
-        click_menu_button(x,y)
+        click_menu_button(x,y)--点击了菜单按钮,切换界面
     elseif screen == MAIN_SCREEN then--首页
         if x >= 459 and x<=(459+106) and y >= 835 and y <= (835+50) then--菜单按钮
             change_screen(RUN_CONTROL_SCREEN);
         end
     elseif screen == RUN_CONTROL_SCREEN then --运行控制界面
-        
+        if x >= 281 and x<=(281+70) and y>=170 and y<=(170+35) then--设置按钮
+            run_control_notify(screen, RunModeSetBtId, ENABLE)
+        end
+        if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then--判断为周期模式
+            upload_pic_after_10ms(25,155,550,625);--上传周期模式界面大小
+        elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].timed then--判断为定时模式
+            upload_pic_after_10ms(25,112,550,761);--上传定时模式界面大小
+        elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then--判断为手动模式
+            upload_pic_after_10ms(25,190,550,611);--上传手动模式界面大小
+        end
     elseif screen == RUN_CONTROL_PERIOD_SCREEN then--运行控制-周期设置
-        
+        if (x>=106 and x<=(106+109) and y>=712 and y<=(712+35)) or (x>=400 and x<=(400+109) and y>=712 and y<=(712+35)) then--取消 or 确认
+            run_control_period_notify(screen, CancelButtonId, ENABLE)
+            upload_pic_after_10ms(25,155,550,625);
+        end
     elseif screen == RUN_CONTROL_TIMED_SCREEN then--运行控制-定时设置
-        
+        if (x>=119 and x<=(116+109) and y>=797 and y<=(797+35)) or (x>=390 and x<=(390+109) and y>=797 and y<=(797+35)) then--取消 or 确认
+            run_control_period_notify(screen, CancelButtonId, ENABLE)
+            upload_pic_after_10ms(25,112,550,761);--上传定时模式界面大小
+        end
     elseif screen == RUN_CONTROL_HAND_SCREEN then--运行控制-手动设置
-        
+        if (x>=113 and x<=(113+109) and y>=688 and y<=(688+35)) or (x>=387 and x<=(387+109) and y>=688 and y<=(688+35)) then--取消 or 确认
+            run_control_period_notify(screen, CancelButtonId, ENABLE)
+            upload_pic_after_10ms(25,190,550,611);--上传手动模式界面大小
+        end
     elseif screen == PROCESS_TYPE_SELECT_SCREEN then --流程选择界面
         
     elseif screen == PROCESS_NAME_SELECT_SCREEN then--流程名称选择界面
         
     elseif screen == PROCESS_SET1_SCREEN or screen == PROCESS_SET2_SCREEN then --流程设置1/2界面
-        
-    elseif screen == PROCESS_EDIT1_SCREEN or screen == PROCESS_EDIT2_SCREEN or screen == PROCESS_EDIT3_SCREEN or screen == PROCESS_EDIT4_SCREEN then --流程编辑1/2/3界面
-        
+        if x>=502 and x<=(502+80) and y>=709 and y<=(709+40)  then--下一页
+            change_screen(PROCESS_SET2_SCREEN)
+        elseif x>=415 and x<=(415+80) and y>=709 and y<=(709+40) then--上一页
+            change_screen(PROCESS_SET1_SCREEN)
+        elseif x>=521 and x<=(521+50) and y>=236 and y<=(236+30) then --第一行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[1].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[13].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=274 and y<=(274+30) then --第二行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[2].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[14].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=313 and y<=(313+30) then --第三行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[3].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[15].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=351 and y<=(351+30) then --第四行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[4].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[16].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=390 and y<=(390+30) then --第五行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[5].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[17].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=428 and y<=(428+30) then --第六行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[6].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[18].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=467 and y<=(467+30) then --第七行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[7].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[19].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=505 and y<=(505+30) then --第八行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[8].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[20].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=544 and y<=(544+30) then --第九行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[9].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[21].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=582 and y<=(582+30) then --第十行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[10].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[22].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=621 and y<=(621+30) then --第十一行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[11].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[23].editId, ENABLE)
+            end
+        elseif x>=521 and x<=(521+50) and y>=660 and y<=(660+30) then --第十二行查看按钮
+            if screen == PROCESS_SET1_SCREEN then 
+                process_set12_control_notify(screen, ProcessSetTab[12].editId, ENABLE)
+            elseif screen == PROCESS_SET2_SCREEN then
+                process_set12_control_notify(screen, ProcessSetTab[24].editId, ENABLE)
+            end
+        end
+    elseif screen == PROCESS_EDIT1_SCREEN or screen == PROCESS_EDIT2_SCREEN or 
+           screen == PROCESS_EDIT3_SCREEN or screen == PROCESS_EDIT4_SCREEN then --流程编辑1/2/3/4界面
+        --x>= and x<=() and y>= and y<=()
+        if x>=502 and x<=(502+80) and y>=709 and y<=(709+40)  then--下一页
+            if screen == PROCESS_EDIT1_SCREEN then
+                change_screen(PROCESS_EDIT2_SCREEN)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                change_screen(PROCESS_EDIT3_SCREEN)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                change_screen(PROCESS_EDIT4_SCREEN)
+            end
+            upload_middle_area_after_10ms(25,190,550,505)
+        elseif x>=415 and x<=(415+80) and y>=709 and y<=(709+40) then--上一页
+            if screen == PROCESS_EDIT2_SCREEN then
+                change_screen(PROCESS_EDIT1_SCREEN)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                change_screen(PROCESS_EDIT2_SCREEN)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                change_screen(PROCESS_EDIT3_SCREEN)
+            end
+            upload_middle_area_after_10ms(25,190,550,505)
+        elseif x>=521 and x<=(521+50) and y>=236 and y<=(236+30) then --第一行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[1].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[13].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[25].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[37].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=274 and y<=(274+30) then --第二行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[2].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[14].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[26].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[38].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=313 and y<=(313+30) then --第三行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[3].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[15].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[27].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[39].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=351 and y<=(351+30) then --第四行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[4].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[16].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[28].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[40].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=390 and y<=(390+30) then --第五行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[5].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[17].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[29].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[41].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=428 and y<=(428+30) then --第六行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[6].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[18].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[30].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[42].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=467 and y<=(467+30) then --第七行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[7].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[19].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[31].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[43].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=505 and y<=(505+30) then --第八行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[8].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[20].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[32].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[44].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=544 and y<=(544+30) then --第九行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[9].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[21].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[33].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[45].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=582 and y<=(582+30) then --第十行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[10].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[22].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[34].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[46].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=621 and y<=(621+30) then --第十一行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[11].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[23].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[35].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[47].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        elseif x>=521 and x<=(521+50) and y>=660 and y<=(660+30) then --第十二行查看按钮
+            if screen == PROCESS_EDIT1_SCREEN then
+                process_edit_control_notify(screen, TabAction[12].editId, ENABLE)
+            elseif screen == PROCESS_EDIT2_SCREEN then
+                process_edit_control_notify(screen, TabAction[24].editId, ENABLE)
+            elseif screen == PROCESS_EDIT3_SCREEN then
+                process_edit_control_notify(screen, TabAction[36].editId, ENABLE)
+            elseif screen == PROCESS_EDIT4_SCREEN then
+                process_edit_control_notify(screen, TabAction[48].editId, ENABLE)
+            end
+            upload_middle_area_after_10ms()
+        end
     elseif screen == RANGE_SELECT_SCREEN then --量程选择界面
         
     elseif screen == ACTION_SELECT_SCREEN then--动作选择界面
         
-    elseif screen == PROCESS_INIT_SCREEN then--流程设置-开始界面
-        
+    elseif screen == PROCESS_INIT_SCREEN then--流程设置-初始化界面
+        if (x>=112 and x<=(112+109) and y>=656 and y<=(656+35)) or (x>=366 and x<=(366+109) and y>=656 and y<=(656+35)) then--确认/取消按钮
+            -- process_init_control_notify(screen, CancelButtonId, ENABLE);--调用该语句之后, 也是调用的change_screen(DestScreen);
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_INJECT_ADD_SCREEN    then--流程设置-注射泵加液
-        
+        if (x>=93 and x<=(93+109) and y>=724 and y<=(724+35)) or (x>=397 and x<=(397+109) and y>=724 and y<=(724+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_PERISTALTIC_SCREEN    then--流程设置-蠕动泵加液
-        
+        if (x>=126 and x<=(126+109) and y>=720 and y<=(720+35)) or (x>=365 and x<=(365+109) and y>=719 and y<=(719+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_DISPEL_SCREEN then--流程设置-消解
-        
+        if (x>=133 and x<=(133+109) and y>=560 and y<=(560+35)) or (x>=372 and x<=(372+109) and y>=560 and y<=(560+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_READ_SIGNAL_SCREEN then--流程设置-读取信号
-        
+        if (x>=96 and x<=(96+109) and y>=607 and y<=(607+35)) or (x>=418 and x<=(418+109) and y>=605 and y<=(605+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_CALCULATE_SCREEN then--流程设置-计算
-        
+        if (x>=94 and x<=(94+109) and y>=703 and y<=(703+35)) or (x>=411 and x<=(411+109) and y>=703 and y<=(703+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_VALVE_CTRL_SCREEN then--流程设置-阀操作
-        
+        if (x>=119 and x<=(119+109) and y>=576 and y<=(576+35)) or (x>=358 and x<=(358+109) and y>=576 and y<=(576+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_WAIT_TIME_SCREEN then--流程设置-等待时间
-        
+        if (x>=87 and x<=(87+109) and y>=684 and y<=(684+35)) or (x>=394 and x<=(394+109) and y>=684 and y<=(684+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == PROCESS_LINEAR_CHK_SET_SCREEN then--流程设置-线性核查稀释
-        
+        if (x>=104 and x<=(104+109) and y>=749 and y<=(749+35)) or (x>=409 and x<=(409+109) and y>=749 and y<=(749+35)) then--确认/取消按钮
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
     elseif screen == RANGE_SET_SCREEN then --量程设置
         
     elseif screen == HAND_OPERATE1_SCREEN then --手动操作1
-        
+        if x>=29 and x<=(29+120) and y>=740 and y<=(740+40) then--阀泵操作按钮
+            -- change_screen(HAND_OPERATE1_SCREEN);
+            -- upload_middle_area_after_10ms();
+        elseif x>=174 and x<=(174+120) and y>=740 and y<=(740+40) then--电流/电极按钮
+            change_screen(HAND_OPERATE2_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=309 and x<=(309+120) and y>=740 and y<=(740+40) then--试剂余量按钮
+            change_screen(HAND_OPERATE3_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=448 and x<=(448+120) and y>=740 and y<=(740+40) then--通讯记录按钮
+            change_screen(HAND_OPERATE4_SCREEN);
+            upload_middle_area_after_10ms();
+        end
     elseif screen == HAND_OPERATE2_SCREEN then --手动操作2
-        
+        if x>=29 and x<=(29+120) and y>=740 and y<=(740+40) then--阀泵操作按钮
+            change_screen(HAND_OPERATE1_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=174 and x<=(174+120) and y>=740 and y<=(740+40) then--电流/电极按钮
+            -- change_screen(HAND_OPERATE2_SCREEN);
+            -- upload_middle_area_after_10ms();
+        elseif x>=309 and x<=(309+120) and y>=740 and y<=(740+40) then--试剂余量按钮
+            change_screen(HAND_OPERATE3_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=448 and x<=(448+120) and y>=740 and y<=(740+40) then--通讯记录按钮
+            change_screen(HAND_OPERATE4_SCREEN);
+            upload_middle_area_after_10ms();
+        end
     elseif screen == HAND_OPERATE3_SCREEN then --手动操作3
-        
+        if x>=29 and x<=(29+120) and y>=740 and y<=(740+40) then--阀泵操作按钮
+            change_screen(HAND_OPERATE1_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=174 and x<=(174+120) and y>=740 and y<=(740+40) then--电流/电极按钮
+            change_screen(HAND_OPERATE2_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=309 and x<=(309+120) and y>=740 and y<=(740+40) then--试剂余量按钮
+            -- change_screen(HAND_OPERATE3_SCREEN);
+            -- upload_middle_area_after_10ms();
+        elseif x>=448 and x<=(448+120) and y>=740 and y<=(740+40) then--通讯记录按钮
+            change_screen(HAND_OPERATE4_SCREEN);
+            upload_middle_area_after_10ms();
+        end
+    elseif screen == HAND_OPERATE4_SCREEN then--手动操作4界面
+        if x>=29 and x<=(29+120) and y>=740 and y<=(740+40) then--阀泵操作按钮
+            change_screen(HAND_OPERATE1_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=174 and x<=(174+120) and y>=740 and y<=(740+40) then--电流/电极按钮
+            change_screen(HAND_OPERATE2_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=309 and x<=(309+120) and y>=740 and y<=(740+40) then--试剂余量按钮
+            change_screen(HAND_OPERATE3_SCREEN);
+            upload_middle_area_after_10ms();
+        elseif x>=448 and x<=(448+120) and y>=740 and y<=(740+40) then--通讯记录按钮
+            -- change_screen(HAND_OPERATE4_SCREEN);
+            -- upload_middle_area_after_10ms();
+        end
     elseif screen == IN_OUT_SCREEN then--输入输出界面
         
     elseif screen == SYSTEM_INFO_SCREEN then --系统信息界面
@@ -6830,18 +7208,45 @@ function parse_xy(x,y)
         
     elseif screen == WIFI_CONNECT_SCREEN then--Wifi设置界面
         
-    elseif screen == REMOTE_UPDATE_SCREEN then
+    elseif screen == REMOTE_UPDATE_SCREEN then--远程更新界面
         
     elseif  screen == HISTORY_ANALYSIS_SCREEN or screen == HISTORY_CHECK_SCREEN or screen == HISTORY_CALIBRATION_SCREEN or
-           screen == HISTORY_ALARM_SCREEN or screen == HISTORY_LOG_SCREEN then
-       
+           screen == HISTORY_ALARM_SCREEN or screen == HISTORY_LOG_SCREEN or screen == HISTORY_RECOVERY_SCREEN or screen == HISTORY_LINER_SCREEN then
+        if x>=33 and x<=(33+90) and y>=695 and y<=(695+40) then--分析
+            change_screen(HISTORY_ANALYSIS_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=144 and x<=(144+90) and y>=695 and y<=(695+40) then--核查
+            change_screen(HISTORY_CHECK_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=255 and x<=(255+90) and y>=695 and y<=(695+40) then--校正
+            change_screen(HISTORY_CALIBRATION_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=366 and x<=(366+90) and y>=695 and y<=(695+40) then--报警
+            change_screen(HISTORY_ALARM_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=377 and x<=(377+90) and y>=695 and y<=(695+40) then--日志
+            change_screen(HISTORY_LOG_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=31 and x<=(31+90) and y>=747 and y<=(747+40) then--加标回收
+            change_screen(HISTORY_RECOVERY_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=142 and x<=(142+90) and y>=747 and y<=(747+40) then--线性核查
+            change_screen(HISTORY_LINER_SCREEN)
+            upload_middle_area_after_10ms();
+        elseif x>=262 and x<=(262+60) and y>=634 and y<=(634+40) then--上页
+            history_control_notify(screen, HistoryPrevPage, ENABLE)
+            upload_middle_area_after_10ms();
+        elseif x>=262 and x<=(262+60) and y>=634 and y<=(634+40) then--下页
+            history_control_notify(screen, HistoryNextPage, ENABLE)
+            upload_middle_area_after_10ms();
+        end
     elseif screen == PASSWORD_DIALOG_SCREEN then--密码对话框界面
         
     elseif screen ==PROCESS_COPY_SCREEN then--流程复制
         
     elseif screen == SERVER_SET_SCREEN then--服务器设置
         
-    elseif screen == REAGENT_SELECT_SCREEN then
+    elseif screen == REAGENT_SELECT_SCREEN then--试剂选择界面
         
     end
 end
@@ -6854,47 +7259,51 @@ function click_menu_button(x,y)
     local length = 100
     local length2 = 90
     local length3 = 120
+    local targetScreen = nil
     if x >= 40 and x <=(40 + length) and y>=813 and y<=(813+width) then--返回首页
-        change_screen(MAIN_SCREEN)
+        targetScreen = (MAIN_SCREEN)
     elseif x >= 176 and x <=(176 + length) and y>=813 and y<=(813+width) then--运行控制
-        change_screen(RUN_CONTROL_SCREEN)
+        targetScreen = (RUN_CONTROL_SCREEN)
     elseif x >= 314 and x <=(314 + length) and y>=813 and y<=(813+width) then--流程设置
-        change_screen(PROCESS_SET1_SCREEN)
+        targetScreen = (PROCESS_SET1_SCREEN)
     elseif x >= 451 and x <=(451 + length) and y>=813 and y<=(813+width) then--量程设置
-        change_screen(RANGE_SET_SCREEN)
+        targetScreen = (RANGE_SET_SCREEN)
     elseif x >= 40 and x <=(40 + length) and y>=864 and y<=(864+width) then--手工操作
-        change_screen(HAND_OPERATE1_SCREEN)
+        targetScreen = (HAND_OPERATE1_SCREEN)
     elseif x >= 29 and x <=(29 + length3) and y>=740 and y<=(740+width) then--手工操作-阀泵操作
-        change_screen(HAND_OPERATE1_SCREEN)
+        targetScreen = (HAND_OPERATE1_SCREEN)
     elseif x >= 174 and x <=(174 + length3) and y>=740 and y<=(740+width) then--手工操作-电极/温度等
-        change_screen(HAND_OPERATE2_SCREEN)
+        targetScreen = (HAND_OPERATE2_SCREEN)
     elseif x >= 309 and x <=(309 + length3) and y>=740 and y<=(740+width) then--手工操作-试剂余量
-        change_screen(HAND_OPERATE3_SCREEN)
+        targetScreen = (HAND_OPERATE3_SCREEN)
     elseif x >= 448 and x <=(448 + length3) and y>=740 and y<=(740+width) then--手工操作-通讯记录
-        change_screen(HAND_OPERATE4_SCREEN)
+        targetScreen = (HAND_OPERATE4_SCREEN)
     elseif x >= 176 and x <=(176 + length) and y>=864 and y<=(864+width) then--输入输出
-        change_screen(IN_OUT_SCREEN)
+        targetScreen = (IN_OUT_SCREEN)
     elseif x >= 314 and x <=(314 + length) and y>=864 and y<=(864+width) then--历史记录
-        change_screen(HISTORY_ANALYSIS_SCREEN)
+        targetScreen = (HISTORY_ANALYSIS_SCREEN)
     elseif x >= 33 and x <=(33 + length2) and y>=695 and y<=(695+width) then--历史记录-分析
-        change_screen(HISTORY_ANALYSIS_SCREEN)
+        targetScreen = (HISTORY_ANALYSIS_SCREEN)
     elseif x >= 144 and x <=(144 + length2) and y>=695 and y<=(695+width) then--历史记录-核查
-        change_screen(HISTORY_CHECK_SCREEN)
+        targetScreen = (HISTORY_CHECK_SCREEN)
     elseif x >= 255 and x <=(255 + length2) and y>=695 and y<=(695+width) then--历史记录-校准
-        change_screen(HISTORY_CALIBRATION_SCREEN)
+        targetScreen = (HISTORY_CALIBRATION_SCREEN)
     elseif x >= 366 and x <=(366 + length2) and y>=695 and y<=(695+width) then--历史记录-报警
-        change_screen(HISTORY_ALARM_SCREEN)
+        targetScreen = (HISTORY_ALARM_SCREEN)
     elseif x >= 477 and x <=(477 + length2) and y>=695 and y<=(695+width) then--历史记录-日志
-        change_screen(HISTORY_LOG_SCREEN)
+        targetScreen = (HISTORY_LOG_SCREEN)
     elseif x >= 31 and x <=(31 + length2) and y>=747 and y<=(747+width) then--历史记录-加标回收
-        change_screen(HISTORY_RECOVERY_SCREEN)
+        targetScreen = (HISTORY_RECOVERY_SCREEN)
     elseif x >= 142 and x <=(142 + length2) and y>=747 and y<=(747+width) then--历史记录-线性核查
-        change_screen(HISTORY_LINER_SCREEN)
+        targetScreen = (HISTORY_LINER_SCREEN)
     elseif x >= 451 and x <=(451 + length) and y>=864 and y<=(864+width) then--系统信息
-        change_screen(SYSTEM_INFO_SCREEN)
+        targetScreen = (SYSTEM_INFO_SCREEN)
+    end
+    if targetScreen ~= nil then
+        change_screen(targetScreen);
+        upload_pic_after_10ms(0,0,600,1000)
     end
 end
-
 
 
 

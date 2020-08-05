@@ -58,92 +58,95 @@
 //创建画面流程设置-线性核查设置的命令索引ID
 #define  _SCREEN_流程设置-线性核查设置                                                  19
 
+//创建画面流程设置-滴定的命令索引ID
+#define  _SCREEN_流程设置-滴定                                                      20
+
 //创建画面流程类型选择的命令索引ID
-#define  _SCREEN_流程类型选择                                                       20
+#define  _SCREEN_流程类型选择                                                       21
 
 //创建画面流程名称选择的命令索引ID
-#define  _SCREEN_流程名称选择                                                       21
+#define  _SCREEN_流程名称选择                                                       22
 
 //创建画面动作选择的命令索引ID
-#define  _SCREEN_动作选择                                                         22
+#define  _SCREEN_动作选择                                                         23
 
 //创建画面量程设置的命令索引ID
-#define  _SCREEN_量程设置                                                         23
+#define  _SCREEN_量程设置                                                         24
 
 //创建画面量程选择的命令索引ID
-#define  _SCREEN_量程选择                                                         24
+#define  _SCREEN_量程选择                                                         25
 
 //创建画面手动操作1的命令索引ID
-#define  _SCREEN_手动操作1                                                        25
+#define  _SCREEN_手动操作1                                                        26
 
 //创建画面手动操作2的命令索引ID
-#define  _SCREEN_手动操作2                                                        26
+#define  _SCREEN_手动操作2                                                        27
 
 //创建画面手动操作3的命令索引ID
-#define  _SCREEN_手动操作3                                                        27
+#define  _SCREEN_手动操作3                                                        28
 
 //创建画面手动操作4的命令索引ID
-#define  _SCREEN_手动操作4                                                        28
+#define  _SCREEN_手动操作4                                                        29
 
 //创建画面输入输出的命令索引ID
-#define  _SCREEN_输入输出                                                         29
+#define  _SCREEN_输入输出                                                         30
 
 //创建画面历史记录-分析记录的命令索引ID
-#define  _SCREEN_历史记录-分析记录                                                    30
+#define  _SCREEN_历史记录-分析记录                                                    31
 
 //创建画面历史记录-核查记录的命令索引ID
-#define  _SCREEN_历史记录-核查记录                                                    31
+#define  _SCREEN_历史记录-核查记录                                                    32
 
 //创建画面历史记录-校准记录的命令索引ID
-#define  _SCREEN_历史记录-校准记录                                                    32
+#define  _SCREEN_历史记录-校准记录                                                    33
 
 //创建画面历史记录-加标回收的命令索引ID
-#define  _SCREEN_历史记录-加标回收                                                    33
+#define  _SCREEN_历史记录-加标回收                                                    34
 
 //创建画面历史记录-线性核查的命令索引ID
-#define  _SCREEN_历史记录-线性核查                                                    34
+#define  _SCREEN_历史记录-线性核查                                                    35
 
 //创建画面历史记录-报警记录的命令索引ID
-#define  _SCREEN_历史记录-报警记录                                                    35
+#define  _SCREEN_历史记录-报警记录                                                    36
 
 //创建画面历史记录-运行日志的命令索引ID
-#define  _SCREEN_历史记录-运行日志                                                    36
+#define  _SCREEN_历史记录-运行日志                                                    37
 
 //创建画面系统信息的命令索引ID
-#define  _SCREEN_系统信息                                                         37
+#define  _SCREEN_系统信息                                                         38
 
 //创建画面密码设置的命令索引ID
-#define  _SCREEN_密码设置                                                         38
+#define  _SCREEN_密码设置                                                         39
 
 //创建画面登录系统的命令索引ID
-#define  _SCREEN_登录系统                                                         39
+#define  _SCREEN_登录系统                                                         40
 
 //创建画面联系我们的命令索引ID
-#define  _SCREEN_联系我们                                                         40
+#define  _SCREEN_联系我们                                                         41
 
 //创建画面对话框的命令索引ID
-#define  _SCREEN_对话框                                                          41
+#define  _SCREEN_对话框                                                          42
 
 //创建画面自定义全键盘的命令索引ID
-#define  _SCREEN_自定义全键盘                                                       42
+#define  _SCREEN_自定义全键盘                                                       43
 
 //创建画面无线连接的命令索引ID
-#define  _SCREEN_无线连接                                                         43
+#define  _SCREEN_无线连接                                                         44
 
 //创建画面远程升级的命令索引ID
-#define  _SCREEN_远程升级                                                         44
+#define  _SCREEN_远程升级                                                         45
 
 //创建画面密码对话框的命令索引ID
-#define  _SCREEN_密码对话框                                                        45
+#define  _SCREEN_密码对话框                                                        46
 
 //创建画面流程复制的命令索引ID
-#define  _SCREEN_流程复制                                                         46
+#define  _SCREEN_流程复制                                                         47
 
 //创建画面服务器设置的命令索引ID
-#define  _SCREEN_服务器设置                                                        47
+#define  _SCREEN_服务器设置                                                        48
 
 //创建画面试剂选择的命令索引ID
-#define  _SCREEN_试剂选择                                                         48
+#define  _SCREEN_试剂选择                                                         49
 
 #define  _RTC_首页_RTC1                                                        111
 
@@ -5254,6 +5257,52 @@
 
 #define  _TXT_DIS__流程设置-线性核查设置_TEXT_DISPLAY50                                 60
 
+//画面流程设置-滴定中按钮Button3弹起时的图片
+#define  _IMG_流程设置-滴定_BUTTON3_UP                                              15
+
+//画面流程设置-滴定中按钮Button3按下时的图片
+#define  _IMG_流程设置-滴定_BUTTON3_DOWN                                            15
+
+#define  _BTN_流程设置-滴定_BUTTON3                                                 99
+
+//画面流程设置-滴定中按钮Button1弹起时的图片
+#define  _IMG_流程设置-滴定_BUTTON1_UP                                              15
+
+//画面流程设置-滴定中按钮Button1按下时的图片
+#define  _IMG_流程设置-滴定_BUTTON1_DOWN                                            20
+
+#define  _BTN_流程设置-滴定_BUTTON1                                                 98
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY3                                       2
+
+//画面流程设置-滴定中文本显示Text_Display3的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY3                                           44
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY5                                       3
+
+//画面流程设置-滴定中文本显示Text_Display5的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY5                                           44
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY6                                       4
+
+//画面流程设置-滴定中文本显示Text_Display6的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY6                                           44
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY1                                       5
+
+//画面流程设置-滴定中文本显示Text_Display1的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY1                                           44
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY2                                       1
+
+//画面流程设置-滴定中文本显示Text_Display2的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY2                                           44
+
+#define  _TXT_DIS__流程设置-滴定_TEXT_DISPLAY4                                       6
+
+//画面流程设置-滴定中文本显示Text_Display4的背景图片
+#define  _IMG_流程设置-滴定_TEXT_DISPLAY4                                           44
+
 //画面流程类型选择中按钮Button3弹起时的图片
 #define  _IMG_流程类型选择_BUTTON3_UP                                               15
 
@@ -5694,7 +5743,7 @@
 //画面动作选择中按钮Button2按下时的图片
 #define  _IMG_动作选择_BUTTON2_DOWN                                               54
 
-#define  _BTN_动作选择_BUTTON2                                                    10
+#define  _BTN_动作选择_BUTTON2                                                    11
 
 //画面动作选择中按钮Button4弹起时的图片
 #define  _IMG_动作选择_BUTTON4_UP                                                 53
@@ -5735,6 +5784,14 @@
 #define  _IMG_动作选择_BUTTON5_DOWN                                               54
 
 #define  _BTN_动作选择_BUTTON5                                                     9
+
+//画面动作选择中按钮Button6弹起时的图片
+#define  _IMG_动作选择_BUTTON6_UP                                                 53
+
+//画面动作选择中按钮Button6按下时的图片
+#define  _IMG_动作选择_BUTTON6_DOWN                                               54
+
+#define  _BTN_动作选择_BUTTON6                                                    10
 
 //画面量程设置中图片Image1使用的图片
 #define  _IMG_量程设置_IMAGE1                                                      2

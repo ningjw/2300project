@@ -25,35 +25,36 @@ PROCESS_CALCULATE_SCREEN = 16;
 PROCESS_VALVE_CTRL_SCREEN = 17;
 PROCESS_WAIT_TIME_SCREEN = 18;
 PROCESS_LINEAR_CHK_SET_SCREEN = 19
-PROCESS_TYPE_SELECT_SCREEN = 20;
-PROCESS_NAME_SELECT_SCREEN = 21;
-ACTION_SELECT_SCREEN = 22;
-RANGE_SET_SCREEN = 23;
-RANGE_SELECT_SCREEN = 24;
-HAND_OPERATE1_SCREEN = 25;
-HAND_OPERATE2_SCREEN = 26;
-HAND_OPERATE3_SCREEN = 27;
-HAND_OPERATE4_SCREEN = 28;
-IN_OUT_SCREEN = 29;
-HISTORY_ANALYSIS_SCREEN = 30;
-HISTORY_CHECK_SCREEN = 31;
-HISTORY_CALIBRATION_SCREEN = 32;
-HISTORY_RECOVERY_SCREEN = 33;
-HISTORY_LINER_SCREEN = 34;
-HISTORY_ALARM_SCREEN = 35;
-HISTORY_LOG_SCREEN = 36;
-SYSTEM_INFO_SCREEN = 37;
-PASSWORD_SET_SCREEN = 38;
-LOGIN_SYSTEM_SCREEN = 39;
-CONTACT_US_SCREEN = 40;
-DIALOG_SCREEN = 41;
-KEYBOARD_SCREEN = 42;
-WIFI_CONNECT_SCREEN = 43;
-REMOTE_UPDATE_SCREEN = 44;
-PASSWORD_DIALOG_SCREEN = 45;
-PROCESS_COPY_SCREEN = 46;
-SERVER_SET_SCREEN = 47;
-REAGENT_SELECT_SCREEN = 48;
+PROCESS_TITRATION_SCREEN = 20;
+PROCESS_TYPE_SELECT_SCREEN = 21;
+PROCESS_NAME_SELECT_SCREEN = 22;
+ACTION_SELECT_SCREEN = 23;
+RANGE_SET_SCREEN = 24;
+RANGE_SELECT_SCREEN = 25;
+HAND_OPERATE1_SCREEN = 26;
+HAND_OPERATE2_SCREEN = 27;
+HAND_OPERATE3_SCREEN = 28;
+HAND_OPERATE4_SCREEN = 29;
+IN_OUT_SCREEN = 30;
+HISTORY_ANALYSIS_SCREEN = 31;
+HISTORY_CHECK_SCREEN = 32;
+HISTORY_CALIBRATION_SCREEN = 33;
+HISTORY_RECOVERY_SCREEN = 34;
+HISTORY_LINER_SCREEN = 35;
+HISTORY_ALARM_SCREEN = 36;
+HISTORY_LOG_SCREEN = 37;
+SYSTEM_INFO_SCREEN = 38;
+PASSWORD_SET_SCREEN = 39;
+LOGIN_SYSTEM_SCREEN = 40;
+CONTACT_US_SCREEN = 41;
+DIALOG_SCREEN = 42;
+KEYBOARD_SCREEN = 43;
+WIFI_CONNECT_SCREEN = 44;
+REMOTE_UPDATE_SCREEN = 45;
+PASSWORD_DIALOG_SCREEN = 46;
+PROCESS_COPY_SCREEN = 47;
+SERVER_SET_SCREEN = 48;
+REAGENT_SELECT_SCREEN = 49;
 
 --ÕâÀï¶¨ÒåµÄPublic table°üº¬ÁËÓÐ×´Ì¬À¸µÄ½çÃæ, ·½±ã¸üÐÂ"¹¤×÷×´Ì¬""µ±Ç°¶¯×÷""ÓÃ»§""±¨¾¯"
 ScreenWithMenu = {
@@ -63,18 +64,20 @@ ScreenWithMenu = {
     [4] = PROCESS_SET2_SCREEN,
     [5] = PROCESS_EDIT1_SCREEN,
     [6] = PROCESS_EDIT2_SCREEN,
-    [7] = RANGE_SET_SCREEN,
-    [8] = HAND_OPERATE1_SCREEN,
-    [9] = HAND_OPERATE2_SCREEN,
-    [10] = HAND_OPERATE3_SCREEN,
-    [11] = HAND_OPERATE4_SCREEN,
-    [12] = IN_OUT_SCREEN,
-    [13] = HISTORY_ANALYSIS_SCREEN,
-    [14] = HISTORY_CALIBRATION_SCREEN,
-    [15] = HISTORY_ALARM_SCREEN,
-    [16] = HISTORY_LOG_SCREEN,
-    [17] = SYSTEM_INFO_SCREEN,
-    [18] = HISTORY_CHECK_SCREEN,
+    [7] = PROCESS_EDIT3_SCREEN,
+    [8] = PROCESS_EDIT4_SCREEN,
+    [9] = RANGE_SET_SCREEN,
+    [10] = HAND_OPERATE1_SCREEN,
+    [11] = HAND_OPERATE2_SCREEN,
+    [12] = HAND_OPERATE3_SCREEN,
+    [13] = HAND_OPERATE4_SCREEN,
+    [14] = IN_OUT_SCREEN,
+    [15] = HISTORY_ANALYSIS_SCREEN,
+    [16] = HISTORY_CALIBRATION_SCREEN,
+    [17] = HISTORY_ALARM_SCREEN,
+    [18] = HISTORY_LOG_SCREEN,
+    [19] = SYSTEM_INFO_SCREEN,
+    [20] = HISTORY_CHECK_SCREEN,
 }
 
 --ModeBus¼Ä´æÆ÷¶¨Òå
@@ -210,15 +213,6 @@ TipsTab = {
         connecting = "Connecting",
     },
 };
-
-AlarmTab = {
-    [CHN] = {
-
-    },
-    [ENG] = {
-        
-    }
-}
 
 --ÈÕÖ¾ÐÅÏ¢
 LogTab = {
@@ -422,6 +416,10 @@ Sys = {
     picTotalPack = 0,--Ò»ÕÅÍ¼Æ¬Êý¾ÝÐèÒª·Ö¶àÉÙ¸ö°ü·¢ËÍ
     remoteControled = false,--ÓÃÓÚ±êÖ¾µ±Ç°ÊÇ·ñÎªÔ¶³Ì¿ØÖÆÄ£Ê½,ÊÇ·ñÐèÒªÊµÊ±ÉÏ´«µ±Ç°½ØÍ¼¸øÉÏÎ»»úÏÔÊ¾
     uploadingPic = false,--ÊÇ·ñÕýÔÚÉÏ´«Í¼Æ¬
+    x = 0,--½ØÆÁÊ±µÄx×ø±ê
+    y = 0,--½ØÆÁÊ±µÄy×ø±ê
+    w = 0,--½ØÆÁÊ±µÄ³¤¶È
+    h = 0,--½ØÆÁÊ±µÄ¸ß¶È
 
     timeCntOfIdle = 0,--ÓÃÓÚ¶¨Ê±30·ÖÖÓÎÞÈÎºÎ²Ù×÷ºó,×Ô¶¯ÇÐ»»Îª²Ù×÷Ô±
 }
@@ -482,6 +480,7 @@ OnOffStatus = {
         close = "Close"
     },
 };
+
 
 SuddenPowerOff = {
     [CHN] = {
@@ -573,7 +572,8 @@ ActionItem = {
         [7] = "Ïû½â",
         [8] = "·§²Ù×÷",
         [9] = "ÏßÐÔºË²éÏ¡ÊÍ",
-        [10]= BLANK_SPACE,
+        [10] = "µÎ¶¨",
+        [11]= BLANK_SPACE,
      },
     [ENG] = {
         [1] = "Initialize",  
@@ -585,7 +585,8 @@ ActionItem = {
         [7] = "Dispel", 
         [8] = "Valve",
         [9] = "Linear Dilution",
-        [10] = BLANK_SPACE ,
+        [10] = "Titration",
+        [11] = BLANK_SPACE ,
     },
 };
 
@@ -598,9 +599,7 @@ ConfigStr = {};
 --±£´æµÄÊÇÅäÖÃÎÄ¼þ"1"-"24"ÖÐµÄÄ³¸öÅäÖÃÎÄ¼þ,Ã¿¸öÔªËØ±£´æ¸ÃÎÄ¼þÖÐµÄÒ»ÐÐ,Ã¿Ò»ÐÐ±íÊ¾µÄÊÇÒ»¸ö¶¯×÷
 ActionStrTab = {};
 
-function test(x,y,w,h)
-    print("x="..x..";y="..y)
-end
+
 --[[Èë¿Úº¯Êý-----------------------------------------------------------------------------------------------]]
 
 --***********************************************************************************************
@@ -618,8 +617,7 @@ function on_init()
         Sys.actionIdTab[i] = 0;
         Sys.actionNameTab[i] = 0;
     end
-    local pf = test
-    pf();
+
     --ModeBus±í
     for i = 0x1000,0x10FF,1 do
         ModeBus[i] = 0
@@ -650,7 +648,7 @@ function on_init()
     record_control_check();--¼ì²âÀúÊ·¼ÇÂ¼¿Õ¼äÖÐ±£´æµÄ²ÎÊý
     
     SetSysUser(SysUser[Sys.language].operator);  --¿ª»úÖ®ºóÄ¬ÈÏÎª²Ù×÷Ô±
-    -- Sys.hand_control_func = sys_init;--¿ª»úÊ×ÏÈ½øÐÐ³õÊ¼»¯²Ù×÷
+    Sys.hand_control_func = sys_init;--¿ª»úÊ×ÏÈ½øÐÐ³õÊ¼»¯²Ù×÷
 
     ----------------------ÒÔÏÂÎªÔÚµçÄÔ¶Ëµ÷ÊÔÊ±¿ÉÄÜÊ¹ÓÃµÄ´úÂë------------------------------------------------
     SetSysUser(SysUser[Sys.language].maintainer); --µ÷ÊÔÊ±Ä¬ÈÏÎªÔËÎ¬Ô±
@@ -680,7 +678,6 @@ function on_init()
 end
 
 
-
 --***********************************************************************************************
 --½«ÐèÒªÑ¡ÔñÁ÷³ÌµÄÎÄ±¾¿ò³õÊ¼»¯ÎªBLANK_SPACE
 --***********************************************************************************************
@@ -690,14 +687,14 @@ function setTextToBlankSpace()
         set_text(PROCESS_SET1_SCREEN, ProcessSetTab[i].nameId, BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].typeId, BLANK_SPACE);
         set_text(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].nameId, BLANK_SPACE);
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, BLANK_SPACE);
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[i + 12].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[i + 12].nameId, BLANK_SPACE);
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[i + 24].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[i + 24].nameId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].nameId, BLANK_SPACE);
     end
     for i = 1, #PeriodicTab,1 do
         set_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId, BLANK_SPACE);
@@ -726,7 +723,7 @@ function record_control_check()
         Sys.info[MaintainerPwd] = "171717"--ÔËÎ¬Ô±ÃÜÂë
         saveSysInfo();--³õÊ¼»¯Ä¬ÈÏÏµÍ³²ÎÊý
 
-        saveWifiInfo()--±£´æwifiÒÔ¼°tcp·þÎñÆ÷Ïà¹ØÉèÖÃ
+        saveNetInfo()--±£´æwifiÒÔ¼°tcp·þÎñÆ÷Ïà¹ØÉèÖÃ
     end
 
     ----------------------------------------------------------------------------
@@ -948,7 +945,7 @@ function on_systick()
             client_send_data(heartHex);
         elseif Sys.remoteControled == true and Sys.uploadingPic == false then
             --Ê±ÖÓÊÇÃ¿S¶¼»á±äµÄ,µ±TCP¿ÕÏÐÊ±,½ØÊ±ÖÓ·¢ËÍ¸øÉÏÎ»»ú
-            -- upload_screen_pic(490, 38, 100, 48)
+            upload_screen_pic(490, 38, 100, 48)
         end
     else--ÍøÂç¶Ï¿ª,·´¿Ø±êÊ¶ÉèÖÃÎªfalse
         Sys.remoteControled = false;
@@ -1001,6 +998,8 @@ function on_control_notify(screen, control, value)
         process_wait_time_control_notify(screen, control, value);
     elseif screen == PROCESS_LINEAR_CHK_SET_SCREEN then--Á÷³ÌÉèÖÃ-ÏßÐÔºË²éÏ¡ÊÍ
         process_linear_set_control_notify(screen, control, value);
+    elseif screen == PROCESS_TITRATION_SCREEN then --Á÷³ÌÉèÖÃ-µÎ¶¨
+        process_titration_control_notify(screen, control, value);
     elseif screen == RANGE_SET_SCREEN then --Á¿³ÌÉèÖÃ
         range_set_control_notify(screen, control, value);
     elseif screen == HAND_OPERATE1_SCREEN then --ÊÖ¶¯²Ù×÷1
@@ -1628,6 +1627,7 @@ function on_uart_send_data(packet, reply)
     --ÒÔÏÂ´úÂë¹¦ÄÜ: Ã¿·¢ËÍÒ»´ÎÊý¾Ý,¾Í½«¸ÃÊý¾Ý±£´æÔÚÊÖ¶¯²Ù×÷4µÄ´®¿ÚÊÕ·¢¼ÇÂ¼µ±ÖÐ,·½±ã´Ó´¥ÃþÆÁ²é¿´.
     local UartDateTime = string.format("%02d-%02d %02d:%02d", Sys.dateTime.mon, Sys.dateTime.day, Sys.dateTime.hour, Sys.dateTime.min);
     local UartData = "";--½«ÐèÒª·¢ËÍµÄÊý¾Ý±£´æµ½¸Ã×Ö·û´®ÖÐ
+
     --ÅÐ¶ÏÎªÉý¼¶Êý¾Ý,Ö»±£´æÇ°6×Ö½ÚÓëºóÁ½×Ö½ÚµÄCRC
     if packet[0] == 208 and packet[1] == 16 and packet[2] == 48 then
         for i = 0, 5, 1 do
@@ -1654,7 +1654,7 @@ end
 --***********************************************************************************************
 function uart_time_out()
     UartArg.repeat_times = UartArg.repeat_times + 1;
-    if UartArg.repeat_times <= 5 then
+    if UartArg.repeat_times <= 3 then
         uart_send_data(UartArg.repeat_data);--Êý¾ÝÖØ·¢
     else  --ÖØ·¢3´Î¶¼Ã»ÓÐ»Ø¸´,²»ÔÙÖØ·¢
         print("´®¿Ú½ÓÊÜ³¬Ê±");
@@ -2561,7 +2561,7 @@ function get_current_process_id()
 
     --ÉÏÒ»´Î¶ÏµçÎªÔËÐÐ×´Ì¬»òÕß´ý»ú×´Ì¬
     if Sys.suddenPwrOff == true then
-        Sys.suddenPwrOff = false;
+        Sys.suddenPwrOff = false;--±êÖ¾Î»ÉèÖÃÎªfalse,±£Ö¤Ö»Ö´ÐÐÒ»´Î¸ÃifÓï¾äÖÐµÄÄÚÈÝ.
         --Ö´ÐÐÅÅ¿ÕÇåÏ´Á÷³Ì, 
         if get_text(RUN_CONTROL_SCREEN,SuddenPwrOffId) == SuddenPowerOff[Sys.language].clean then
             processId = getProcessIdByType(ProcessItem[Sys.language][3])--»ñÈ¡ÅÅ¿ÕÇåÏ´µÄÁ÷³Ìid
@@ -2570,8 +2570,22 @@ function get_current_process_id()
                 ShowSysTips("Î´ÕÒµ½ÅÅ¿ÕÇåÏ´º¯Êý");
                 SystemStop(STOP_BY_NORMAL);
             end
-        else--»òÕß»Ö¸´µ½ÉÏ´Î¶ÏµçÊ±µÄ×´Ì¬.´Ë´¦²»ÓÃ×öÈÎºÎ²Ù×÷
-                ShowSysTips("Òì³£¶Ïµçºó»Ö¸´µ½ÉÏ´ÎµÄ×´Ì¬");
+        else--»òÕß»Ö¸´µ½ÉÏ´Î¶ÏµçÊ±µÄ×´Ì¬
+            --Èç¹ûÊÇÊÖ¶¯Ä£Ê½,ÔòÒª¶ÁÈ¡µ±Ç°ÒÑ¾­Ñ­»·µÄ´ÎÊýÒÔ¼°µ±Ç°ÔËÐÐµ½ÄÄÒ»¸öÁ÷³ÌÁË
+            if get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then
+                Sys.handProcessIndex = Sys.statusInfo[10];--ÊÖ¶¯Ä£Ê½µÄÏÂµÄÄÄ¸öÁ÷³Ì
+                Sys.handRunTimes = Sys.statusInfo[11];--ÊÖ¶¯Ä£Ê½µÄÑ­»·´ÎÊý+1
+
+            --Èç¹ûÊÇÖÜÆÚÄ£Ê½,ÔòÒª¶ÁÈ¡Ã¿¸öÁ÷³Ì¶ÔÓ¦µÄfreqÖµ,ÒÔ¼°¶ÏµçÊ±ÔËÐÐµÄÁ÷³ÌÃû³Æ(ÖÜÆÚÄ£Ê½ÔÝ²»¿¼ÂÇ±êÑùºË²é²»ºÏ¸ñÊ±½øÈë±êÑùºË²éÓëÐ£×¼Ñ­»·Ö´ÐÐµÄÇé¿ö)
+            elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].period then
+                for i = 2,8,1 do --ÖÜÆÚÄ£Ê½ÏÂ,¸÷Á÷³ÌÔËÐÐµÄÆµ´Î
+                    PeriodicTab[i].freq = Sys.statusInfo[i];
+                end
+                Sys.processName = Sys.statusInfo[9];--ÖÜÆÚÄ£Ê½ÏÂÔËÐÐµÄÁ÷³ÌÃû³Æ
+                processId = getProcessIdByName(Sys.processName);
+            else--Èç¹ûÊÇ¶¨Ê±Ä£Ê½»òÕß·´¿ØÄ£Ê½,´Ë´¦ÎÞÐè×öÈÎºÎ²Ù×÷,
+            end
+            ShowSysTips("Òì³£¶Ïµçºó»Ö¸´µ½ÉÏ´ÎµÄ×´Ì¬");
         end
         return processId;
     end
@@ -2615,6 +2629,7 @@ function get_current_process_id()
 
         if get_value(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].enableId) == ENABLE and
            get_text (RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].processNameId) ~= BLANK_SPACE then
+
             local processName = get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[1].processNameId);
             if Sys.periodStartDateTime <= currentDateTime and processName ~= BLANK_SPACE then
                 --ÉèÖÃµÄÖÜÆÚ¿ªÊ¼Ê±¼äµ½ÁË,ÇÒË®Ñù·ÖÎöÁ÷³Ì²»Îª¿Õ
@@ -2623,7 +2638,7 @@ function get_current_process_id()
                 --ÉèÖÃÏÂ´ÎÖÜÆÚ¿ªÊ¼Ê±¼ä
                 setNextPeriodTime(tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[1].freqId)));
             end
-        else
+        else--µ±²»ÉèÖÃÖÜÆÚÄ£Ê½ÏÂµÄË®Ñù·ÖÎöÊ±, Ò²¿ÉÒÔÔËÐÐÁ÷³Ì. ÕâÀïÖ÷ÒªÊÇÓÃÀ´²âÊÔ±êÑùºË²é²»ºÏ¸ñÊ±ÐèÒª²»¶ÏÑ­»·Ö´ÐÐ±êÑùºË²éÓëÐ£×¼Ö±µ½ºÏ¸ñ.
             for i = 2,#PeriodicTab,1 do 
                  if get_value(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].enableId) == ENABLE and
                     get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId) ~= BLANK_SPACE then
@@ -2668,30 +2683,18 @@ function set_process_edit_state(state)
         set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].rangeId, state);
         set_enable(PROCESS_SET2_SCREEN, ProcessSetTab[i + 12].deleteId, state);
 
-        set_enable(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, state);
-        set_enable(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, state);
+        set_enable(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, state);
+        set_enable(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, state);
 
-        set_enable(PROCESS_EDIT2_SCREEN, TabAction[i + 12].typeId, state);
-        set_enable(PROCESS_EDIT2_SCREEN, TabAction[i + 12].nameId, state);
+        set_enable(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].typeId, state);
+        set_enable(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].nameId, state);
 
-        set_enable(PROCESS_EDIT3_SCREEN, TabAction[i + 24].typeId, state);
-        set_enable(PROCESS_EDIT3_SCREEN, TabAction[i + 24].nameId, state);
+        set_enable(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].typeId, state);
+        set_enable(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].nameId, state);
 
-        set_enable(PROCESS_EDIT4_SCREEN, TabAction[i + 36].typeId, state);
-        set_enable(PROCESS_EDIT4_SCREEN, TabAction[i + 36].nameId, state);
+        set_enable(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].typeId, state);
+        set_enable(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].nameId, state);
     end
-
-    ----------------------------ÒÔÉÏ¸÷½çÃæÖÐµÄ""È·¶¨"°´Å¥-----------------------------------------
-    set_enable(PROCESS_INIT_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_INJECT_ADD_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_READ_SIGNAL_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_PERISTALTIC_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_CALCULATE_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_WAIT_TIME_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_VALVE_CTRL_SCREEN, SureButtonId, state)
-    set_enable(PROCESS_TYPE_SELECT_SCREEN, SureButtonId, state)
-    -- set_enable(PROCESS_NAME_SELECT_SCREEN, SureButtonId, state)
-    set_enable(ACTION_SELECT_SCREEN, SureButtonId, state)
 end
 
 --***********************************************************************************************
@@ -2706,6 +2709,8 @@ function LoadActionStr(index)
     end
     
     --¸ù¾ÝÁ÷³Ìid»ñÈ¡Á÷³ÌÀàÐÍÓëÁ÷³ÌÃû³Æ-----------------------------------------------
+    --processTypeInfo,processNameInfo,processRangeInfo ÔÚ¿ª»úµÄÊ±ºò¾ÍÔÚrecord_control_checkº¯ÊýÖÐ»á´ÓÀúÊ·¼ÇÂ¼¿Ø¼þÖÐ¶ÁÈ¡, 
+    --¶ÔÓ¦ÁËÁ÷³ÌÉèÖÃ1/2»­ÃæÖÐµÄÁ÷³ÌÀàÐÍ,Á÷³ÌÃû³Æ,Á÷³ÌÁ¿³Ì
     Sys.processType = Sys.processTypeInfo[index]
     Sys.processName = Sys.processNameInfo[index]
     Sys.processRange = Sys.processRangeInfo[index]
@@ -2761,6 +2766,7 @@ function LoadActionStr(index)
             end
         end
     end
+    
     --¼ÆËãÅÜÍê¸ÃÁ÷³Ìºó,ÊÔ¼ÁµÄÓàÁ¿, ²¢½«¸ÃÓàÁ¿Óë±¨¾¯Öµ½øÐÐ±È½Ï
     for i = 1, 6, 1 do
         --1.¼ì²âÊÇ·ñ¿ªÆôÁËÊÔ¼ÁÓàÁ¿¼ì²â  2.ÊÔ¼ÁÓàÁ¿ÉÙÓÚ±¨¾¯Öµ
@@ -2834,9 +2840,6 @@ function process_ready_run(processIdType)
         set_text(MAIN_SCREEN, StartTimeId, string.format("%d-%02d-%02d  %02d:%02d",--ÏÔÊ¾±¾´ÎÆô¶¯Á÷³ÌµÄÊ±¼ä
                  Sys.startTime.year, Sys.startTime.mon, Sys.startTime.day,Sys.startTime.hour, Sys.startTime.min));
         SetSysWorkStatus(WorkStatus[Sys.language].run);--ÉèÖÃ¹¤×÷×´Ì¬ÎªÔËÐÐ,¶¨Ê±Æ÷ÖÐ¶ÏÖÐ¼ì²âµ½ÔËÐÐ×´Ì¬ºó,»áÌø×ªµ½excute_process??ÊýÖ´ÐÐÁ÷??
-        if Sys.remoteControled == true then
-            upload_bottom_status_area()
-        end
     end
 end
 
@@ -2879,6 +2882,8 @@ function excute_process()
             Sys.actionFunction = excute_valve_ctrl_process;--Ö´ÐÐ-·§²Ù×÷Á÷³Ì
         elseif Sys.actionType == ActionItem[Sys.language][9] then--Ö´ÐÐ-ÏßÐÔºË²é±êÒºÏ¡ÊÍ
             Sys.actionFunction = excute_linear_set_process;
+        elseif Sys.actionType == ActionItem[Sys.language][10] then--Ö´ÐÐ-µÎ¶¨
+            Sys.actionFunction = excute_titration_process;
         end
         Sys.driverStep = 1;--ËïÁ÷³Ì´ÓµÚÒ»²½¿ªÊ¼
         Sys.actionSubStep = 1;--×ÓÁ÷³Ì´ÓµÚÒ»²½¿ªÊ¼Ö´ÐÐ
@@ -2915,7 +2920,7 @@ function excute_process()
             ----------------ÊÖ¶¯Ä£Ê½--------------------
             elseif get_text(RUN_CONTROL_SCREEN, RunTypeID) == WorkType[Sys.language].hand then     
                 Sys.handProcessIndex = Sys.handProcessIndex + 1;--Ö¸ÏòÏÂÒ»¸öÁ÷³Ì
-                Sys.handRunTimes = Sys.handRunTimes + 1;
+                Sys.handRunTimes = Sys.handRunTimes + 1;--Ñ­»·´ÎÊý+1
                 if tonumber(get_text(RUN_CONTROL_HAND_SCREEN,HandProcessTimesId)) == 0 or
                    Sys.handRunTimes < tonumber(get_text(RUN_CONTROL_HAND_SCREEN, HandProcessTimesId)) * Sys.handProcessTotal then
 
@@ -2943,11 +2948,12 @@ function excute_process()
                     return
                 end
 
-                if Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[1].processNameId) then--Ë®Ñù·ÖÎö
+                if Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[1].processNameId) then--±¾´ÎÁ÷³ÌÎªË®Ñù·ÖÎö
                     --Ã¿ÔËÐÐÒ»´Î·ÖÎöÁ÷³Ì, ÆäËûÁ÷³ÌµÄÆµÂÊÐèÒª + 1;
                     for i = 2,#PeriodicTab,1 do 
-                        PeriodicTab[i].freq = PeriodicTab[i].freq + 1;
-
+                        PeriodicTab[i].freq = PeriodicTab[i].freq + 1;--ËùÓÐÆäËûÀàÐÍµÄÆµ´Î¶¼ÐèÒª+1
+                        --ÖÜÆÚÁ÷³ÌµÄfreq±äÁ¿·¢Éú¸Ä±ä,ÖØÐÂ±£´æµ½ÀúÊ·¼ÇÂ¼¿Ø¼þ
+                        saveStatusInfo()
                         local freqOfSet = tonumber(get_text(RUN_CONTROL_PERIOD_SCREEN,PeriodicTab[i].freqId));--»ñÈ¡ÉèÖÃµÄÆµÂÊ
                         --1.ÅÐ¶ÏÆµÂÊ(´ÎÊý)ÊÇ·ñ´ïµ½ÒªÇó; 2.ÅÐ¶Ï¸ÃÁ÷³ÌÇ°·½µÄ¸´Ñ¡¿òÊÇ·ñ´ò¹³; 3.ÅÐ¶ÏÊÇ·ñÉèÖÃÁËÁ÷³Ì(²»Îª¿Õ¸ñ)
                          if PeriodicTab[i].freq >= freqOfSet and 
@@ -2957,9 +2963,9 @@ function excute_process()
                             PeriodicTab[i].isReadyRun = true;--¸Ã±êÖ¾Î»¸³Öµtrue,±íÊ¾´ïµ½¸ÃÁ÷³ÌÔËÐÐµÄÌõ¼þÁË.
                         end
                     end
-                else
+                else--±¾´ÎÁ÷³Ì²»ÊÇË®Ñù·ÖÎö, Ôò¸ÃÁ÷³Ì¶ÔÓ¦freqÓëisReadyRun±äÁ¿ÐèÒª¸´Î».·ÀÖ¹ÖØ¸´ÔËÐÐ¸ÃÁ÷³Ì.
                     for i = 2,#PeriodicTab,1 do
-                        if Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId) then--ÅÐ¶Ï±¾´ÎÁ÷³ÌµÄÁ÷³ÌÀàÐÍ
+                        if Sys.processName == get_text(RUN_CONTROL_PERIOD_SCREEN, PeriodicTab[i].processNameId) then
                             PeriodicTab[i].isReadyRun = false;
                             PeriodicTab[i].freq = 0;
                             break;
@@ -2967,7 +2973,7 @@ function excute_process()
                     end
                 end
                 
-                --ÅÐ¶Ï±¾´ÎÐèÒªÔËÐÐÄÄÒ»ÀàÁ÷³Ì
+                --ÅÐ¶Ï±¾´Î·ÖÎöÁ÷³Ì½áÊøºóÊÇ·ñÐèÒªÔËÐÐÆäËûÁ÷³Ì
                 for i = 2,#PeriodicTab,1 do
                     if PeriodicTab[i].isReadyRun == true then
                         process_ready_run(PERIOD_GET_ID);
@@ -3343,7 +3349,7 @@ ProcessSelectTipsTextId = 21;--ÓÃÓÚÏÔÊ¾ÌáÊ¾ÐÅÏ¢µÄÎÄ±¾¿ò,Á÷³Ì±à¼­1/3½çÃæÖÐ¶¼ÊÇÕâ¸
 ProcessSaveId = 19;
 --ÕâÀï×¢Òâ¹Û²ì¶¯×÷Ñ¡Ôñid,¶¯×÷Ãû³Æid,±à¼­idÖ®¼äµÄÊýÑ§×ª»»¹ØÏµ:typeId = nameId + 100; nameId = editId + 100
 --ÆäÖÐ[1]-[12]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³Ì±à¼­1½çÃæÖÐ,[13]-[24]ÖÐ°üº¬µÄid¿Ø¼þÔÚÁ÷³Ì±à¼­2½çÃæÖÐ
-TabAction = {
+ActionTab = {
     [1] = { typeId = 301, nameId = 201, insertId = 501, deleteId = 601, editId = 101 },
     [2] = { typeId = 302, nameId = 202, insertId = 502, deleteId = 602, editId = 102 },
     [3] = { typeId = 303, nameId = 203, insertId = 503, deleteId = 603, editId = 103 },
@@ -3426,6 +3432,8 @@ function set_edit_screen(para, screen, control)
         change_screen(PROCESS_VALVE_CTRL_SCREEN);
     elseif para == ActionItem[Sys.language][9] then --ÏßÐÔºË²éÏ¡ÊÍ
         change_screen(PROCESS_LINEAR_CHK_SET_SCREEN);
+    elseif para == ActionItem[Sys.language][10] then --µÎ¶¨
+        change_screen(PROCESS_TITRATION_SCREEN);
     end
 end
 
@@ -3440,17 +3448,17 @@ function process_edit_control_notify(screen, control, value)
             DestProcessSetScreen = PROCESS_SET1_SCREEN;
         end
         change_screen(DestProcessSetScreen);
-    elseif (control - 100) >= TabAction[1].typeId and (control - 100) <= TabAction[#TabAction].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
+    elseif (control - 100) >= ActionTab[1].typeId and (control - 100) <= ActionTab[#ActionTab].typeId then--µ±µã»÷"¶¯×÷ÀàÐÍ"ÏÂÃæµÄ°´Å¥Ê±
         action_select_set(screen, control - 100, control - 400);
-    elseif control >= TabAction[1].editId and control <= TabAction[#TabAction].editId and value == ENABLE then--µ±µã»÷"±à¼­"°´Å¥Ê±
+    elseif control >= ActionTab[1].editId and control <= ActionTab[#ActionTab].editId and value == ENABLE then--µ±µã»÷"±à¼­"°´Å¥Ê±
         if get_text(screen, control + 200) ~= BLANK_SPACE then--Èç¹ûÉèÖÃÁË¶¯×÷ÀàÐÍ,(±à¼­°´Å¥µÄid+200µÈÓÚ¶¯×÷Ãû³Æid)
             set_edit_screen(get_text(screen, control + 200), screen, control);--control+200±íÊ¾¶ÔÓ¦µÄ"¶¯×÷ÀàÐÍ"id
         end
-    elseif control >= TabAction[1].insertId and control <= TabAction[#TabAction].insertId and value == ENABLE then--µ±µã»÷²åÈë°´Å¥Ê±
+    elseif control >= ActionTab[1].insertId and control <= ActionTab[#ActionTab].insertId and value == ENABLE then--µ±µã»÷²åÈë°´Å¥Ê±
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--¼ì²âÈ¨ÏÞ
             InsertAction(control - 500);
         end
-    elseif control >= TabAction[1].deleteId and control <= TabAction[#TabAction].deleteId and value == ENABLE then--µ±µã»÷É¾³ý°´Å¥Ê±
+    elseif control >= ActionTab[1].deleteId and control <= ActionTab[#ActionTab].deleteId and value == ENABLE then--µ±µã»÷É¾³ý°´Å¥Ê±
         if operate_permission_detect(CHK_RUN_USER) == ENABLE then--¼ì²âÈ¨ÏÞ
             set_return_screen_control(screen, control)
             change_screen(DIALOG_SCREEN);--×ª»»µ½É¾³ýÈ·ÈÏ½çÃæ
@@ -3469,77 +3477,77 @@ function InsertAction(actionNumber)
     --------ÔÚÁ÷³Ì±à¼­1½çÃæ²åÈëÒ»ÐÐ---------------------------------------------------------------
     if actionNumber >= 1 and actionNumber <= 12 then
         for i = 48, 38, -1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId));
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId));
 
         for i = 36, 26, -1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[25].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[24].typeId));
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[25].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[24].nameId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[25].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[24].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[25].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[24].nameId));
 
         for i = 24, 14, -1 do--
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[13].typeId, get_text(PROCESS_EDIT1_SCREEN, TabAction[12].typeId));
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[13].nameId, get_text(PROCESS_EDIT1_SCREEN, TabAction[12].nameId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[13].typeId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[12].typeId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[13].nameId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[12].nameId));
 
         for i = 12, actionNumber + 1, -1 do--
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT1_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT1_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[actionNumber].nameId, BLANK_SPACE);
         --------ÔÚÁ÷³Ì±à¼­2½çÃæ²åÈëÒ»ÐÐ---------------------------------------------------------------
     elseif actionNumber >= 13 and actionNumber <= 24 then
         for i = 48, 38, -1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId));
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId));
 
         for i = 36, 26, -1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[25].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[24].typeId));
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[25].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[24].nameId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[25].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[24].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[25].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[24].nameId));
 
         for i = 24, actionNumber + 1, -1 do--
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[actionNumber].typeId, BLANK_SPACE);--½«µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[actionNumber].nameId, BLANK_SPACE);
     --------ÔÚÁ÷³Ì±à¼­3½çÃæ²åÈëÒ»ÐÐ---------------------------------------------------------------
     elseif actionNumber >= 25 and actionNumber <= 36 then
         for i = 48, 38, -1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId));
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[37].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId));
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[37].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId));
 
         for i = 36, actionNumber + 1, -1 do--
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[actionNumber].typeId, BLANK_SPACE);--µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[actionNumber].nameId, BLANK_SPACE);
     --------ÔÚÁ÷³Ì±à¼­4½çÃæ²åÈëÒ»ÐÐ---------------------------------------------------------------
     else
         for i = 48, actionNumber + 1, -1 do--
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i - 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i - 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[actionNumber].typeId, BLANK_SPACE);--µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[actionNumber].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[actionNumber].typeId, BLANK_SPACE);--µ±Ç°ÐÐÏÔÊ¾Îª¿Õ¸ñ
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[actionNumber].nameId, BLANK_SPACE);
     end
     MoveActionStrTabElement(actionNumber, 1);
 end
@@ -3552,76 +3560,76 @@ function DeleteAction(actionNumber)
     --------ÔÚÁ÷³Ì±à¼­1½çÃæÉ¾³ýÒ»ÐÐ---------------------------------------------------------------
     if actionNumber >= 1 and actionNumber <= 12 then
         for i = actionNumber, 12, 1 do--
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT1_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT1_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT1_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[12].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[13].typeId));
-        set_text(PROCESS_EDIT1_SCREEN, TabAction[12].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[13].nameId));
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[12].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[13].typeId));
+        set_text(PROCESS_EDIT1_SCREEN, ActionTab[12].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[13].nameId));
 
         for i = 13, 23, 1 do
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[24].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[25].typeId));
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[24].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[25].nameId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[24].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[25].typeId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[24].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[25].nameId));
 
         for i = 25, 35, 1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
 
         for i = 37, 47, 1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].nameId, BLANK_SPACE);
         --------ÔÚÁ÷³Ì±à¼­2½çÃæÉ¾³ýÒ»ÐÐ---------------------------------------------------------------
     elseif actionNumber >= 13 and actionNumber <= 24 then
         for i = actionNumber, 24, 1 do--
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT2_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[24].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[25].typeId));
-        set_text(PROCESS_EDIT2_SCREEN, TabAction[24].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[25].nameId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[24].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[25].typeId));
+        set_text(PROCESS_EDIT2_SCREEN, ActionTab[24].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[25].nameId));
         for i = 25, 35, 1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
 
         for i = 37, 47, 1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].nameId, BLANK_SPACE);
     --------ÔÚÁ÷³Ì±à¼­3½çÃæÉ¾³ýÒ»ÐÐ---------------------------------------------------------------
     elseif actionNumber >= 25 and actionNumber <= 36 then
         for i = actionNumber, 35, 1 do
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT3_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
-        set_text(PROCESS_EDIT3_SCREEN, TabAction[36].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
+        set_text(PROCESS_EDIT3_SCREEN, ActionTab[36].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[37].typeId));
 
         for i = 37, 47, 1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].nameId, BLANK_SPACE);
     --------ÔÚÁ÷³Ì±à¼­4½çÃæÉ¾³ýÒ»ÐÐ---------------------------------------------------------------
     else
         for i = actionNumber, 47, 1 do
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].typeId));
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, get_text(PROCESS_EDIT4_SCREEN, TabAction[i + 1].nameId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].typeId));
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, get_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 1].nameId));
         end
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].typeId, BLANK_SPACE);
-        set_text(PROCESS_EDIT4_SCREEN, TabAction[48].nameId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].typeId, BLANK_SPACE);
+        set_text(PROCESS_EDIT4_SCREEN, ActionTab[48].nameId, BLANK_SPACE);
     end
     MoveActionStrTabElement(actionNumber, 2);
 end
@@ -4436,7 +4444,10 @@ function excute_calculate_process(paraTab)
             end
             --1.ÅÐ¶ÏÊÇ·ñÐèÒªºË²é; 2.ºË²é½á¹ûÊÇ·ñºÏ¸ñ
             if needCheck == true and math.abs(Sys.result - Sys.checkValue) > DNL_Value then
-                Sys.isCheckOk = false;--ºË²é½á¹û²»ºÏ¸ñ
+                --Ö»ÓÐ±êÑùºË²é²ÅÐèÒª½«¸Ã±êÖ¾ÉèÖÃÎªfalse,ÒòÎªÖ»ÓÐ×Ô¶¯±êÑùºË²é½á¹û²»ºÏ¸ñ²ÅÐèÒªÓëÐ£×¼Á÷³ÌÑ­»·Ö´ÐÐ,Ö±µ½ºÏ¸ñ.
+                if Sys.processType ==  ProcessItem[Sys.language][6] then
+                    Sys.isCheckOk = false;--ºË²é½á¹û²»ºÏ¸ñ
+                end
                 Sys.alarmCode = 16--"ºË²é²»ºÏ¸ñ"
                 add_history_record(HISTORY_ALARM_SCREEN);
                 set_fore_color(MAIN_SCREEN, LastResultId, RED);--ºìÉ«
@@ -5167,6 +5178,29 @@ function excute_linear_set_process(paraTab)
     return Sys.actionSubStep
 end
 
+--[[Á÷³ÌÉèÖÃ-µÎ¶¨--------------------------------------------------------------------------------------------]]
+TITRATION_TextStartId = 1
+TITRATION_TextEndId = 6
+--ÓÃ»§Í¨¹ý´¥ÃþÐÞ¸Ä¿Ø¼þºó£¬Ö´ÐÐ´Ë»Øµ÷º¯Êý¡£
+--µã»÷°´Å¥¿Ø¼þ£¬ÐÞ¸ÄÎÄ±¾¿Ø¼þ¡¢ÐÞ¸Ä»¬¶¯Ìõ¶¼»á´¥·¢´ËÊÂ¼þ¡£
+function process_titration_control_notify(screen, control, value)
+    if control == SureButtonId and value == ENABLE then --È·ÈÏ°´Å¥
+        if operate_permission_detect(CHK_RUN_USER) == ENABLE then--¼ì²âÈ¨ÏÞ
+            WriteTypeAndContentToActionStrTab(DestActionNum);
+            change_screen(DestScreen);
+        end
+    elseif control == CancelButtonId then --È¡Ïû°´Å¥
+        change_screen(DestScreen);
+    end
+end
+
+--Ö´ÐÐµÎ¶¨Á÷³Ì
+function excute_read_signal_process(paraTab)
+    
+    return Sys.actionSubStep
+end
+
+
 --[[Á÷³ÌÀàÐÍÑ¡Ôñ-----------------------------------------------------------------------------------------------------]]
 AnalysisButtonId = 1;--·ÖÎö°´Å¥
 NullButtonId = 13;--¿Õ°´Å¥
@@ -5811,7 +5845,7 @@ MAX_LOG_FILE_NUM = 20000;
 --***********************************************************************************************
 function add_history_record(screen)
     local date, time, filePath,signalHistoryContent,historyTab,historyOrder,maxHistoryNum;
-
+    
     filePath = getFilePathByScreen(screen);
     historyTab = readFileToTab(filePath);--½«ÎÄ¼þ¶ÁÈ¡µ½tabµ±ÖÐ
     maxHistoryNum = getMaxNumByScreen(screen);--»ñÈ¡×î´ó¼ÇÂ¼ÌõÊý
@@ -6499,7 +6533,7 @@ function wifi_connect_control_notify(screen, control, value)
             set_text(WIFI_CONNECT_SCREEN, WifiStatusTextId, TipsTab[Sys.language].connecting)--Á¬½ÓÖÐ
         end
     elseif control == SureButtonId then
-        saveWifiInfo()
+        saveNetInfo()
     end
 end
 
@@ -6552,7 +6586,7 @@ function remote_update_control_notify(screen, control, value)
             http_download(3, 'http://' .. get_text(REMOTE_UPDATE_SCREEN, RemoteFtpAddrTextId) .. '/STM.BIN', "STM.BIN");
         end
     elseif control == SureButtonId then
-        saveWifiInfo()
+        saveNetInfo()
     end
 end
 
@@ -6686,7 +6720,7 @@ function server_set_control_notify(screen, control, value)
             end
         end
     elseif control == SureButtonId and value == ENABLE then --È·ÈÏ°´Å¥
-        saveWifiInfo()
+        saveNetInfo()
         change_screen(SYSTEM_INFO_SCREEN);
     elseif control == CancelButtonId then --È¡Ïû°´Å¥
         change_screen(SYSTEM_INFO_SCREEN);
@@ -6957,134 +6991,134 @@ function parse_xy(x,y)
             upload_middle_area_after_10ms(25,190,550,505)
         elseif x>=521 and x<=(521+50) and y>=236 and y<=(236+30) then --µÚÒ»ÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[1].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[1].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[13].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[13].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[25].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[25].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[37].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[37].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=274 and y<=(274+30) then --µÚ¶þÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[2].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[2].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[14].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[14].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[26].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[26].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[38].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[38].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=313 and y<=(313+30) then --µÚÈýÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[3].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[3].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[15].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[15].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[27].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[27].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[39].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[39].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=351 and y<=(351+30) then --µÚËÄÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[4].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[4].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[16].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[16].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[28].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[28].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[40].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[40].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=390 and y<=(390+30) then --µÚÎåÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[5].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[5].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[17].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[17].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[29].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[29].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[41].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[41].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=428 and y<=(428+30) then --µÚÁùÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[6].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[6].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[18].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[18].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[30].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[30].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[42].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[42].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=467 and y<=(467+30) then --µÚÆßÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[7].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[7].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[19].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[19].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[31].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[31].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[43].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[43].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=505 and y<=(505+30) then --µÚ°ËÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[8].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[8].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[20].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[20].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[32].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[32].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[44].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[44].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=544 and y<=(544+30) then --µÚ¾ÅÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[9].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[9].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[21].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[21].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[33].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[33].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[45].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[45].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=582 and y<=(582+30) then --µÚÊ®ÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[10].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[10].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[22].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[22].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[34].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[34].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[46].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[46].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=621 and y<=(621+30) then --µÚÊ®Ò»ÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[11].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[11].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[23].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[23].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[35].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[35].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[47].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[47].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         elseif x>=521 and x<=(521+50) and y>=660 and y<=(660+30) then --µÚÊ®¶þÐÐ²é¿´°´Å¥
             if screen == PROCESS_EDIT1_SCREEN then
-                process_edit_control_notify(screen, TabAction[12].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[12].editId, ENABLE)
             elseif screen == PROCESS_EDIT2_SCREEN then
-                process_edit_control_notify(screen, TabAction[24].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[24].editId, ENABLE)
             elseif screen == PROCESS_EDIT3_SCREEN then
-                process_edit_control_notify(screen, TabAction[36].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[36].editId, ENABLE)
             elseif screen == PROCESS_EDIT4_SCREEN then
-                process_edit_control_notify(screen, TabAction[48].editId, ENABLE)
+                process_edit_control_notify(screen, ActionTab[48].editId, ENABLE)
             end
             upload_middle_area_after_10ms()
         end
@@ -7135,6 +7169,11 @@ function parse_xy(x,y)
         end
     elseif screen == PROCESS_LINEAR_CHK_SET_SCREEN then--Á÷³ÌÉèÖÃ-ÏßÐÔºË²éÏ¡ÊÍ
         if (x>=104 and x<=(104+109) and y>=749 and y<=(749+35)) or (x>=409 and x<=(409+109) and y>=749 and y<=(749+35)) then--È·ÈÏ/È¡Ïû°´Å¥
+            change_screen(DestScreen);
+            upload_middle_area_after_10ms()
+        end
+    elseif screen == PROCESS_TITRATION_SCREEN then--Á÷³ÌÉèÖÃ-µÎ¶¨
+        if (x>=96 and x<=(96+109) and y>=657 and y<=(657+35)) or (x>=418 and x<=(418+109) and y>=655 and y<=(655+35)) then--È·ÈÏ/È¡Ïû°´Å¥
             change_screen(DestScreen);
             upload_middle_area_after_10ms()
         end
@@ -7469,7 +7508,7 @@ function getFileNameByProcessName(processName)
 end
 
 --***********************************************************************************************
---¼ì²âÁ÷³Ì¶¯×÷ÎÄ¼þÊÇ·ñ´æÔÚ,Èç¹û²»´æÔÚÔò´´½¨Ò»¸öÄ¬ÈÏµÄÎÄ¼þ, ²¢½«¸ÃÄ¬ÈÏÎÄ¼þ¶Á¶ÁÈ¡µ½ActionStrTab±íÖÐ
+--½«ÎÄ¼þÖÐµÄÃ¿Ò»¸öAction¼ÓÔØµ½ActionStrTab±í²¢ÏÔÊ¾µ½½çÃæµ±ÖÐ
 --***********************************************************************************************
 function ReadActionToTabAndScreen(filePath)
     print("ReadActionToTabAndScreen ");
@@ -7477,14 +7516,14 @@ function ReadActionToTabAndScreen(filePath)
 
     if #ActionStrTab == 0 then --Ä¿Ç°»¹Ã»ÓÐ¸ÃÅäÖÃÎÄ¼þ
         for i = 1, 12, 1 do            --Çå¿ÕÁ÷³Ì±à¼­½çÃæ1/2/3/4ÖÐµÄÄÚÈÝ
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, BLANK_SPACE);
-            set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, BLANK_SPACE);
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i + 12].typeId, BLANK_SPACE);
-            set_text(PROCESS_EDIT2_SCREEN, TabAction[i + 12].nameId, BLANK_SPACE);
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i + 24].typeId, BLANK_SPACE);
-            set_text(PROCESS_EDIT3_SCREEN, TabAction[i + 24].nameId, BLANK_SPACE);
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].typeId, BLANK_SPACE);
-            set_text(PROCESS_EDIT4_SCREEN, TabAction[i + 36].nameId, BLANK_SPACE);
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, BLANK_SPACE);
+            set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, BLANK_SPACE);
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].typeId, BLANK_SPACE);
+            set_text(PROCESS_EDIT2_SCREEN, ActionTab[i + 12].nameId, BLANK_SPACE);
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].typeId, BLANK_SPACE);
+            set_text(PROCESS_EDIT3_SCREEN, ActionTab[i + 24].nameId, BLANK_SPACE);
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].typeId, BLANK_SPACE);
+            set_text(PROCESS_EDIT4_SCREEN, ActionTab[i + 36].nameId, BLANK_SPACE);
             ActionStrTab[i] = "<type> , </type><content> </content>";
             ActionStrTab[i+12] = "<type> , </type><content> </content>";
             ActionStrTab[i+24] = "<type> , </type><content> </content>";
@@ -7497,40 +7536,40 @@ function ReadActionToTabAndScreen(filePath)
             contentStr = GetSubString( ActionStrTab[i], "<type>", "</type>")
             tab = split(contentStr, ",");
             if tab[1] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
             if tab[2] ~= nil then
-                set_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
         end
         for i = 13, 24, 1 do
             contentStr = GetSubString( ActionStrTab[i], "<type>", "</type>")
             tab = split(contentStr, ",");
             if tab[1] ~= nil then
-                set_text(PROCESS_EDIT2_SCREEN, TabAction[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
             if tab[2] ~= nil then
-                set_text(PROCESS_EDIT2_SCREEN, TabAction[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT2_SCREEN, ActionTab[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
         end
         for i = 25, 36, 1 do
             contentStr = GetSubString( ActionStrTab[i], "<type>", "</type>")
             tab = split(contentStr, ",");
             if tab[1] ~= nil then
-                set_text(PROCESS_EDIT3_SCREEN, TabAction[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
             if tab[2] ~= nil then
-                set_text(PROCESS_EDIT3_SCREEN, TabAction[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT3_SCREEN, ActionTab[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
         end
         for i = 37, 48, 1 do
             contentStr = GetSubString( ActionStrTab[i], "<type>", "</type>")
             tab = split(contentStr, ",");
             if tab[1] ~= nil then
-                set_text(PROCESS_EDIT4_SCREEN, TabAction[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].typeId, tab[1]);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
             if tab[2] ~= nil then
-                set_text(PROCESS_EDIT4_SCREEN, TabAction[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+                set_text(PROCESS_EDIT4_SCREEN, ActionTab[i].nameId, tab[2]); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             end
         end
     end
@@ -7548,23 +7587,23 @@ function WriteActionStrTabToFile()
         --½«Á÷³ÌÀàÐÍÓëÁ÷³ÌÃû³ÆÐ´Èëµ½ ActionStrTab ±íÖÐ
         for i = 1, 12, 1 do
             contentStr =  GetSubString( ActionStrTab[i], "<content>", "</content>")
-            actionType = get_text(PROCESS_EDIT1_SCREEN, TabAction[i].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
-            actionName = get_text(PROCESS_EDIT1_SCREEN, TabAction[i].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionType = get_text(PROCESS_EDIT1_SCREEN, ActionTab[i].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionName = get_text(PROCESS_EDIT1_SCREEN, ActionTab[i].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             ActionStrTab[i] = "<type>"..actionType..","..actionName.."</type><content>"..contentStr.."</content>"
 
             contentStr =  GetSubString( ActionStrTab[i+12], "<content>", "</content>")
-            actionType = get_text(PROCESS_EDIT2_SCREEN, TabAction[i+12].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
-            actionName = get_text(PROCESS_EDIT2_SCREEN, TabAction[i+12].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionType = get_text(PROCESS_EDIT2_SCREEN, ActionTab[i+12].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionName = get_text(PROCESS_EDIT2_SCREEN, ActionTab[i+12].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             ActionStrTab[i+12] = "<type>"..actionType..","..actionName.."</type><content>"..contentStr.."</content>"
 
             contentStr =  GetSubString( ActionStrTab[i+24], "<content>", "</content>")
-            actionType = get_text(PROCESS_EDIT3_SCREEN, TabAction[i+24].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
-            actionName = get_text(PROCESS_EDIT3_SCREEN, TabAction[i+24].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionType = get_text(PROCESS_EDIT3_SCREEN, ActionTab[i+24].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionName = get_text(PROCESS_EDIT3_SCREEN, ActionTab[i+24].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             ActionStrTab[i+24] = "<type>"..actionType..","..actionName.."</type><content>"..contentStr.."</content>"
 
             contentStr =  GetSubString( ActionStrTab[i+36], "<content>", "</content>")
-            actionType = get_text(PROCESS_EDIT4_SCREEN, TabAction[i+36].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
-            actionName = get_text(PROCESS_EDIT4_SCREEN, TabAction[i+36].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionType = get_text(PROCESS_EDIT4_SCREEN, ActionTab[i+36].typeId);  --°Ñ¶¯×÷ÀàÐÍÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
+            actionName = get_text(PROCESS_EDIT4_SCREEN, ActionTab[i+36].nameId); --°Ñ¶¯×÷Ãû³ÆÏÔÊ¾µ½ÎÄ±¾¿òÖÐ
             ActionStrTab[i+36] = "<type>"..actionType..","..actionName.."</type><content>"..contentStr.."</content>"
         end
 
@@ -7586,17 +7625,17 @@ function WriteTypeAndContentToActionStrTab(actionNumber)
     local actionType=""
     local actionName="";
     if actionNumber >= 1 and actionNumber <= 12 then
-        actionType = get_text(PROCESS_EDIT1_SCREEN, TabAction[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
-        actionName = get_text(PROCESS_EDIT1_SCREEN, TabAction[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
+        actionType = get_text(PROCESS_EDIT1_SCREEN, ActionTab[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
+        actionName = get_text(PROCESS_EDIT1_SCREEN, ActionTab[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
     elseif actionNumber >= 13 and actionNumber <= 24 then
-        actionType = get_text(PROCESS_EDIT2_SCREEN, TabAction[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
-        actionName = get_text(PROCESS_EDIT2_SCREEN, TabAction[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
+        actionType = get_text(PROCESS_EDIT2_SCREEN, ActionTab[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
+        actionName = get_text(PROCESS_EDIT2_SCREEN, ActionTab[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
     elseif actionNumber >= 25 and actionNumber <= 36 then
-        actionType = get_text(PROCESS_EDIT3_SCREEN, TabAction[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
-        actionName = get_text(PROCESS_EDIT3_SCREEN, TabAction[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
+        actionType = get_text(PROCESS_EDIT3_SCREEN, ActionTab[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
+        actionName = get_text(PROCESS_EDIT3_SCREEN, ActionTab[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
     elseif actionNumber >= 37 and actionNumber <= 48 then
-        actionType = get_text(PROCESS_EDIT4_SCREEN, TabAction[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
-        actionName = get_text(PROCESS_EDIT4_SCREEN, TabAction[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
+        actionType = get_text(PROCESS_EDIT4_SCREEN, ActionTab[actionNumber].typeId);--»ñÈ¡µ±Ç°¶¯×÷ÀàÐÍ
+        actionName = get_text(PROCESS_EDIT4_SCREEN, ActionTab[actionNumber].nameId);--»ñÈ¡µ±Ç°¶¯×÷Ãû³Æ
     end
     --Ð´Èë¶¯×÷ÀàÐÍÓë¶¯×÷Ãû³Æ(»òÁ÷³ÌÀàÐÍÓëÃû³Æ):³õÊ¼»¯/×¢Éä±Ã/Ïû½â......
     ActionStrTab[actionNumber] = "<type>" .. actionType .. "," .. actionName .. "</type>".."<content>"
@@ -7665,8 +7704,13 @@ function WriteTypeAndContentToActionStrTab(actionNumber)
         for i = LINEAR_TextStartId, LINEAR_TextEndId, 1 do
             ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. get_text(PROCESS_LINEAR_CHK_SET_SCREEN, i) .. "," --Ð´ÈëÎÄ±¾Öµ
         end
-        --------------------------------Ð´-¿Õ²Ù×÷²ÎÊý------------------------------------------------------
+     --------------------------------Ð´-µÎ¶¨²ÎÊý------------------------------------------------------
     elseif actionType == ActionItem[Sys.language][10] then
+        for i = TITRATION_TextStartId, TITRATION_TextEndId, 1 do
+            ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. get_text(PROCESS_TITRATION_SCREEN, i) .. "," --Ð´ÈëÎÄ±¾Öµ
+        end
+        --------------------------------Ð´-¿Õ²Ù×÷²ÎÊý------------------------------------------------------
+    elseif actionType == ActionItem[Sys.language][11] then
         ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. "<content> </content>"
     end
     ActionStrTab[actionNumber] = ActionStrTab[actionNumber] .. "</content>"
@@ -7695,7 +7739,7 @@ end
 
 
 --***********************************************************************************************
---¶ÁÅäÖÃÎÄ¼þº¯Êý,½«ActionTabStrÖÐµÄÄÚÈÝÉèÖÃµ½½çÃæµ±ÖÐ
+--½«ActionStrTabÖÐµÄÄÚÈÝÉèÖÃµ½½çÃæµ±ÖÐ
 --actionNumber: µ±Ç°¶¯×÷ÎªµÚ¼¸²½
 --***********************************************************************************************
 function SetActionToScreen(actionNumber)
@@ -7807,6 +7851,13 @@ function SetActionToScreen(actionNumber)
                 set_text(PROCESS_LINEAR_CHK_SET_SCREEN, i, tab[i]);--Ð´ÈëÎÄ±¾Öµ
             end
         end
+    --------------------------------¶Á-µÎ¶¨²ÎÊý------------------------------------------------------
+    elseif actionType[1] == ActionItem[Sys.language][10] then
+        for i = TITRATION_TextStartId, TITRATION_TextEndId, 1 do
+            if tab[i] ~= nil then
+                set_text(PROCESS_TITRATION_SCREEN, i, tab[i]);--Ð´ÈëÎÄ±¾Öµ
+            end
+        end
     end
 end
 
@@ -7830,7 +7881,7 @@ end
 --***********************************************************************************************
 --  ±£´æwifiÏà¹ØµÄÉèÖÃ
 --***********************************************************************************************
-function saveWifiInfo()
+function saveNetInfo()
     --³õÊ¼»¯WifiÓÃ»§Ãû,ÃÜÂë,TCP·þÎñÆ÷µØÖ·Óë¶Ë¿Ú²ÎÊý
     Sys.wifiInfo[1] = get_text(WIFI_CONNECT_SCREEN, 1)--wifiÃû³Æ
     Sys.wifiInfo[2] = get_text(WIFI_CONNECT_SCREEN, 5)--wifiÃÜÂë
@@ -8024,16 +8075,28 @@ end
 --  ±£´æÏµÍ³×´Ì¬
 --***********************************************************************************************
 function saveStatusInfo()
-    for i=1,7,1 do
-        Sys.statusInfo[i] = get_text(MAIN_SCREEN, 900+i)
+    Sys.statusInfo[1] = get_text(MAIN_SCREEN, 900)
+    for i = 2,8,1 do --ÖÜÆÚÄ£Ê½ÏÂ,¸÷Á÷³ÌÔËÐÐµÄÆµ´Î
+        Sys.statusInfo[i] = PeriodicTab[i].freq
     end
+    Sys.statusInfo[9] = Sys.processName;--ÖÜÆÚÄ£Ê½ÏÂÔËÐÐµÄÁ÷³ÌÃû³Æ
+    Sys.statusInfo[10] = Sys.handProcessIndex;--ÊÖ¶¯Ä£Ê½µÄÏÂÒ»¸öÁ÷³Ì
+    Sys.statusInfo[11] = Sys.handRunTimes;--ÊÖ¶¯Ä£Ê½µÄÑ­»·´ÎÊý+1
 
     local record = ""
     --Á¿³ÌÉèÖÃ½çÃæ²ÎÊý
-    for i=1,7,1 do
+    for i=1,11,1 do
         record = record..Sys.statusInfo[i]..","
     end
     record_modify(SYSTEM_INFO_SCREEN, SysPublicInfoRId, 12, record);
+end
+
+--***********************************************************************************************
+--  ±£´æÔËÐÐ×´Ì¬ÏÂµÄ¹Ø¼üÐÅÏ¢
+--***********************************************************************************************
+function savePeriodFreq()
+    
+
 end
 
 
